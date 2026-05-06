@@ -1,0 +1,317 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import StoreBanner from './StoreBanner'
+import StoreHeader from './StoreHeader'
+import StoreHero, { type HeroSlide } from './StoreHero'
+import ProductGrid from './ProductGrid'
+import StoreFooter from './StoreFooter'
+import CartSidebar from './cart-sidebar'
+import SectionDivider from './SectionDivider'
+import CustomSection, { type CustomSectionData } from './CustomSection'
+import { EditorSection, EditorItem } from './EditorHighlight'
+
+interface ThemeStyle {
+  primaryColor: string
+  backgroundColor: string
+  footerColor: string
+  accentColor: string
+  textColor: string
+  borderRadius: string
+  buttonStyle: string
+  font: string
+  headingFont: string
+  bannerText: string
+  showBanner: boolean
+  logoUrl: string
+  logoWidth: number
+  footerText: string
+  instagramHandle: string
+  twitterHandle: string
+  facebookUrl: string
+  layout: string
+  cardShadow: string
+  dividerStyle: string
+  shopAllLabel: string
+  featuredLabel: string
+  productGridBg: string
+  productGridButtonColor: string
+  productGridTextColor: string
+  productGridFont: string
+  customCss: string
+  customHead: string
+  productTitleWidth?: string
+  productTitleMaxWidth?: string
+  productTitleAlign?: string
+  productTitlePreset?: string
+  productTitleBg?: string
+  productTitlePaddingTop?: number
+  productTitlePaddingBottom?: number
+  productTitlePaddingLeft?: number
+  productTitlePaddingRight?: number
+  productPriceShowSale?: boolean
+  productPriceInstallments?: boolean
+  productPriceTaxInfo?: boolean
+  productPricePreset?: string
+  productPriceWidth?: string
+  productPriceAlign?: string
+  productPriceTextColor?: string
+  productPriceHeadingColor?: string
+  productPriceLinkColor?: string
+  productPricePaddingTop?: number
+  productPricePaddingBottom?: number
+  productPricePaddingLeft?: number
+  productPricePaddingRight?: number
+  cartBtnLabel?: string
+  cartBtnShowIcon?: boolean
+  cartBtnWidth?: string
+  cartBtnFontSize?: number
+  cartBtnPaddingTop?: number
+  cartBtnPaddingBottom?: number
+  cartBtnPaddingLeft?: number
+  cartBtnPaddingRight?: number
+  navLinks?: { label: string; href: string }[]
+  navFontSize?: number
+  navCase?: string
+  navDividers?: boolean
+  darkMode?: boolean
+  showDarkToggle?: boolean
+}
+
+interface StorefrontClientProps {
+  store: any
+  products: any[]
+  initialTheme: ThemeStyle
+  initialCustomSections: CustomSectionData[]
+  initialHeroSlides?: HeroSlide[] | null
+  subdomain: string
+}
+
+
+export default function StorefrontClient({
+  store,
+  products,
+  initialTheme,
+  initialCustomSections,
+  initialHeroSlides,
+  subdomain,
+}: StorefrontClientProps) {
+  const [theme, setTheme] = useState<ThemeStyle>(initialTheme)
+  const [isEditor, setIsEditor] = useState(false)
+  const [customSections, setCustomSections] = useState<CustomSectionData[]>(initialCustomSections)
+  const [heroSlides, setHeroSlides] = useState<HeroSlide[] | undefined>(
+    (initialHeroSlides && initialHeroSlides.length > 0) ? initialHeroSlides : undefined
+  )
+  const [activeHeroSlide, setActiveHeroSlide] = useState<number | null>(null)
+  const [activeProductField, setActiveProductField] = useState<string | null>(null)
+
+  useEffect(() => {
+    const isPreview = new URLSearchParams(window.location.search).has('preview')
+    setIsEditor(window.self !== window.top && !isPreview)
+  }, [])
+
+  function notifyParent(section: string) {
+    window.parent.postMessage({ type: 'section:edit', section }, '*')
+  }
+
+  useEffect(() => {
+    function handleMessage(event: MessageEvent) {
+      if (event.data?.type === 'theme:update' && event.data.theme) {
+        setTheme(prev => ({ ...prev, ...event.data.theme }))
+      }
+      if (event.data?.type === 'custom-sections:update' && Array.isArray(event.data.sections)) {
+        setCustomSections(event.data.sections)
+      }
+      if (event.data?.type === 'hero:update' && Array.isArray(event.data.slides)) {
+        setHeroSlides(event.data.slides)
+      }
+      if (event.data?.type === 'hero:active') {
+        setActiveHeroSlide(event.data.index)
+      }
+      if (event.data?.type === 'product-field:activate') {
+        setActiveProductField(event.data.field ?? null)
+      }
+      if (event.data?.type === 'section:highlight' && event.data.section) {
+        const el = document.getElementById(`section-${event.data.section}`)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          el.classList.remove('preview-section-pulse')
+          void el.offsetWidth
+          el.classList.add('preview-section-pulse')
+          setTimeout(() => el.classList.remove('preview-section-pulse'), 1800)
+        }
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [])
+
+  const themeObj = {
+    primaryColor: theme.primaryColor,
+    backgroundColor: theme.backgroundColor,
+    footerColor: theme.footerColor,
+    accentColor: theme.accentColor,
+    textColor: theme.textColor,
+    borderRadius: theme.borderRadius,
+    buttonStyle: theme.buttonStyle,
+    font: theme.font,
+    headingFont: theme.headingFont,
+    bannerText: theme.bannerText,
+    showBanner: theme.showBanner,
+    logoUrl: theme.logoUrl,
+    logoWidth: theme.logoWidth,
+    footerText: theme.footerText,
+    instagramHandle: theme.instagramHandle,
+    twitterHandle: theme.twitterHandle,
+    facebookUrl: theme.facebookUrl,
+    layout: theme.layout,
+    cardShadow: theme.cardShadow,
+    navLinks:       theme.navLinks,
+    navFontSize:    theme.navFontSize,
+    navCase:        theme.navCase,
+    navDividers:    theme.navDividers,
+    darkMode:       theme.darkMode,
+    showDarkToggle: theme.showDarkToggle,
+    productGridBg:  theme.productGridBg,
+  }
+
+  const btnColor = theme.productGridButtonColor || theme.primaryColor
+
+  const themeStyle = {
+    primaryColor: btnColor,
+    backgroundColor: theme.backgroundColor,
+    footerColor: theme.footerColor,
+    accentColor: theme.accentColor,
+    textColor: theme.productGridTextColor || theme.textColor,
+    borderRadius: theme.borderRadius,
+    buttonStyle: theme.buttonStyle,
+    font: theme.productGridFont || theme.font,
+    headingFont: theme.headingFont,
+    cardShadow: theme.cardShadow,
+    featuredLabel: theme.featuredLabel || 'Featured Products',
+    productTitleWidth:         theme.productTitleWidth,
+    productTitleMaxWidth:      theme.productTitleMaxWidth,
+    productTitleAlign:         theme.productTitleAlign,
+    productTitlePreset:        theme.productTitlePreset,
+    productTitleBg:            theme.productTitleBg,
+    productTitlePaddingTop:    theme.productTitlePaddingTop,
+    productTitlePaddingBottom: theme.productTitlePaddingBottom,
+    productTitlePaddingLeft:   theme.productTitlePaddingLeft,
+    productTitlePaddingRight:  theme.productTitlePaddingRight,
+    productPriceShowSale:      theme.productPriceShowSale,
+    productPriceInstallments:  theme.productPriceInstallments,
+    productPriceTaxInfo:       theme.productPriceTaxInfo,
+    productPricePreset:        theme.productPricePreset,
+    productPriceWidth:         theme.productPriceWidth,
+    productPriceAlign:         theme.productPriceAlign,
+    productPriceTextColor:     theme.productPriceTextColor,
+    productPriceHeadingColor:  theme.productPriceHeadingColor,
+    productPriceLinkColor:     theme.productPriceLinkColor,
+    productPricePaddingTop:    theme.productPricePaddingTop,
+    productPricePaddingBottom: theme.productPricePaddingBottom,
+    productPricePaddingLeft:   theme.productPricePaddingLeft,
+    productPricePaddingRight:  theme.productPricePaddingRight,
+    cartBtnLabel:         theme.cartBtnLabel,
+    cartBtnShowIcon:      theme.cartBtnShowIcon,
+    cartBtnWidth:         theme.cartBtnWidth,
+    cartBtnFontSize:      theme.cartBtnFontSize,
+    cartBtnPaddingTop:    theme.cartBtnPaddingTop,
+    cartBtnPaddingBottom: theme.cartBtnPaddingBottom,
+    cartBtnPaddingLeft:   theme.cartBtnPaddingLeft,
+    cartBtnPaddingRight:  theme.cartBtnPaddingRight,
+  }
+
+  return (
+    <div
+      className="min-h-screen flex flex-col"
+      style={{
+        background: 'var(--store-bg)',
+        color: 'var(--store-text)',
+        fontFamily: theme.font === 'serif' ? 'serif' : theme.font === 'mono' ? 'monospace' : 'inherit',
+      }}
+    >
+      {/* Preview pulse animation — only injected when inside the editor iframe */}
+      {isEditor && (
+        <style>{`
+          @keyframes preview-section-pulse {
+            0%   { box-shadow: 0 0 0 0px rgba(59,130,246,0); }
+            25%  { box-shadow: 0 0 0 4px rgba(59,130,246,0.6); }
+            55%  { box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
+            75%  { box-shadow: 0 0 0 4px rgba(59,130,246,0.6); }
+            100% { box-shadow: 0 0 0 0px rgba(59,130,246,0); }
+          }
+          .preview-section-pulse {
+            animation: preview-section-pulse 1.6s ease-in-out;
+          }
+        `}</style>
+      )}
+
+      <EditorSection id="section-banner" label="Announcement Banner" section="banner" isEditor={isEditor} onEdit={notifyParent}>
+        <StoreBanner theme={themeObj} isEditor={isEditor} onEdit={notifyParent} />
+      </EditorSection>
+
+      <EditorSection id="section-header" label="Header" section="header" isEditor={isEditor} onEdit={notifyParent}>
+        <StoreHeader store={store} theme={themeObj} subdomain={subdomain} isEditor={isEditor} onEdit={notifyParent} />
+      </EditorSection>
+
+      <EditorSection id="section-hero" label="Hero Slides" section="hero" isEditor={isEditor} onEdit={notifyParent}>
+        <StoreHero
+          theme={themeObj}
+          storeName={store.name}
+          storeId={store.id}
+          slides={heroSlides}
+          activeSlide={activeHeroSlide}
+          isEditor={isEditor}
+          onEdit={notifyParent}
+        />
+      </EditorSection>
+
+      <SectionDivider style={theme.dividerStyle} primaryColor={theme.primaryColor} />
+
+      <EditorSection id="section-products" label="Product Grid" section="products" isEditor={isEditor} onEdit={notifyParent}>
+        <div data-pg="1" style={{ backgroundColor: 'var(--store-pg-bg)' }}>
+          <ProductGrid products={products} theme={themeObj} subdomain={subdomain} themeStyle={themeStyle} isEditor={isEditor} onEdit={notifyParent} activeProductField={activeProductField} />
+          <div className="flex justify-center pb-8 -mt-2">
+            <EditorItem section="products" field="shop-all" label="Shop All label" isEditor={isEditor} onEdit={notifyParent} block>
+              <a
+                href={`/store/${subdomain}/products`}
+                className="inline-flex items-center gap-2 px-8 py-3 text-sm font-bold transition-all hover:opacity-80"
+                style={{
+                  borderRadius: theme.borderRadius,
+                  backgroundColor: theme.buttonStyle === 'solid' ? btnColor : 'transparent',
+                  color: theme.buttonStyle === 'solid' ? '#fff' : btnColor,
+                  border: theme.buttonStyle === 'ghost' ? 'none' : `2px solid ${btnColor}`,
+                }}
+              >
+                {theme.shopAllLabel || 'Shop All Products'}
+              </a>
+            </EditorItem>
+          </div>
+        </div>
+      </EditorSection>
+
+      {customSections.filter(s => s.visible).map(section => (
+        <EditorSection key={section.id} id={`section-custom-${section.id}`} label="Custom Section" section="custom" isEditor={isEditor} onEdit={notifyParent}>
+          <div>
+            <SectionDivider style={theme.dividerStyle} primaryColor={theme.primaryColor} />
+            <CustomSection section={section} themeStyle={themeStyle} isEditor={isEditor} onEdit={notifyParent} />
+          </div>
+        </EditorSection>
+      ))}
+
+      <SectionDivider style={theme.dividerStyle} primaryColor={theme.primaryColor} />
+
+      <EditorSection id="section-footer" label="Footer" section="footer" isEditor={isEditor} onEdit={notifyParent}>
+        <StoreFooter store={store} theme={themeObj} isEditor={isEditor} onEdit={notifyParent} />
+      </EditorSection>
+      <CartSidebar
+        themeStyle={{
+          primaryColor: theme.primaryColor,
+          borderRadius: theme.borderRadius,
+          buttonStyle: theme.buttonStyle,
+        }}
+        subdomain={subdomain}
+      />
+    </div>
+  )
+}

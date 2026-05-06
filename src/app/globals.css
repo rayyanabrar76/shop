@@ -1,26 +1,131 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+@theme {
+  --color-brand: #323232;
+  --color-brand-hover: #1a1a1a;
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Admin dark mode: dark: prefix works when html has data-theme="dark" ── */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ── Storefront / global CSS variables ── */
+:root {
+  --background: #fdfdfc;
+  --foreground: #212121;
+  --muted: #6b6b6b;
+  --border: #e8e8e3;
+}
+
+/* ── Admin UI design tokens ── */
+:root,
+[data-theme="light"] {
+  --admin-bg:           #ffffff;
+  --admin-bg-subtle:    #fafafa;
+  --admin-bg-muted:     #f4f4f5;
+  --admin-border:       #e4e4e7;
+  --admin-divider:      rgba(0, 0, 0, 0.06);
+  --admin-text:         #09090b;
+  --admin-text-2:       #52525b;
+  --admin-text-3:       #a1a1aa;
+  --admin-text-4:       #d4d4d8;
+  --admin-shadow:       0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --admin-shadow-md:    0 4px 16px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+  --admin-shadow-lg:    0 8px 30px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
+}
+
+[data-theme="dark"] {
+  --admin-bg:           #18181b;
+  --admin-bg-subtle:    #27272a;
+  --admin-bg-muted:     #3f3f46;
+  --admin-border:       #3f3f46;
+  --admin-divider:      rgba(255, 255, 255, 0.06);
+  --admin-text:         #fafafa;
+  --admin-text-2:       #a1a1aa;
+  --admin-text-3:       #71717a;
+  --admin-text-4:       #52525b;
+  --admin-shadow:       0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+  --admin-shadow-md:    0 4px 16px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.4);
+  --admin-shadow-lg:    0 8px 30px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.5);
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.015em;
+}
+
+.ui-card {
+  @apply bg-white border border-[#e8e8e3] rounded-4xl shadow-[0_2px_8px_rgba(0,0,0,0.02)];
+}
+
+::selection {
+  background: #e8e8e3;
+  color: #1a1a1a;
+}
+
+.text-ink {
+  @apply bg-clip-text text-transparent bg-linear-to-b from-[#444] to-[#111];
+}
+
+/* Hide scrollbar but keep scroll working */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Thin minimal scrollbar */
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 transparent;
+}
+.thin-scrollbar::-webkit-scrollbar {
+  width: 3px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 999px;
+}
+
+/* Editor sidebar pulse — fires when a section is activated from either direction */
+@keyframes editor-section-pulse {
+  0%   { background-color: rgba(59,130,246,0);    box-shadow: inset 0 0 0 0px rgba(59,130,246,0);    }
+  25%  { background-color: rgba(59,130,246,0.07); box-shadow: inset 0 0 0 2px rgba(59,130,246,0.25); }
+  50%  { background-color: rgba(59,130,246,0);    box-shadow: inset 0 0 0 0px rgba(59,130,246,0);    }
+  75%  { background-color: rgba(59,130,246,0.07); box-shadow: inset 0 0 0 2px rgba(59,130,246,0.25); }
+  100% { background-color: rgba(59,130,246,0);    box-shadow: inset 0 0 0 0px rgba(59,130,246,0);    }
+}
+.editor-section-pulse {
+  animation: editor-section-pulse 1.6s ease-in-out;
+}
+
+/* Field-level pulse — only the specific input/option that was clicked */
+@keyframes field-pulse {
+  0%   { box-shadow: 0 0 0 0px rgba(59,130,246,0);    background-color: rgba(59,130,246,0); }
+  20%  { box-shadow: 0 0 0 3px rgba(59,130,246,0.45); background-color: rgba(59,130,246,0.08); }
+  45%  { box-shadow: 0 0 0 1px rgba(59,130,246,0.1);  background-color: rgba(59,130,246,0); }
+  65%  { box-shadow: 0 0 0 3px rgba(59,130,246,0.45); background-color: rgba(59,130,246,0.08); }
+  85%  { box-shadow: 0 0 0 1px rgba(59,130,246,0.1);  background-color: rgba(59,130,246,0); }
+  100% { box-shadow: 0 0 0 0px rgba(59,130,246,0);    background-color: rgba(59,130,246,0); }
+}
+.field-pulse {
+  animation: field-pulse 1.8s ease-in-out;
+  border-radius: 0.5rem;
+}
+
+/* Mobile nav drawer slide-in */
+@keyframes drawer-slide-in {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+.drawer-slide-in {
+  animation: drawer-slide-in 0.25s ease-out;
 }

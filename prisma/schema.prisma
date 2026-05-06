@@ -1,0 +1,384 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  clerkId      String   @unique
+  email        String   @unique
+  adminTheme   String   @default("system")
+  createdAt    DateTime @default(now())
+  stores       Store[]
+}
+
+model Store {
+  id             String   @id @default(cuid())
+  ownerId        String
+  name           String
+  subdomain      String   @unique
+  customDomain   String?  @unique
+  domainVerified Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  owner           User              @relation(fields: [ownerId], references: [id])
+  products        Product[]
+  orders          Order[]
+  customers       Customer[]
+  theme           StoreTheme?
+  categories      Category[]
+  payment         StorePayment?
+  customSections  CustomSection[]
+  media           MediaAsset[]
+  pages           StorePage[]
+  storeCustomers  StoreCustomer[]
+  discountCodes   DiscountCode[]
+  shippingRates   ShippingRate[]
+}
+
+model StorePayment {
+  id      String @id @default(cuid())
+  storeId String @unique
+
+  codEnabled      Boolean @default(false)
+  stripeAccountId String?
+  stripeEnabled   Boolean @default(false)
+  taxEnabled      Boolean @default(false)
+  taxRate         Float   @default(0)
+  taxName         String  @default("Tax")
+
+  store Store @relation(fields: [storeId], references: [id])
+}
+
+model StoreTheme {
+  id              String  @id @default(cuid())
+  storeId         String  @unique
+  primaryColor    String  @default("#6c47ff")
+  backgroundColor String  @default("#ffffff")
+  footerColor     String  @default("#f4f4f5")
+  accentColor     String  @default("#000000")
+  textColor       String  @default("#09090b")
+  font            String  @default("sans")
+  headingFont     String  @default("sans")
+  baseFontSize    Int     @default(16)
+  bannerText      String  @default("Welcome to our store")
+  showBanner      Boolean @default(true)
+  logoUrl         String?
+  logoWidth       Int     @default(120)
+  layout          String  @default("grid")
+  borderRadius    String  @default("0.75rem")
+  buttonStyle     String  @default("solid")
+  cardShadow      String  @default("none")
+  dividerStyle    String  @default("none")
+  showSearch      Boolean @default(true)
+  shopAllLabel    String  @default("Shop All Products")
+  featuredLabel   String  @default("Featured Products")
+  productGridBg          String  @default("#ffffff")
+  productGridButtonColor String  @default("")
+  productGridTextColor   String  @default("")
+  productGridFont        String  @default("")
+  productsPageHeading    String  @default("")
+  productTitleWidth      String  @default("fill")
+  productTitleMaxWidth   String  @default("")
+  productTitleAlign      String  @default("left")
+  productTitlePreset     String  @default("default")
+  productTitleBg         String  @default("")
+  productTitlePaddingTop    Int  @default(4)
+  productTitlePaddingBottom Int  @default(0)
+  productTitlePaddingLeft   Int  @default(0)
+  productTitlePaddingRight  Int  @default(0)
+  productPricePreset     String  @default("h6")
+  productPriceWidth      String  @default("fit")
+  productPriceAlign      String  @default("left")
+  productPriceTextColor  String  @default("")
+  productPricePaddingTop    Int  @default(0)
+  productPricePaddingBottom Int  @default(0)
+  productPricePaddingLeft   Int  @default(0)
+  productPricePaddingRight  Int  @default(0)
+  cartBtnLabel       String  @default("")
+  cartBtnShowIcon    Boolean @default(true)
+  cartBtnWidth       String  @default("fill")
+  cartBtnFontSize    Int     @default(10)
+  cartBtnPaddingTop    Int   @default(5)
+  cartBtnPaddingBottom Int   @default(5)
+  cartBtnPaddingLeft   Int   @default(0)
+  cartBtnPaddingRight  Int   @default(0)
+  customCss              String  @default("")
+  customHead             String  @default("")
+  footerText      String?
+  instagramHandle String?
+  twitterHandle   String?
+  facebookUrl     String?
+  heroSlides      Json?
+  navLinks        Json?
+  navFontSize     Int     @default(14)
+  navCase         String  @default("normal")
+  navDividers     Boolean @default(false)
+  darkMode        Boolean @default(false)
+  showDarkToggle  Boolean @default(true)
+  // Category filter / products page
+  catBackLabel         String  @default("Back to store")
+  catFilterRadius      String  @default("9999px")
+  catFilterFontSize    Int     @default(12)
+  catFilterFont        String  @default("")
+  catFilterCase        String  @default("uppercase")
+  catFilterActiveBg    String  @default("")
+  catFilterActiveText  String  @default("#ffffff")
+  catFilterInactiveBg  String  @default("")
+  catFilterInactiveText String @default("")
+  catFilterPaddingX    Int     @default(16)
+  catFilterPaddingY    Int     @default(6)
+  catBackFont          String  @default("")
+  catFilterFontWeight  String  @default("bold")
+
+  store Store @relation(fields: [storeId], references: [id])
+}
+
+model CustomSection {
+  id          String   @id @default(cuid())
+  storeId     String
+  pageId      String?
+  name        String
+  layout      String
+  heading     String?
+  text        String?
+  imageUrl    String?
+  buttonLabel   String?
+  buttonUrl     String?
+  buttonVariant String?
+  buttonRadius  String?
+  buttonColor   String?
+  buttonFont    String?
+  showButton    Boolean @default(false)
+  bgColor       String?
+  position    Int      @default(0)
+  visible     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id])
+}
+
+model StorePage {
+  id        String   @id @default(cuid())
+  storeId   String
+  type      String
+  name      String
+  slug      String
+  content   Json?
+  createdAt DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, slug])
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  storeId   String
+  url       String
+  fileId    String
+  filename  String
+  type      String   // "image" | "video"
+  size      Int?
+  width     Int?
+  height    Int?
+  createdAt DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  @@index([storeId, createdAt])
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  price       Int
+  inventory   Int
+  imageUrl    String?
+  status      String   @default("DRAFT")
+  category    String?
+  sku         String?
+  createdAt   DateTime @default(now())
+  storeId     String
+
+  store      Store                @relation(fields: [storeId], references: [id])
+  orderItems OrderItem[]
+  images     ProductImage[]
+  variants   ProductVariant[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  storeId   String
+  name      String
+  slug      String
+  visible   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  store     Store    @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, slug])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  storeId         String
+  total           Int
+  status          OrderStatus @default(PENDING)
+  createdAt       DateTime    @default(now())
+  customerName    String?
+  customerEmail   String?
+  customerPhone   String?
+  customerAddress String?
+  customerCity    String?
+  customerCountry String?
+  paymentMethod   String?
+  stripeSessionId String?
+  notes           String?
+  discountCode    String?
+  discountAmount  Int         @default(0)
+  shippingAmount  Int         @default(0)
+  shippingMethod  String?
+  taxAmount       Int         @default(0)
+
+  store Store       @relation(fields: [storeId], references: [id])
+  items OrderItem[]
+}
+
+model OrderItem {
+  id           String  @id @default(cuid())
+  orderId      String
+  productId    String
+  quantity     Int
+  price        Int
+  variantLabel String?
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  url       String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  name      String
+  position  Int      @default(0)
+
+  product Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  options ProductVariantOption[]
+}
+
+model ProductVariantOption {
+  id            String  @id @default(cuid())
+  variantId     String
+  label         String
+  priceOverride Int?
+  inventory     Int     @default(0)
+  sku           String?
+  position      Int     @default(0)
+
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  storeId   String
+  email     String
+  name      String?
+  createdAt DateTime @default(now())
+  store     Store    @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, email])
+}
+
+model StoreCustomer {
+  id           String   @id @default(cuid())
+  storeId      String
+  email        String
+  passwordHash String?
+  googleId     String?
+  name         String?
+  phone        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  store     Store                  @relation(fields: [storeId], references: [id])
+  addresses StoreCustomerAddress[]
+
+  @@unique([storeId, email])
+}
+
+model StoreCustomerAddress {
+  id         String   @id @default(cuid())
+  customerId String
+  name       String?
+  line1      String
+  line2      String?
+  city       String
+  country    String
+  phone      String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  customer StoreCustomer @relation(fields: [customerId], references: [id])
+}
+
+model StorePasswordReset {
+  id         String   @id @default(cuid())
+  storeId    String
+  email      String
+  token      String   @unique
+  expiresAt  DateTime
+  used       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model DiscountCode {
+  id        String    @id @default(cuid())
+  storeId   String
+  code      String
+  type      String    // "percentage" | "fixed"
+  value     Int       // percentage (0-100) or fixed cents
+  minOrder  Int       @default(0)
+  maxUses   Int?
+  usedCount Int       @default(0)
+  active    Boolean   @default(true)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, code])
+}
+
+model ShippingRate {
+  id            String   @id @default(cuid())
+  storeId       String
+  name          String
+  price         Int      // cents, 0 = free
+  minOrder      Int      @default(0)
+  estimatedDays String?
+  createdAt     DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+  REFUNDED
+}
