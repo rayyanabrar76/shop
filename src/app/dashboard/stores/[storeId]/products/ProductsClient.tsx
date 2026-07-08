@@ -66,7 +66,7 @@ function RowMenu({ product, storeId, onDelete }: { product: Product; storeId: st
   )
 }
 
-export default function ProductsClient({ storeId, subdomain, products: initial }: { storeId: string; subdomain: string; products: Product[] }) {
+export default function ProductsClient({ storeId, products: initial }: { storeId: string; subdomain: string; products: Product[] }) {
   const router = useRouter()
   const [products, setProducts] = useState<Product[]>(initial)
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
@@ -194,7 +194,7 @@ export default function ProductsClient({ storeId, subdomain, products: initial }
               <div>
                 <h3 className="font-bold text-zinc-900 dark:text-zinc-50">Delete product?</h3>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                  <span className="font-semibold text-zinc-700 dark:text-zinc-200">"{deleteTarget.title}"</span> will be permanently removed. This cannot be undone.
+                  <span className="font-semibold text-zinc-700 dark:text-zinc-200">&quot;{deleteTarget.title}&quot;</span> will be permanently removed. This cannot be undone.
                 </p>
               </div>
             </div>

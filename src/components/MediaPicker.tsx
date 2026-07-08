@@ -9,6 +9,7 @@ interface MediaPickerProps {
   value: string
   onChange: (url: string) => void
   accept?: 'image' | 'video' | 'all'
+  placeholder?: string
 }
 
 export default function MediaPicker({
@@ -16,6 +17,7 @@ export default function MediaPicker({
   value,
   onChange,
   accept = 'image',
+  placeholder,
 }: MediaPickerProps) {
   const [showLibrary, setShowLibrary] = useState(false)
 
@@ -31,6 +33,10 @@ export default function MediaPicker({
         <ImagePlus className="w-3.5 h-3.5" />
         Choose from Library
       </button>
+
+      {!value && placeholder && (
+        <p className="text-xs text-zinc-400">{placeholder}</p>
+      )}
 
       {/* Preview */}
       {value && (

@@ -25,7 +25,7 @@ export async function GET(
     } : null
 
     return NextResponse.json({ storeId: store.id, payment })
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 })
   }
 }

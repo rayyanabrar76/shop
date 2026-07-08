@@ -10,7 +10,7 @@ export async function GET(
     const { storeId } = await params
     const payment = await prisma.storePayment.findUnique({ where: { storeId } })
     return NextResponse.json({ payment })
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 })
   }
 }

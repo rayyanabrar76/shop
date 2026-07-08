@@ -41,7 +41,7 @@ export default async function DashboardPage() {
           >
             <div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-colors">
-                <StoreIcon className="h-5 w-5" />
+                <StoreIcon className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
               </div>
               <h3 className="mt-4 font-bold text-zinc-900 dark:text-zinc-50">{store.name}</h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">{store.subdomain}.{APP_DOMAIN}</p>

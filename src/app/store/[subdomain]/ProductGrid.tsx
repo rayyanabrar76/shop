@@ -201,7 +201,7 @@ export default function ProductGrid({
               <EditorItem key={p.id} section="products" field="layout" label="Card layout" isEditor={isEditor} onEdit={notify} block>
               <div
                 className="relative flex gap-4 border bg-white p-3 transition-shadow cursor-pointer"
-                style={{ borderRadius, ...shadowStyle, ...(fontFamily ? { fontFamily } : {}) }}
+                style={{ borderRadius, ...shadowStyle, borderColor: 'var(--store-card-border, #e4e4e7)', ...(fontFamily ? { fontFamily } : {}) }}
                 onClick={() => navigateTo(p.id)}
               >
                 {isEditor && (
@@ -256,7 +256,7 @@ export default function ProductGrid({
               <EditorItem key={p.id} section="products" field="layout" label="Card layout" isEditor={isEditor} onEdit={notify} block>
               <div
                 className="group flex flex-col bg-white overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
-                style={{ borderRadius, ...shadowStyle, border: '1px solid #f1f1f1', ...(fontFamily ? { fontFamily } : {}) }}
+                style={{ borderRadius, ...shadowStyle, border: '1px solid var(--store-card-border, #f1f1f1)', ...(fontFamily ? { fontFamily } : {}) }}
                 onClick={() => navigateTo(p.id)}
               >
                 {/* Image with category badge overlay */}

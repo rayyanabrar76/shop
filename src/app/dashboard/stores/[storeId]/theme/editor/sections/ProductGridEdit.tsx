@@ -229,7 +229,7 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
         {/* Shop All Button Label — home page only */}
         {!isProductsPage && (
           <div data-field="shop-all">
-            <label className={labelCls}>"Shop All" Button Label</label>
+            <label className={labelCls}>&quot;Shop All&quot; Button Label</label>
             <input
               type="text"
               className={inputCls}

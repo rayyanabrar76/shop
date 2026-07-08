@@ -1,11 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
-import StoreBanner from '../../store/[subdomain]/StoreBanner'
-import StoreHeader from '../../store/[subdomain]/StoreHeader'
-import StoreHero from '../../store/[subdomain]/StoreHero'
-import ProductGrid from '../../store/[subdomain]/ProductGrid'
-import StoreFooter from '../../store/[subdomain]/StoreFooter'
-import CartSidebar from '../../store/[subdomain]/cart-sidebar'
+import StorefrontClient from '../../store/[subdomain]/StorefrontClient'
+import { getActivePlan } from '@/lib/plans'
 
 export default async function CustomDomainPage({
   params,
@@ -22,49 +18,71 @@ export default async function CustomDomainPage({
 
   if (!store) notFound()
 
-  const products = await prisma.product.findMany({
-    where: { storeId: store.id, status: 'active' },
-    orderBy: { createdAt: 'desc' },
-  })
+  const [products, customSections] = await Promise.all([
+    prisma.product.findMany({
+      where: { storeId: store.id, status: 'active' },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.customSection.findMany({
+      where: { storeId: store.id, pageId: null },
+      orderBy: { position: 'asc' },
+    }),
+  ])
 
-  const themeStyle = {
-    primaryColor: store.theme?.primaryColor ?? '#6c47ff',
-    backgroundColor: store.theme?.backgroundColor ?? '#ffffff',
-    footerColor: store.theme?.footerColor ?? '#f4f4f5',
-    accentColor: store.theme?.accentColor ?? '#000000',
-    textColor: store.theme?.textColor ?? '#09090b',
-    borderRadius: store.theme?.borderRadius ?? '0.75rem',
-    buttonStyle: store.theme?.buttonStyle ?? 'solid',
-    font: store.theme?.font ?? 'sans',
-    headingFont: store.theme?.headingFont ?? 'sans',
+  const t = store.theme
+
+  const initialTheme = {
+    primaryColor:    t?.primaryColor    ?? '#6c47ff',
+    backgroundColor: t?.backgroundColor ?? '#ffffff',
+    footerColor:     t?.footerColor     ?? '#f4f4f5',
+    accentColor:     t?.accentColor     ?? '#000000',
+    textColor:       t?.textColor       ?? '#09090b',
+    borderRadius:    t?.borderRadius    ?? '0.75rem',
+    buttonStyle:     t?.buttonStyle     ?? 'solid',
+    font:            t?.font            ?? 'sans',
+    headingFont:     t?.headingFont     ?? 'sans',
+    bannerText:      t?.bannerText      ?? 'Welcome to our store',
+    showBanner:      t?.showBanner      ?? true,
+    logoUrl:         t?.logoUrl         ?? '',
+    logoWidth:       t?.logoWidth       ?? 120,
+    footerText:      t?.footerText      ?? '',
+    instagramHandle: t?.instagramHandle ?? '',
+    twitterHandle:   t?.twitterHandle   ?? '',
+    facebookUrl:     t?.facebookUrl     ?? '',
+    layout:          t?.layout          ?? 'grid',
+    cardShadow:      t?.cardShadow      ?? 'none',
+    dividerStyle:    t?.dividerStyle    ?? 'none',
+    shopAllLabel:    t?.shopAllLabel    ?? 'Shop All Products',
+    featuredLabel:   t?.featuredLabel   ?? 'Featured Products',
+    productGridBg:          t?.productGridBg          ?? '#ffffff',
+    productGridButtonColor: t?.productGridButtonColor ?? '',
+    productGridTextColor:   t?.productGridTextColor   ?? '',
+    productGridFont:        t?.productGridFont        ?? '',
+    customCss:              t?.customCss              ?? '',
+    customHead:             t?.customHead             ?? '',
+    navLinks:               (t?.navLinks as any)      ?? null,
+    navFontSize:            t?.navFontSize            ?? 14,
+    navCase:                t?.navCase                ?? 'normal',
+    navDividers:            t?.navDividers            ?? false,
+    darkMode:               t?.darkMode               ?? false,
+    showDarkToggle:         t?.showDarkToggle         ?? true,
   }
 
+  // Parse hero slides from the JSON field
+  const initialHeroSlides = Array.isArray((t as any)?.heroSlides) ? (t as any).heroSlides as any[] : null
+
+  const activePlan = getActivePlan(store)
+  const showShopflowBranding = !activePlan.limits.removeBranding
+
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{
-        background: themeStyle.backgroundColor,
-        color: themeStyle.textColor,
-      }}
-    >
-      <StoreBanner theme={store.theme} />
-      <StoreHeader store={store} theme={store.theme} subdomain={store.subdomain} />
-      <StoreHero theme={store.theme} storeName={store.name} storeId={store.id} />
-      <ProductGrid
-        products={products}
-        theme={store.theme}
-        subdomain={store.subdomain}
-        themeStyle={themeStyle}
-      />
-      <StoreFooter store={store} theme={store.theme} />
-      <CartSidebar
-        themeStyle={{
-          primaryColor: themeStyle.primaryColor,
-          borderRadius: themeStyle.borderRadius,
-          buttonStyle: themeStyle.buttonStyle,
-        }}
-        subdomain={store.subdomain}
-      />
-    </div>
+    <StorefrontClient
+      store={store}
+      products={products}
+      initialTheme={initialTheme}
+      initialCustomSections={customSections}
+      initialHeroSlides={initialHeroSlides}
+      subdomain={store.subdomain}
+      showShopflowBranding={showShopflowBranding}
+    />
   )
 }

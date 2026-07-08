@@ -121,7 +121,7 @@ export default function CustomersClient({ store, customers }: { store: Store; cu
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700">
             <Search size={28} className="mx-auto text-zinc-300 dark:text-zinc-600 mb-3" />
-            <p className="text-zinc-500 dark:text-zinc-400 font-medium">No customers match "{search}"</p>
+            <p className="text-zinc-500 dark:text-zinc-400 font-medium">No customers match &quot;{search}&quot;</p>
             <button onClick={() => setSearch('')} className="mt-2 text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 underline">Clear search</button>
           </div>
         ) : (

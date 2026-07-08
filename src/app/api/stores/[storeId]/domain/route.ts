@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import dns from 'dns/promises'
+import { loadStoreEntitlements, assertCustomDomain } from '@/lib/entitlements'
+import { addVercelDomain, removeVercelDomain, getVercelDomainStatus } from '@/lib/vercel'
+
+const VALID_DOMAIN = /^(?!:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
 
 export async function POST(
   req: NextRequest,
@@ -12,16 +16,19 @@ export async function POST(
     if (!clerkId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { storeId } = await params
-    const { domain } = await req.json()
+    const { domain } = (await req.json()) as { domain: string }
 
-    if (!domain) return NextResponse.json({ error: 'Domain is required' }, { status: 400 })
+    if (!domain || !VALID_DOMAIN.test(domain)) {
+      return NextResponse.json({ error: 'Invalid domain' }, { status: 400 })
+    }
 
-    const store = await prisma.store.findFirst({
-      where: { id: storeId, owner: { clerkId } },
-    })
-    if (!store) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    const ent = await loadStoreEntitlements(storeId, clerkId)
+    if (!ent) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    // Check if domain is already taken by another store
+    const planErr = assertCustomDomain(ent.plan)
+    if (planErr) return planErr
+
+    // Domain uniqueness across stores
     const existing = await prisma.store.findFirst({
       where: { customDomain: domain, NOT: { id: storeId } },
     })
@@ -29,45 +36,81 @@ export async function POST(
       return NextResponse.json({ error: 'This domain is already connected to another store.' }, { status: 409 })
     }
 
-    // Try to verify DNS
-    let verified = false
-    let dnsError = ''
-
-    try {
-      const rootDomain = process.env.NEXT_PUBLIC_APP_DOMAIN ?? 'localhost:3000'
-      const records = await dns.resolveCname(domain)
-      verified = records.some(r => r.includes(rootDomain) || r.includes('vercel'))
-    } catch (e) {
-      // CNAME not found, try A record
+    // Register with Vercel (so SSL is provisioned)
+    let vercelOk = false
+    let vercelReason: string | undefined
+    if (process.env.VERCEL_TOKEN) {
       try {
-        const addresses = await dns.resolve4(domain)
-        // If any IP resolves, DNS is at least set up
-        verified = addresses.length > 0
-        dnsError = 'CNAME not found — make sure you added the CNAME record'
-      } catch {
-        dnsError = 'Domain DNS not configured yet'
+        const status = await addVercelDomain(domain)
+        vercelOk = status.verified
+        vercelReason = status.reason
+      } catch (e) {
+        console.error('[domain] Vercel API error', e)
+        vercelReason = 'Vercel API error'
       }
+    } else {
+      vercelReason = 'VERCEL_TOKEN not configured — domain stored but SSL not auto-provisioned'
     }
 
-    // Save domain regardless (store owner can add DNS later)
+    // Verify CNAME points at our platform (defense-in-depth on top of Vercel's check)
+    const root = process.env.NEXT_PUBLIC_APP_DOMAIN ?? ''
+    let cnameOk = false
+    try {
+      const records = await dns.resolveCname(domain)
+      cnameOk = records.some(
+        (r) => r.includes(root) || r.endsWith('.vercel-dns.com') || r.endsWith('.vercel.app'),
+      )
+    } catch {
+      cnameOk = false
+    }
+
+    const verified = vercelOk && cnameOk
+
     await prisma.store.update({
       where: { id: storeId },
-      data: {
-        customDomain: domain,
-        domainVerified: verified,
-      },
+      data: { customDomain: domain, domainVerified: verified },
     })
 
     return NextResponse.json({
       ok: true,
       verified,
+      vercelOk,
+      cnameOk,
       message: verified
-        ? 'Domain verified and connected!'
-        : `Domain saved. ${dnsError} — add the DNS records shown below then verify again.`,
+        ? 'Domain connected and verified.'
+        : vercelReason ?? 'Domain saved. Add the CNAME record shown below, then verify.',
     })
   } catch (err) {
     console.error('[domain:verify]', err)
     return NextResponse.json({ error: 'Failed to verify domain' }, { status: 500 })
+  }
+}
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ storeId: string }> }
+) {
+  try {
+    const { userId: clerkId } = await auth()
+    if (!clerkId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { storeId } = await params
+    const store = await prisma.store.findFirst({
+      where: { id: storeId, owner: { clerkId } },
+      select: { customDomain: true, domainVerified: true },
+    })
+    if (!store) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+    let live = false
+    if (store.customDomain && process.env.VERCEL_TOKEN) {
+      try {
+        const status = await getVercelDomainStatus(store.customDomain)
+        live = status.verified
+      } catch {}
+    }
+    return NextResponse.json({ ...store, live })
+  } catch {
+    return NextResponse.json({ error: 'Failed' }, { status: 500 })
   }
 }
 
@@ -80,6 +123,14 @@ export async function DELETE(
     if (!clerkId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { storeId } = await params
+    const store = await prisma.store.findFirst({
+      where: { id: storeId, owner: { clerkId } },
+    })
+    if (!store) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+    if (store.customDomain && process.env.VERCEL_TOKEN) {
+      try { await removeVercelDomain(store.customDomain) } catch {}
+    }
 
     await prisma.store.update({
       where: { id: storeId },
@@ -87,7 +138,7 @@ export async function DELETE(
     })
 
     return NextResponse.json({ ok: true })
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Failed to remove domain' }, { status: 500 })
   }
 }

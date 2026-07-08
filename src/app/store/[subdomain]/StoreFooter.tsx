@@ -14,6 +14,7 @@ interface StoreFooterProps {
     twitterHandle?: string | null
     facebookUrl?: string | null
   } | null
+  showShopflowBranding?: boolean
   isEditor?: boolean
   onEdit?: (s: string) => void
 }
@@ -44,7 +45,7 @@ function SocialLink({ isEditor, href, label, children }: {
   )
 }
 
-export default function StoreFooter({ store, theme, isEditor = false, onEdit }: StoreFooterProps) {
+export default function StoreFooter({ store, theme, showShopflowBranding = false, isEditor = false, onEdit }: StoreFooterProps) {
   const notify = onEdit ?? (() => {})
 
   return (
@@ -88,6 +89,19 @@ export default function StoreFooter({ store, theme, isEditor = false, onEdit }: 
           )}
         </div>
       </div>
+
+      {showShopflowBranding && (
+        <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-current/10 flex justify-center">
+          <a
+            href="https://shopflow.app?ref=footer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-medium opacity-50 hover:opacity-80 transition-opacity"
+          >
+            Powered by <span className="font-bold">ShopFlow</span>
+          </a>
+        </div>
+      )}
     </footer>
   )
 }

@@ -85,6 +85,7 @@ interface StorefrontClientProps {
   initialCustomSections: CustomSectionData[]
   initialHeroSlides?: HeroSlide[] | null
   subdomain: string
+  showShopflowBranding?: boolean
 }
 
 
@@ -95,8 +96,10 @@ export default function StorefrontClient({
   initialCustomSections,
   initialHeroSlides,
   subdomain,
+  showShopflowBranding = false,
 }: StorefrontClientProps) {
   const [theme, setTheme] = useState<ThemeStyle>(initialTheme)
+  const [storeName, setStoreName] = useState(store.name)
   const [isEditor, setIsEditor] = useState(false)
   const [customSections, setCustomSections] = useState<CustomSectionData[]>(initialCustomSections)
   const [heroSlides, setHeroSlides] = useState<HeroSlide[] | undefined>(
@@ -130,6 +133,9 @@ export default function StorefrontClient({
       }
       if (event.data?.type === 'product-field:activate') {
         setActiveProductField(event.data.field ?? null)
+      }
+      if (event.data?.type === 'store-name:update' && event.data.name) {
+        setStoreName(event.data.name)
       }
       if (event.data?.type === 'section:highlight' && event.data.section) {
         const el = document.getElementById(`section-${event.data.section}`)
@@ -251,13 +257,13 @@ export default function StorefrontClient({
       </EditorSection>
 
       <EditorSection id="section-header" label="Header" section="header" isEditor={isEditor} onEdit={notifyParent}>
-        <StoreHeader store={store} theme={themeObj} subdomain={subdomain} isEditor={isEditor} onEdit={notifyParent} />
+        <StoreHeader store={{ ...store, name: storeName }} theme={themeObj} subdomain={subdomain} isEditor={isEditor} onEdit={notifyParent} />
       </EditorSection>
 
       <EditorSection id="section-hero" label="Hero Slides" section="hero" isEditor={isEditor} onEdit={notifyParent}>
         <StoreHero
           theme={themeObj}
-          storeName={store.name}
+          storeName={storeName}
           storeId={store.id}
           slides={heroSlides}
           activeSlide={activeHeroSlide}
@@ -275,6 +281,7 @@ export default function StorefrontClient({
             <EditorItem section="products" field="shop-all" label="Shop All label" isEditor={isEditor} onEdit={notifyParent} block>
               <a
                 href={`/store/${subdomain}/products`}
+                data-btn-type={theme.buttonStyle}
                 className="inline-flex items-center gap-2 px-8 py-3 text-sm font-bold transition-all hover:opacity-80"
                 style={{
                   borderRadius: theme.borderRadius,
@@ -302,7 +309,7 @@ export default function StorefrontClient({
       <SectionDivider style={theme.dividerStyle} primaryColor={theme.primaryColor} />
 
       <EditorSection id="section-footer" label="Footer" section="footer" isEditor={isEditor} onEdit={notifyParent}>
-        <StoreFooter store={store} theme={themeObj} isEditor={isEditor} onEdit={notifyParent} />
+        <StoreFooter store={{ ...store, name: storeName }} theme={themeObj} showShopflowBranding={showShopflowBranding} isEditor={isEditor} onEdit={notifyParent} />
       </EditorSection>
       <CartSidebar
         themeStyle={{

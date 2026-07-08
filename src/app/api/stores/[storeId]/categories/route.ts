@@ -14,7 +14,7 @@ export async function GET(
       orderBy: { name: 'asc' },
     })
     return NextResponse.json({ categories })
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 })
   }
 }

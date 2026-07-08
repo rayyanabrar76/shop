@@ -1,20 +1,81 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import SectionHeader from './SectionHeader'
 import { ThemeState, labelCls, inputCls } from '../types'
 import { Instagram, Twitter, Facebook } from 'lucide-react'
 
 interface FooterEditProps {
+  storeId: string
+  storeName: string
+  onPreviewChange: (name: string) => void
+  onSaveSuccess: (name: string) => void
   theme: ThemeState
   updateTheme: (patch: Partial<ThemeState>) => void
   onBack: () => void
 }
 
-export default function FooterEdit({ theme, updateTheme, onBack }: FooterEditProps) {
+export default function FooterEdit({ storeId, storeName, onPreviewChange, onSaveSuccess, theme, updateTheme, onBack }: FooterEditProps) {
+  const [nameInput, setNameInput] = useState('')
+  const [savedName, setSavedName] = useState('')
+  const [nameSaving, setNameSaving] = useState(false)
+
+  // Fetch the real current name from the DB on every open
+  useEffect(() => {
+    fetch(`/api/stores/${storeId}/settings`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.name) {
+          setNameInput(data.name)
+          setSavedName(data.name)
+          onPreviewChange(data.name)
+          onSaveSuccess(data.name)
+        }
+      })
+      .catch(() => {
+        // fallback to prop
+        setNameInput(storeName)
+        setSavedName(storeName)
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function saveStoreName() {
+    const trimmed = nameInput.trim()
+    if (!trimmed || trimmed === savedName) return
+    setNameSaving(true)
+    try {
+      const res = await fetch(`/api/stores/${storeId}/settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmed }),
+      })
+      if (res.ok) {
+        setSavedName(trimmed)
+        onSaveSuccess(trimmed)
+      }
+    } finally {
+      setNameSaving(false)
+    }
+  }
+
   return (
     <div>
       <SectionHeader title="Footer" description="Footer text and social links" onBack={onBack} />
       <div className="p-4 space-y-5">
+
+        <div data-field="footer-name">
+          <label className={labelCls}>Store Name</label>
+          <input
+            className={inputCls}
+            value={nameInput}
+            onChange={e => { setNameInput(e.target.value); onPreviewChange(e.target.value) }}
+            onBlur={saveStoreName}
+            onKeyDown={e => { if (e.key === 'Enter') { e.currentTarget.blur() } }}
+            disabled={nameSaving}
+            placeholder="My Store"
+          />
+        </div>
 
         <div data-field="footer-text">
           <label className={labelCls}>Footer Text</label>

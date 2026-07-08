@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import { loadStoreEntitlements, assertDiscountLimit } from '@/lib/entitlements'
 
 export async function GET(
   _req: NextRequest,
@@ -23,6 +24,13 @@ export async function POST(
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { storeId } = await params
+
+  const ent = await loadStoreEntitlements(storeId, userId)
+  if (!ent) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const limitErr = await assertDiscountLimit(storeId, ent.plan)
+  if (limitErr) return limitErr
+
   const { code, type, value, minOrder, maxUses, expiresAt } = await req.json()
 
   if (!code || !type || value == null) {

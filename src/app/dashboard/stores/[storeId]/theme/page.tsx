@@ -34,8 +34,8 @@ export default async function ThemePage({
       <div className="w-full max-w-md space-y-6 text-center">
 
         <div className="space-y-2">
-          <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center" style={{ backgroundColor: `${primary}20` }}>
-            <Paintbrush className="w-6 h-6" style={{ color: primary }} />
+          <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center bg-zinc-100 dark:bg-zinc-800">
+            <Paintbrush className="w-6 h-6 text-zinc-700 dark:text-zinc-300" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Storefront</h1>
           <p className="text-sm text-zinc-400 dark:text-zinc-500">Manage how your store looks to customers</p>

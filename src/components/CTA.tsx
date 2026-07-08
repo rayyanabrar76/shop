@@ -1,7 +1,11 @@
-import { SignedOut, SignInButton } from '@clerk/nextjs';
+'use client';
+
+import { SignedOut } from '@clerk/nextjs';
 import { ArrowRight } from 'lucide-react';
+import { useAuthModal } from './auth/AuthModalProvider';
 
 export default function CTA() {
+  const { openAuth } = useAuthModal();
   return (
     <section className="py-32 bg-[#fdfdfc]">
       <div className="max-w-5xl mx-auto px-6">
@@ -27,12 +31,13 @@ export default function CTA() {
                 className="px-6 py-3.5 rounded-full w-full bg-transparent text-[#fdfdfc] placeholder-[#6b6b6b] text-[14px] focus:outline-none"
               />
               <SignedOut>
-                <SignInButton mode="modal">
-                  <button className="bg-[#fdfdfc] text-[#212121] px-8 py-3.5 rounded-full font-bold text-[13px] hover:bg-white transition-all whitespace-nowrap flex items-center justify-center gap-2 group">
-                    Get Started 
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                </SignInButton>
+                <button
+                  onClick={() => openAuth('sign-up')}
+                  className="bg-[#fdfdfc] text-[#212121] px-8 py-3.5 rounded-full font-bold text-[13px] hover:bg-white transition-all whitespace-nowrap flex items-center justify-center gap-2 group"
+                >
+                  Get Started
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </button>
               </SignedOut>
             </div>
 

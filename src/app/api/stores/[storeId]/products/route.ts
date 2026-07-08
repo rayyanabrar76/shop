@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { loadStoreEntitlements, assertProductLimit } from '@/lib/entitlements'
 
 export async function GET(
   _req: Request,
@@ -41,12 +42,14 @@ export async function POST(
     return NextResponse.json({ error: 'Title and price are required' }, { status: 400 })
   }
 
-  const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
-  const store = await prisma.store.findUnique({ where: { id: storeId } })
+  const ent = await loadStoreEntitlements(storeId, userId)
+  if (!ent) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  if (!store || store.ownerId !== dbUser?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const limitErr = await assertProductLimit(storeId, ent.plan)
+  if (limitErr) return limitErr
+
+  const store = await prisma.store.findUnique({ where: { id: storeId } })
+  if (!store) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const product = await prisma.product.create({
     data: {

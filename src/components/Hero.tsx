@@ -2,10 +2,11 @@
 
 import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
-import { SignedOut, SignedIn, SignInButton } from "@clerk/nextjs";
+import { SignedOut, SignedIn } from "@clerk/nextjs";
 import { ArrowRight, Play, CreditCard, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
 import Mockup from "./Mockup";
+import { useAuthModal } from "./auth/AuthModalProvider";
 
 const SLIDES = [
   { word: "gear.", font: "font-sans tracking-tighter" },
@@ -17,6 +18,7 @@ const SLIDES = [
 export default function Hero() {
   const [index, setIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { openAuth } = useAuthModal();
 
   useEffect(() => {
     const timer = setInterval(() => setIndex((prev) => (prev + 1) % SLIDES.length), 4000);
@@ -139,18 +141,17 @@ export default function Hero() {
           className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start mb-20"
         >
           <SignedOut>
-            <SignInButton mode="modal" forceRedirectUrl="/dashboard">
-              <button
-                className="group relative px-8 py-4 rounded-2xl font-semibold text-[14px] text-white flex items-center gap-2.5 transition-all active:scale-95 hover:bg-black"
-                style={{
-                  background: "#000",
-                  boxShadow: "0 1px 0 rgba(255,255,255,0.08) inset, 0 12px 32px -8px rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.12)",
-                }}
-              >
-                Launch Store
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-              </button>
-            </SignInButton>
+            <button
+              onClick={() => openAuth("sign-up")}
+              className="group relative px-8 py-4 rounded-2xl font-semibold text-[14px] text-white flex items-center gap-2.5 transition-all active:scale-95 hover:bg-black"
+              style={{
+                background: "#000",
+                boxShadow: "0 1px 0 rgba(255,255,255,0.08) inset, 0 12px 32px -8px rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.12)",
+              }}
+            >
+              Launch Store
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+            </button>
           </SignedOut>
 
           <SignedIn>

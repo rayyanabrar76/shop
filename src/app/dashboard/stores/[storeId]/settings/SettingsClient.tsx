@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import {
   HiCheck, HiX, HiCheckCircle, HiClock,
-  HiExclamation, HiRefresh,
+  HiExclamation,
 } from 'react-icons/hi'
 import { useAdminTheme, type AdminThemeMode } from '@/components/dashboard/AdminThemeProvider'
 
@@ -371,7 +371,7 @@ export default function SettingsClient({ store }: { store: StoreData }) {
                           <span className="text-xs font-mono text-violet-600 dark:text-violet-400">cname.vercel-dns.com</span>
                         </div>
                       </div>
-                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500">DNS changes can take up to 48 hours. Click "Save & Verify" again after adding records.</p>
+                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500">DNS changes can take up to 48 hours. Click &quot;Save &amp; Verify&quot; again after adding records.</p>
                     </div>
                   )}
                 </div>

@@ -191,7 +191,7 @@ export default function CategoriesClient({ storeId, categories: initial }: { sto
               <div>
                 <h3 className="font-bold text-zinc-900 dark:text-zinc-50">Delete category?</h3>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                  <span className="font-semibold text-zinc-700 dark:text-zinc-200">"{deleteTarget.name}"</span> will be deleted.
+                  <span className="font-semibold text-zinc-700 dark:text-zinc-200">&quot;{deleteTarget.name}&quot;</span> will be deleted.
                   {deleteTarget._count.products > 0 && <span className="text-amber-600 dark:text-amber-400 font-medium"> {deleteTarget._count.products} product{deleteTarget._count.products !== 1 ? 's' : ''} will be uncategorised.</span>}
                 </p>
               </div>

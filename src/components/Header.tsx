@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { ArrowRight, LogOut, LayoutGrid, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuthModal } from './auth/AuthModalProvider';
 
 export default function Header() {
   const { user, isSignedIn } = useUser();
   const { signOut } = useClerk();
+  const { openAuth } = useAuthModal();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -41,11 +43,27 @@ export default function Header() {
           </span>
         </Link>
 
+        {/* Center nav */}
+        <nav className="hidden md:flex items-center gap-7 absolute left-1/2 -translate-x-1/2">
+          <Link href="/#features" className="text-[13px] font-semibold text-zinc-600 hover:text-zinc-900 transition-colors">
+            Features
+          </Link>
+          <Link href="/pricing" className="text-[13px] font-semibold text-zinc-600 hover:text-zinc-900 transition-colors">
+            Pricing
+          </Link>
+          <Link href="/privacy" className="text-[13px] font-semibold text-zinc-600 hover:text-zinc-900 transition-colors">
+            Privacy
+          </Link>
+          <a href="mailto:hello@shopflow.app" className="text-[13px] font-semibold text-zinc-600 hover:text-zinc-900 transition-colors">
+            Contact
+          </a>
+        </nav>
+
         {/* Right */}
         <div className="flex items-center gap-3">
           {!isSignedIn ? (
-            <Link
-              href="/dashboard"
+            <button
+              onClick={() => openAuth("sign-in")}
               className="group flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-[13px] text-white transition-all active:scale-95 hover:opacity-90"
               style={{
                 background: "#000",
@@ -54,7 +72,7 @@ export default function Header() {
             >
               Get Started
               <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-            </Link>
+            </button>
           ) : (
             <div className="relative" ref={dropdownRef}>
 

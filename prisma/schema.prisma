@@ -25,6 +25,18 @@ model Store {
   domainVerified Boolean  @default(false)
   createdAt      DateTime @default(now())
 
+  // Billing / subscription
+  plan                 Plan      @default(FREE)
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  subscriptionStatus   String?   // trialing | active | past_due | canceled | incomplete
+  trialEndsAt          DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+
+  // Storage usage tracking (bytes)
+  storageUsed BigInt @default(0)
+
   owner           User              @relation(fields: [ownerId], references: [id])
   products        Product[]
   orders          Order[]
@@ -38,6 +50,12 @@ model Store {
   storeCustomers  StoreCustomer[]
   discountCodes   DiscountCode[]
   shippingRates   ShippingRate[]
+}
+
+enum Plan {
+  FREE
+  BASIC
+  PRO
 }
 
 model StorePayment {

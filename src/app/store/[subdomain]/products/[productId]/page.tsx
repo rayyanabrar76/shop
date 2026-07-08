@@ -34,10 +34,10 @@ export default async function StoreProductPage({
   if (!product) return <div className="p-10">Product not found</div>
 
   const theme = store.theme
+  const headerTheme = theme ? { ...theme, navLinks: (theme.navLinks as any) ?? null } : null
   const primary = theme?.primaryColor ?? '#6c47ff'
   const radius = theme?.borderRadius ?? '0.75rem'
   const buttonStyle = theme?.buttonStyle ?? 'solid'
-  const bg = theme?.backgroundColor ?? '#ffffff'
   const textColor = theme?.textColor ?? '#09090b'
   const font = theme?.font ?? 'sans'
 
@@ -63,7 +63,7 @@ export default async function StoreProductPage({
     >
       <DarkModeSync />
       <StoreBanner theme={theme} />
-      <StoreHeader store={store} theme={theme} subdomain={subdomain} />
+      <StoreHeader store={store} theme={headerTheme} subdomain={subdomain} />
 
       <div className="max-w-6xl mx-auto w-full px-6 pt-8 pb-4">
         <Link

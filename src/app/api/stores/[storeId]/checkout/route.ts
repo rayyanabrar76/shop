@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import Stripe from 'stripe'
+import { getStripe } from '@/lib/stripe'
 import { sendOrderConfirmation, sendNewOrderAlert } from '@/lib/email'
-
-const PLATFORM_FEE_PERCENT = Number(process.env.PLATFORM_FEE_PERCENT ?? 3)
+import { getActivePlan } from '@/lib/plans'
+import { guard } from '@/lib/rate-limit'
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ storeId: string }> }
 ) {
   try {
+    const limited = guard(req, 'checkout', { windowMs: 60_000, max: 10 })
+    if (limited) return limited
+
     const { storeId } = await params
     const body = await req.json()
 
@@ -28,9 +31,15 @@ export async function POST(
     if (!store) return NextResponse.json({ error: 'Store not found' }, { status: 404 })
 
     const payment = store.payment
+    const planDef = getActivePlan(store)
 
-    if (paymentMethod === 'cod' && !payment?.codEnabled) {
-      return NextResponse.json({ error: 'COD not available' }, { status: 400 })
+    if (paymentMethod === 'cod') {
+      if (!payment?.codEnabled) {
+        return NextResponse.json({ error: 'COD not available' }, { status: 400 })
+      }
+      if (!planDef.limits.codAllowed) {
+        return NextResponse.json({ error: 'This store is on a plan that does not allow COD.' }, { status: 400 })
+      }
     }
     if (paymentMethod === 'stripe' && (!payment?.stripeEnabled || !payment?.stripeAccountId)) {
       return NextResponse.json({ error: 'Card payment not available for this store' }, { status: 400 })
@@ -77,31 +86,46 @@ export async function POST(
 
     const total = subtotal - discountAmount + shippingAmount + taxAmount
 
-    const order = await prisma.order.create({
-      data: {
-        storeId, total, status: 'PENDING', paymentMethod,
-        customerName, customerEmail, customerPhone,
-        customerAddress, customerCity, customerCountry, notes,
-        discountCode: appliedDiscountCode,
-        discountAmount,
-        shippingAmount,
-        shippingMethod,
-        taxAmount,
-        items: {
-          create: items.map((item: { productId: string; quantity: number; price: number }) => ({
-            productId: item.productId, quantity: item.quantity, price: item.price,
-          })),
-        },
-      },
-      include: { items: { include: { product: true } } },
-    })
-
-    // Decrement inventory
-    for (const item of items) {
-      await prisma.product.update({
-        where: { id: item.productId },
-        data: { inventory: { decrement: item.quantity } },
+    // Atomic: verify inventory + decrement + create order in one transaction.
+    // Uses an updateMany with a `gte` guard so two concurrent buyers can't oversell.
+    let order
+    try {
+      order = await prisma.$transaction(async (tx) => {
+        for (const item of items as { productId: string; quantity: number; price: number }[]) {
+          const updated = await tx.product.updateMany({
+            where: { id: item.productId, inventory: { gte: item.quantity } },
+            data: { inventory: { decrement: item.quantity } },
+          })
+          if (updated.count === 0) {
+            const p = await tx.product.findUnique({
+              where: { id: item.productId },
+              select: { title: true, inventory: true },
+            })
+            throw new Error(`Insufficient stock for ${p?.title ?? 'product'} (${p?.inventory ?? 0} left).`)
+          }
+        }
+        return tx.order.create({
+          data: {
+            storeId, total, status: 'PENDING', paymentMethod,
+            customerName, customerEmail, customerPhone,
+            customerAddress, customerCity, customerCountry, notes,
+            discountCode: appliedDiscountCode,
+            discountAmount,
+            shippingAmount,
+            shippingMethod,
+            taxAmount,
+            items: {
+              create: items.map((item: { productId: string; quantity: number; price: number }) => ({
+                productId: item.productId, quantity: item.quantity, price: item.price,
+              })),
+            },
+          },
+          include: { items: { include: { product: true } } },
+        })
       })
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Checkout failed'
+      return NextResponse.json({ error: msg }, { status: 409 })
     }
 
     // Upsert customer
@@ -153,11 +177,9 @@ export async function POST(
 
     // ── Stripe Connect ──────────────────────────────────────────────────────
     if (paymentMethod === 'stripe' && payment?.stripeAccountId) {
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-        apiVersion: '2026-04-22.dahlia',
-      })
+      const stripe = getStripe()
 
-      const productIds = items.map((i: any) => i.productId)
+      const productIds = items.map((i: { productId: string }) => i.productId)
       const products = await prisma.product.findMany({ where: { id: { in: productIds } } })
 
       const lineItems: any[] = items.map((item: any) => {
@@ -186,7 +208,8 @@ export async function POST(
         })
       }
 
-      const platformFee = Math.round(total * (PLATFORM_FEE_PERCENT / 100))
+      // Platform fee = take-rate determined by store plan
+      const platformFee = Math.max(0, Math.round(total * (planDef.takeRatePercent / 100)))
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -195,13 +218,14 @@ export async function POST(
         customer_email: customerEmail,
         success_url: `${req.headers.get('origin')}/store/${store.subdomain}/success?orderId=${order.id}&method=stripe`,
         cancel_url: `${req.headers.get('origin')}/store/${store.subdomain}/checkout`,
-        metadata: { orderId: order.id },
+        metadata: { orderId: order.id, storeId: store.id, planId: store.plan },
         ...(discountAmount > 0 && {
           discounts: [{ coupon: (await stripe.coupons.create({ amount_off: discountAmount, currency: 'usd', duration: 'once', name: appliedDiscountCode ?? 'Discount' })).id }],
         }),
         payment_intent_data: {
           transfer_data: { destination: payment.stripeAccountId },
           application_fee_amount: platformFee,
+          metadata: { orderId: order.id, storeId: store.id },
         },
       })
 

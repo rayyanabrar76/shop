@@ -8,7 +8,7 @@ function base(content: string) {
 }
 
 export async function sendOrderConfirmation({
-  to, storeName, orderId, items, subtotal, discountAmount, shippingAmount, taxAmount, total,
+  to, storeName, orderId, items, discountAmount, shippingAmount, taxAmount, total,
   customerName, address, city, country, paymentMethod,
 }: {
   to: string

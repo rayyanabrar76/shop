@@ -45,8 +45,6 @@ export default function OwnerPreviewBar({ storeId }: { storeId: string }) {
 
   if (!visible) return null
 
-  const deviceWidth = DEVICES.find(d => d.id === device)?.width
-
   return (
     <>
       {/* Keep each device iframe in DOM once loaded — avoids re-fetching on switch */}

@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { ShoppingBag, User, Mail, Phone, Calendar } from 'lucide-react'
 import { useAuth } from '../auth-context'
-import { useRouter } from 'next/navigation'
 
 interface Customer {
   id: string
@@ -29,8 +28,7 @@ export default function AccountClient({
   theme: Theme
 }) {
   const { logout } = useAuth()
-  const router = useRouter()
-  const { primaryColor, borderRadius, headingFont } = theme
+  const { primaryColor, headingFont } = theme
 
   const joinDate = new Date(customer.createdAt).toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric',
