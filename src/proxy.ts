@@ -1,6 +1,8 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
+const isApiRoute = createRouteMatcher(['/api/(.*)'])
+
 const isPublicRoute = createRouteMatcher([
   '/',
   '/pricing(.*)',
@@ -50,7 +52,17 @@ export default clerkMiddleware(async (auth, request) => {
 
   // ── Protect dashboard routes ─────────────────────────────────────────────
   if (!isPublicRoute(request)) {
-    await auth.protect()
+    const { userId } = await auth()
+    if (!userId) {
+      // API routes get a clean 401; page requests go to our custom sign-in
+      // (not Clerk's hosted page), preserving where the user was headed.
+      if (isApiRoute(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      const signInUrl = new URL('/sign-in', request.url)
+      signInUrl.searchParams.set('redirect_url', url.pathname + url.search)
+      return NextResponse.redirect(signInUrl)
+    }
   }
 
   return NextResponse.next()
