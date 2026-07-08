@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useUser } from '@clerk/nextjs'
 import { Check, ArrowRight } from 'lucide-react'
 import { PLANS, TRIAL_DAYS } from '@/lib/plans'
+import { useAuthModal } from '@/components/auth/AuthModalProvider'
 
 const FEATURES: { label: string; key: keyof typeof PLANS.FREE.limits | 'takeRate' }[] = [
   { label: 'Products', key: 'maxProducts' },
@@ -34,6 +36,20 @@ function renderFeature(planId: 'FREE' | 'BASIC' | 'PRO', key: string) {
 
 export default function PricingClient() {
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly')
+  const { isSignedIn } = useUser()
+  const { openAuth } = useAuthModal()
+  const router = useRouter()
+
+  function handlePlanClick(planId: 'FREE' | 'BASIC' | 'PRO') {
+    const destination =
+      planId === 'FREE'
+        ? '/dashboard/create-store'
+        : `/dashboard?upgrade=${planId}&billing=${billing}`
+    // Already signed in → go straight to the destination.
+    // Signed out → open the custom auth modal, then land on the destination.
+    if (isSignedIn) router.push(destination)
+    else openAuth('sign-up', destination)
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-6 md:px-12">
@@ -107,8 +123,8 @@ export default function PricingClient() {
               <p className={`mt-2 text-xs ${featured ? 'text-zinc-400' : 'text-zinc-500'}`}>
                 + {plan.takeRatePercent}% transaction fee on Stripe sales
               </p>
-              <Link
-                href={id === 'FREE' ? '/dashboard/create-store' : `/dashboard?upgrade=${id}&billing=${billing}`}
+              <button
+                onClick={() => handlePlanClick(id)}
                 className={`mt-6 flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold transition ${
                   featured
                     ? 'bg-white text-zinc-900 hover:bg-zinc-100'
@@ -117,7 +133,7 @@ export default function PricingClient() {
               >
                 {id === 'FREE' ? 'Start free' : `Start ${TRIAL_DAYS}-day free trial`}
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </button>
 
               <ul className="mt-7 space-y-2.5 text-sm">
                 {FEATURES.map((f) => (

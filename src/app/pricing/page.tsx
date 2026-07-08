@@ -1,6 +1,7 @@
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import PricingClient from './PricingClient'
+import { AuthModalProvider } from '@/components/auth/AuthModalProvider'
 
 export const metadata = {
   title: 'Pricing — ShopFlow',
@@ -9,12 +10,14 @@ export const metadata = {
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-white font-sans selection:bg-violet-200 selection:text-violet-900">
-      <Header />
-      <main className="pt-24 pb-24">
-        <PricingClient />
-      </main>
-      <Footer />
-    </div>
+    <AuthModalProvider>
+      <div className="min-h-screen bg-white font-sans selection:bg-violet-200 selection:text-violet-900">
+        <Header />
+        <main className="pt-24 pb-24">
+          <PricingClient />
+        </main>
+        <Footer />
+      </div>
+    </AuthModalProvider>
   )
 }

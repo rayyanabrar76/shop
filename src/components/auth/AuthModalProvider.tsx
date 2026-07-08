@@ -8,16 +8,20 @@ import AuthForm from './AuthForm'
 type Mode = 'sign-in' | 'sign-up'
 
 interface AuthModalContextValue {
-  openAuth: (mode?: Mode) => void
+  openAuth: (mode?: Mode, redirectUrl?: string) => void
   closeAuth: () => void
 }
 
 // Default falls back to the full-page /sign-in route when no provider is
 // mounted (e.g. the Header on legal/pricing pages), so consumers never crash.
 const AuthModalContext = createContext<AuthModalContextValue>({
-  openAuth: (mode?: Mode) => {
+  openAuth: (mode?: Mode, redirectUrl?: string) => {
     if (typeof window !== 'undefined') {
-      window.location.href = mode === 'sign-up' ? '/sign-in?mode=sign-up' : '/sign-in'
+      const params = new URLSearchParams()
+      if (mode === 'sign-up') params.set('mode', 'sign-up')
+      if (redirectUrl) params.set('redirect_url', redirectUrl)
+      const qs = params.toString()
+      window.location.href = qs ? `/sign-in?${qs}` : '/sign-in'
     }
   },
   closeAuth: () => {},
@@ -30,9 +34,11 @@ export function useAuthModal() {
 export function AuthModalProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<Mode>('sign-in')
+  const [redirectUrl, setRedirectUrl] = useState('/dashboard')
 
-  const openAuth = useCallback((m: Mode = 'sign-in') => {
+  const openAuth = useCallback((m: Mode = 'sign-in', r = '/dashboard') => {
     setMode(m)
+    setRedirectUrl(r)
     setOpen(true)
   }, [])
 
@@ -91,7 +97,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
                 <X className="h-4 w-4" />
               </button>
 
-              <AuthForm initialMode={mode} onClose={closeAuth} />
+              <AuthForm initialMode={mode} redirectUrl={redirectUrl} onClose={closeAuth} />
 
               <p className="mt-6 text-center text-[10px] font-medium uppercase tracking-[0.15em] text-[#b5b5ad]">
                 Secured by Clerk
