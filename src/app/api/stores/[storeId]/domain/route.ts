@@ -39,7 +39,7 @@ export async function POST(
     // Register with Vercel (so SSL is provisioned)
     let vercelOk = false
     let vercelReason: string | undefined
-    if (process.env.VERCEL_TOKEN) {
+    if (process.env.VC_API_TOKEN) {
       try {
         const status = await addVercelDomain(domain)
         vercelOk = status.verified
@@ -49,7 +49,7 @@ export async function POST(
         vercelReason = 'Vercel API error'
       }
     } else {
-      vercelReason = 'VERCEL_TOKEN not configured — domain stored but SSL not auto-provisioned'
+      vercelReason = 'VC_API_TOKEN not configured — domain stored but SSL not auto-provisioned'
     }
 
     // Verify CNAME points at our platform (defense-in-depth on top of Vercel's check)
@@ -102,7 +102,7 @@ export async function GET(
     if (!store) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     let live = false
-    if (store.customDomain && process.env.VERCEL_TOKEN) {
+    if (store.customDomain && process.env.VC_API_TOKEN) {
       try {
         const status = await getVercelDomainStatus(store.customDomain)
         live = status.verified
@@ -128,7 +128,7 @@ export async function DELETE(
     })
     if (!store) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    if (store.customDomain && process.env.VERCEL_TOKEN) {
+    if (store.customDomain && process.env.VC_API_TOKEN) {
       try { await removeVercelDomain(store.customDomain) } catch {}
     }
 

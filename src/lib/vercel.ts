@@ -1,17 +1,17 @@
 // Vercel domain API helpers — used to register/remove custom domains on the
 // platform's Vercel project so SSL is auto-provisioned.
-// Set VERCEL_TOKEN, VERCEL_PROJECT_ID, and (if applicable) VERCEL_TEAM_ID in env.
+// Set VC_API_TOKEN, VC_PROJECT_ID, and (if applicable) VC_TEAM_ID in env.
 
 const API = 'https://api.vercel.com'
 
 function teamQuery(): string {
-  const teamId = process.env.VERCEL_TEAM_ID
+  const teamId = process.env.VC_TEAM_ID
   return teamId ? `?teamId=${teamId}` : ''
 }
 
 function authHeaders() {
-  const token = process.env.VERCEL_TOKEN
-  if (!token) throw new Error('VERCEL_TOKEN not set')
+  const token = process.env.VC_API_TOKEN
+  if (!token) throw new Error('VC_API_TOKEN not set')
   return {
     Authorization: `Bearer ${token}`,
     'Content-Type': 'application/json',
@@ -19,8 +19,8 @@ function authHeaders() {
 }
 
 function projectId() {
-  const id = process.env.VERCEL_PROJECT_ID
-  if (!id) throw new Error('VERCEL_PROJECT_ID not set')
+  const id = process.env.VC_PROJECT_ID
+  if (!id) throw new Error('VC_PROJECT_ID not set')
   return id
 }
 

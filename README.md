@@ -84,9 +84,9 @@ stripe listen --forward-to localhost:3000/api/webhooks/stripe
 Custom domains are added to the Vercel project automatically when an owner connects one (see [src/lib/vercel.ts](src/lib/vercel.ts)).
 
 Set:
-- `VERCEL_TOKEN` — token from https://vercel.com/account/tokens
-- `VERCEL_PROJECT_ID` — Vercel Settings → General → Project ID
-- `VERCEL_TEAM_ID` — only if the project is owned by a team
+- `VC_API_TOKEN` — token from https://vercel.com/account/tokens
+- `VC_PROJECT_ID` — Vercel Settings → General → Project ID
+- `VC_TEAM_ID` — only if the project is owned by a team
 
 Owners point a CNAME at `cname.vercel-dns.com` for their domain. Vercel auto-provisions SSL.
 
