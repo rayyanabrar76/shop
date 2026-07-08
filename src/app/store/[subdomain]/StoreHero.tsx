@@ -74,7 +74,6 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
   if (!slide) return null
 
   const primary = theme?.primaryColor ?? '#6c47ff'
-  const radius = theme?.borderRadius ?? '0.75rem'
   const buttonStyle = theme?.buttonStyle ?? 'solid'
   const notify = onEdit ?? (() => {})
   const hasMedia = !!slide.imageUrl

@@ -18,6 +18,7 @@ export default function DarkModeSync() {
         el.style.setProperty('--store-footer', '#09090b')
         el.style.setProperty('--store-pg-bg', '#09090b')
         el.style.setProperty('--store-divider', 'rgba(255,255,255,0.12)')
+        el.style.setProperty('--store-card-border', 'rgba(255,255,255,0.08)')
       } else {
         el.removeAttribute('data-dark')
         el.style.setProperty('--store-bg', t.backgroundColor || '#ffffff')
@@ -25,6 +26,7 @@ export default function DarkModeSync() {
         el.style.setProperty('--store-footer', t.footerColor || '#f4f4f5')
         el.style.setProperty('--store-pg-bg', t.productGridBg || '#ffffff')
         el.style.setProperty('--store-divider', 'rgba(0,0,0,0.08)')
+        el.style.setProperty('--store-card-border', '#f1f1f1')
       }
     }
     window.addEventListener('message', handleMessage)

@@ -1,10 +1,45 @@
+import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { auth } from '@clerk/nextjs/server'
 import { CartProvider } from './cart'
 import { AuthProvider, type CustomerSession } from './auth-context'
 import { verifyCustomerToken, COOKIE_NAME } from '@/lib/store-auth'
 import { prisma } from '@/lib/prisma'
+import { sanitizeCustomCss, sanitizeCustomHead } from '@/lib/sanitize'
 import OwnerPreviewBar from './OwnerPreviewBar'
+
+export async function generateMetadata({
+  params,
+}: { params: Promise<{ subdomain: string }> }): Promise<Metadata> {
+  const { subdomain } = await params
+  const store = await prisma.store.findUnique({
+    where: { subdomain },
+    select: { name: true, theme: { select: { logoUrl: true, footerText: true } } },
+  })
+  if (!store) return { title: 'Store not found' }
+
+  const description =
+    store.theme?.footerText?.slice(0, 160) ??
+    `Shop ${store.name} online. Discover products and place orders securely.`
+
+  return {
+    title: { default: store.name, template: `%s — ${store.name}` },
+    description,
+    icons: store.theme?.logoUrl ? { icon: store.theme.logoUrl } : undefined,
+    openGraph: {
+      title: store.name,
+      description,
+      type: 'website',
+      images: store.theme?.logoUrl ? [{ url: store.theme.logoUrl }] : undefined,
+    },
+    twitter: {
+      card: 'summary',
+      title: store.name,
+      description,
+    },
+    robots: { index: true, follow: true },
+  }
+}
 
 export default async function StoreLayout({
   children,
@@ -37,8 +72,8 @@ export default async function StoreLayout({
       theme: { select: { customCss: true, customHead: true, darkMode: true, showDarkToggle: true, backgroundColor: true, textColor: true, footerColor: true, productGridBg: true } },
     },
   })
-  const customCss       = store?.theme?.customCss       ?? ''
-  const customHead      = store?.theme?.customHead      ?? ''
+  const customCss       = sanitizeCustomCss(store?.theme?.customCss ?? '')
+  const customHead      = sanitizeCustomHead(store?.theme?.customHead ?? '')
   const darkMode        = store?.theme?.darkMode        ?? false
   const showDarkToggle  = store?.theme?.showDarkToggle  ?? true
   // When darkMode is ON, the DB stores dark colors in backgroundColor/textColor/footerColor.
@@ -68,6 +103,7 @@ export default async function StoreLayout({
       el.style.setProperty('--store-footer','#09090b');
       el.style.setProperty('--store-pg-bg','#09090b');
       el.style.setProperty('--store-divider','rgba(255,255,255,0.12)');
+      el.style.setProperty('--store-card-border','rgba(255,255,255,0.08)');
     }else{
       el.removeAttribute('data-dark');
       el.style.setProperty('--store-bg',lbg);
@@ -75,6 +111,7 @@ export default async function StoreLayout({
       el.style.setProperty('--store-footer',lft);
       el.style.setProperty('--store-pg-bg',lpg);
       el.style.setProperty('--store-divider','rgba(0,0,0,0.08)');
+      el.style.setProperty('--store-card-border','#f1f1f1');
     }
   }catch(e){}}())`
 
@@ -122,6 +159,12 @@ export default async function StoreLayout({
     [data-dark] .rounded-2xl.bg-white { background-color: #18181b !important; }
     [data-dark] .min-h-screen { background-color: #09090b !important; color: #fafafa !important; }
     [data-dark] footer { background-color: #09090b !important; border-color: rgba(255,255,255,0.08) !important; color: #fafafa !important; }
+    [data-dark] [data-btn-type="outline"] { color: rgba(255,255,255,0.92) !important; border-color: rgba(255,255,255,0.55) !important; }
+    [data-dark] [data-btn-type="ghost"] { color: rgba(255,255,255,0.92) !important; border: 1px solid rgba(255,255,255,0.18) !important; }
+    [data-dark] [data-btn-type="outline"]:hover,
+    [data-dark] [data-btn-type="ghost"]:hover { background-color: rgba(255,255,255,0.08) !important; }
+    [data-dark] [data-btn-type="solid"] { border: 1px solid rgba(255,255,255,0.20) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.10) !important; }
+    [data-dark] [data-btn-type="solid"]:hover { filter: brightness(1.15) !important; }
   `
 
   // Check if the logged-in Clerk user owns this store

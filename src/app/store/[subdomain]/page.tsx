@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import StorefrontClient from './StorefrontClient'
+import { getActivePlan } from '@/lib/plans'
 
 export default async function StorefrontPage({
   params,
@@ -68,6 +69,9 @@ export default async function StorefrontPage({
   // Parse hero slides from the JSON field
   const initialHeroSlides = Array.isArray((t as any)?.heroSlides) ? (t as any).heroSlides as any[] : null
 
+  const activePlan = getActivePlan(store)
+  const showShopflowBranding = !activePlan.limits.removeBranding
+
   return (
     <StorefrontClient
       store={store}
@@ -76,6 +80,7 @@ export default async function StorefrontPage({
       initialCustomSections={customSections}
       initialHeroSlides={initialHeroSlides}
       subdomain={subdomain}
+      showShopflowBranding={showShopflowBranding}
     />
   )
 }

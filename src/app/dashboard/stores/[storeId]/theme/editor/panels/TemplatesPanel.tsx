@@ -8,7 +8,7 @@ interface TemplatesPanelProps {
   applyTemplate: (templateId: string) => void
 }
 
-export default function TemplatesPanel({ theme, applyTemplate }: TemplatesPanelProps) {
+export default function TemplatesPanel({ applyTemplate }: TemplatesPanelProps) {
   return (
     <div className="p-4 space-y-3">
       <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-3">Choose a Template</p>

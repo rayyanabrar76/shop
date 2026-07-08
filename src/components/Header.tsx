@@ -41,6 +41,13 @@ export default function Header() {
           </span>
         </Link>
 
+        {/* Center nav */}
+        <nav className="hidden md:flex items-center gap-7 absolute left-1/2 -translate-x-1/2">
+          <Link href="/pricing" className="text-[13px] font-semibold text-zinc-600 hover:text-zinc-900 transition-colors">
+            Pricing
+          </Link>
+        </nav>
+
         {/* Right */}
         <div className="flex items-center gap-3">
           {!isSignedIn ? (

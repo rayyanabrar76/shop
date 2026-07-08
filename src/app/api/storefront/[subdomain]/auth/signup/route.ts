@@ -3,11 +3,15 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { signCustomerToken, COOKIE_NAME } from '@/lib/store-auth'
 import { sendWelcomeEmail } from '@/lib/email'
+import { guard } from '@/lib/rate-limit'
 
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ subdomain: string }> }
 ) {
+  const limited = guard(req, 'storefront-signup', { windowMs: 60_000 * 60, max: 5 })
+  if (limited) return limited
+
   const { subdomain } = await params
   const { name, email, password } = await req.json()
 

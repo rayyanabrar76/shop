@@ -2,11 +2,15 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { randomBytes } from 'crypto'
 import { sendPasswordReset } from '@/lib/email'
+import { guard } from '@/lib/rate-limit'
 
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ subdomain: string }> }
 ) {
+  const limited = guard(req, 'storefront-forgot', { windowMs: 60_000 * 60, max: 5 })
+  if (limited) return limited
+
   const { subdomain } = await params
   const { email } = await req.json()
 

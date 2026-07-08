@@ -2,11 +2,15 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { signCustomerToken, COOKIE_NAME } from '@/lib/store-auth'
+import { guard } from '@/lib/rate-limit'
 
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ subdomain: string }> }
 ) {
+  const limited = guard(req, 'storefront-login', { windowMs: 60_000, max: 5 })
+  if (limited) return limited
+
   const { subdomain } = await params
   const { email, password } = await req.json()
 
@@ -21,7 +25,8 @@ export async function POST(
     where: { storeId_email: { storeId: store.id, email: email.toLowerCase() } },
   })
 
-  if (!customer) {
+  if (!customer || !customer.passwordHash) {
+    // No password set (e.g. Google-only account) — same generic error to prevent enumeration
     return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
   }
 

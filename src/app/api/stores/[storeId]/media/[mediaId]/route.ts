@@ -33,6 +33,16 @@ export async function DELETE(
     // Continue anyway — delete from DB even if ImageKit fails
   }
 
-  await prisma.mediaAsset.delete({ where: { id: mediaId } })
+  const sizeFreed = media.size ?? 0
+  await prisma.$transaction(async (tx) => {
+    await tx.mediaAsset.delete({ where: { id: mediaId } })
+    if (sizeFreed > 0) {
+      await tx.store.update({
+        where: { id: storeId },
+        data: { storageUsed: { decrement: BigInt(sizeFreed) } },
+      })
+    }
+  })
+
   return NextResponse.json({ ok: true })
 }

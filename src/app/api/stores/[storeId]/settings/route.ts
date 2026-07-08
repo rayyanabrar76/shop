@@ -1,6 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+
+// GET /api/stores/[storeId]/settings
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ storeId: string }> }
+) {
+  try {
+    const { userId: clerkId } = await auth()
+    if (!clerkId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { storeId } = await params
+    const store = await prisma.store.findFirst({
+      where: { id: storeId, owner: { clerkId } },
+      select: { name: true, subdomain: true },
+    })
+    if (!store) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+    return NextResponse.json({ name: store.name, subdomain: store.subdomain })
+  } catch (err) {
+    console.error('[settings:get]', err)
+    return NextResponse.json({ error: 'Failed' }, { status: 500 })
+  }
+}
 
 // PATCH /api/stores/[storeId]/settings
 export async function PATCH(
@@ -38,7 +62,8 @@ export async function PATCH(
       },
     })
 
-    return NextResponse.json({ ok: true, store: updated })
+    revalidatePath(`/store/${updated.subdomain}`)
+    return NextResponse.json({ ok: true, name: updated.name, subdomain: updated.subdomain })
   } catch (err) {
     console.error('[settings:patch]', err)
     return NextResponse.json({ error: 'Failed to save' }, { status: 500 })

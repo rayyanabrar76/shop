@@ -31,7 +31,6 @@ export default async function AnalyticsPage({
 
   // ── Revenue by day (last 30 days) ──────────────────────────────────────────
   const now = new Date()
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
   const revenueByDay: Record<string, number> = {}
   for (let i = 29; i >= 0; i--) {

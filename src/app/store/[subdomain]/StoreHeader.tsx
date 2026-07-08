@@ -1,8 +1,7 @@
 'use client'
 
-import { Fragment, useState, useEffect, useRef, Suspense } from 'react'
+import { Fragment, useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
 import { Search, X, User, LogOut, ShoppingBag, ChevronDown, Menu, Sun, Moon } from 'lucide-react'
 import CartIcon from './cart-icon'
 import { useAuth } from './auth-context'
@@ -38,6 +37,7 @@ interface StoreHeaderProps {
     accentColor?: string | null
     primaryColor?: string | null
     backgroundColor?: string | null
+    textColor?: string | null
     showSearch?: boolean | null
     navLinks?: NavLink[] | null
     navFontSize?: number | null
@@ -45,63 +45,12 @@ interface StoreHeaderProps {
     navDividers?: boolean | null
     darkMode?: boolean | null
     showDarkToggle?: boolean | null
-    backgroundColor?: string | null
-    textColor?: string | null
     footerColor?: string | null
     productGridBg?: string | null
   } | null
   subdomain: string
   isEditor?: boolean
   onEdit?: (s: string) => void
-}
-
-function CategoryNavBar({
-  categories,
-  subdomain,
-  primaryColor,
-}: {
-  categories: Category[]
-  subdomain: string
-  primaryColor: string
-}) {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const activeCategory = searchParams.get('category')
-  const isProductsPage = pathname === `/store/${subdomain}/products`
-
-  if (categories.length === 0) return null
-
-  return (
-    <div
-      className="border-b flex items-center gap-1 px-4 md:px-8 py-2 overflow-x-auto hide-scrollbar"
-      style={{ backgroundColor: 'rgba(255,255,255,0.95)', borderColor: 'rgba(0,0,0,0.06)' }}
-    >
-      <Link
-        href={`/store/${subdomain}/products`}
-        className={`shrink-0 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${
-          isProductsPage && !activeCategory ? 'text-white' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
-        }`}
-        style={isProductsPage && !activeCategory ? { backgroundColor: primaryColor } : {}}
-      >
-        All
-      </Link>
-      {categories.map(cat => {
-        const isActive = isProductsPage && activeCategory === cat.slug
-        return (
-          <Link
-            key={cat.id}
-            href={`/store/${subdomain}/products?category=${cat.slug}`}
-            className={`shrink-0 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${
-              isActive ? 'text-white' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
-            }`}
-            style={isActive ? { backgroundColor: primaryColor } : {}}
-          >
-            {cat.name}
-          </Link>
-        )
-      })}
-    </div>
-  )
 }
 
 const DEFAULT_NAV_LINKS: NavLink[] = [
@@ -142,6 +91,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
       el.style.setProperty('--store-footer', '#09090b')
       el.style.setProperty('--store-pg-bg', '#09090b')
       el.style.setProperty('--store-divider', 'rgba(255,255,255,0.12)')
+      el.style.setProperty('--store-card-border', 'rgba(255,255,255,0.08)')
     } else {
       el.removeAttribute('data-dark')
       // When darkMode is saved ON in DB, the theme colors are the dark preset colors.
@@ -155,6 +105,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
       el.style.setProperty('--store-footer', footer)
       el.style.setProperty('--store-pg-bg', pgBg)
       el.style.setProperty('--store-divider', 'rgba(0,0,0,0.08)')
+      el.style.setProperty('--store-card-border', '#f1f1f1')
     }
   }, [isDark, themeDark, theme?.backgroundColor, theme?.textColor, theme?.footerColor])
 
@@ -303,7 +254,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
           {/* Centre nav — desktop only */}
           <nav className="hidden md:flex items-center">
             {navLinks.map(({ label, href }, i) => (
-              <Fragment key={label}>
+              <Fragment key={`${label}-${i}`}>
                 {navDividers && i > 0 && (
                   <span className="w-px h-4 bg-zinc-200 shrink-0 mx-3.5" />
                 )}
@@ -511,9 +462,9 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
 
             {/* Nav links */}
             <nav className="px-4 py-4 flex flex-col gap-1">
-              {navLinks.map(({ label, href }) => (
+              {navLinks.map(({ label, href }, i) => (
                 <Link
-                  key={label}
+                  key={`${label}-${i}`}
                   href={buildHref(subdomain, href)}
                   onClick={() => setDrawerOpen(false)}
                   className="px-3 py-2.5 rounded-xl text-sm font-semibold text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"

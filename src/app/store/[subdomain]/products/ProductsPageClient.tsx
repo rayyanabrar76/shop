@@ -209,7 +209,7 @@ export default function ProductsPageClient({
     cartBtnPaddingRight:       theme.cartBtnPaddingRight,
   }
 
-  const { primaryColor, borderRadius } = theme
+  const { primaryColor } = theme
 
   function buildUrl(cat: string | null, page = 1) {
     const parts: string[] = []

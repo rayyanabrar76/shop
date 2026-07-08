@@ -22,7 +22,6 @@ export default function DomainSettings({
   const [domain, setDomain] = useState(currentDomain ?? '')
   const [saving, setSaving] = useState(false)
   const [verifying, setVerifying] = useState(false)
-  const [saved, setSaved] = useState(false)
   const [verified, setVerified] = useState(domainVerified)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -44,8 +43,6 @@ export default function DomainSettings({
 
       setVerified(data.verified)
       setMessage(data.message)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
     } catch (e: any) {
       setError(e.message)
     } finally {
@@ -199,7 +196,7 @@ export default function DomainSettings({
           </div>
 
           <p className="text-[10px] text-zinc-400">
-            DNS changes can take up to 48 hours to propagate. Click "Save & Verify" again after adding the records.
+            DNS changes can take up to 48 hours to propagate. Click &quot;Save &amp; Verify&quot; again after adding the records.
           </p>
         </div>
       )}

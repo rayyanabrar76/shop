@@ -119,12 +119,12 @@ export default function OrdersClient({ storeId, orders: initial, stats }: {
             <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {orders.map(order => (
                 <div key={order.id} className="grid grid-cols-12 items-center px-5 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                  <div className="col-span-2">
+                  <Link href={`/dashboard/stores/${storeId}/orders/${order.id}`} className="col-span-2 -my-4 py-4 hover:underline">
                     <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
                       {order.id.slice(0, 10)}...
                     </span>
                     <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1 capitalize">{order.paymentMethod ?? '—'}</p>
-                  </div>
+                  </Link>
                   <div className="col-span-3 min-w-0">
                     <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate">{order.customerName ?? '—'}</p>
                     <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">{order.customerEmail ?? ''}</p>

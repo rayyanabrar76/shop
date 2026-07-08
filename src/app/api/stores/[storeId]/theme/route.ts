@@ -2,6 +2,8 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
+import { loadStoreEntitlements } from '@/lib/entitlements'
+import { sanitizeCustomCss, sanitizeCustomHead } from '@/lib/sanitize'
 
 export async function GET(
   _req: Request,
@@ -22,11 +24,20 @@ export async function POST(
   const { storeId } = await params
   const body = await req.json()
 
-  const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
+  const ent = await loadStoreEntitlements(storeId, userId)
+  if (!ent) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const store = await prisma.store.findUnique({ where: { id: storeId } })
-  if (!store || store.ownerId !== dbUser?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!store) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // Sanitize + plan-gate custom code
+  const allowCustomCode = ent.plan.limits.customCodeAllowed
+  const customCss  = body.customCss !== undefined
+    ? (allowCustomCode ? sanitizeCustomCss(body.customCss) : '')
+    : undefined
+  const customHead = body.customHead !== undefined
+    ? (allowCustomCode ? sanitizeCustomHead(body.customHead) : '')
+    : undefined
 
   const data = {
     primaryColor:    body.primaryColor    ?? undefined,
@@ -56,8 +67,8 @@ export async function POST(
     productGridButtonColor: body.productGridButtonColor ?? undefined,
     productGridTextColor:   body.productGridTextColor   ?? undefined,
     productGridFont:        body.productGridFont        ?? undefined,
-    customCss:              body.customCss              ?? undefined,
-    customHead:             body.customHead             ?? undefined,
+    customCss,
+    customHead,
     navLinks:    body.navLinks    ?? undefined,
     navFontSize: body.navFontSize ?? undefined,
     navCase:     body.navCase     ?? undefined,

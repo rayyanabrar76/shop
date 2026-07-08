@@ -10,7 +10,7 @@ import {
   Home, Globe, Plus, Check,
   ShoppingBag, CreditCard, CheckSquare, LogIn, UserCircle, PackageCheck,
 } from 'lucide-react'
-import { ThemeState, EDITOR_COLOR } from './types'
+import { ThemeState } from './types'
 import SectionsList from './sections/SectionsList'
 import BannerEdit from './sections/BannerEdit'
 import HeaderEdit from './sections/HeaderEdit'
@@ -215,12 +215,18 @@ export default function VisualEditor({
     catFilterFontWeight:   initialTheme?.catFilterFontWeight   ?? 'bold',
   })
 
+  // dbStoreName = confirmed name in database (used for field init on remount)
+  // previewStoreName = live typing value (used for iframe postMessage only)
+  const [dbStoreName, setDbStoreName] = useState(storeName)
+  const [previewStoreName, setPreviewStoreName] = useState(storeName)
   const [history, setHistory] = useState<ThemeState[]>([])
   const [iframeLoading, setIframeLoading] = useState(false)
 
-  // Ref so page:ready handler always has the current theme without stale closures
+  // Refs so page:ready handler always has current values without stale closures
   const themeRef = useRef(theme)
   useEffect(() => { themeRef.current = theme }, [theme])
+  const storeNameRef = useRef(dbStoreName)
+  useEffect(() => { storeNameRef.current = dbStoreName }, [dbStoreName])
 
   // Fetch store pages on mount
   useEffect(() => {
@@ -337,6 +343,7 @@ export default function VisualEditor({
       const win = iframeRef.current?.contentWindow
       if (!win) return
       win.postMessage({ type: 'theme:update', theme: themeRef.current }, '*')
+      win.postMessage({ type: 'store-name:update', name: storeNameRef.current }, '*')
     }
     window.addEventListener('message', handlePageReady)
     return () => window.removeEventListener('message', handlePageReady)
@@ -355,6 +362,10 @@ export default function VisualEditor({
   useEffect(() => {
     iframeRef.current?.contentWindow?.postMessage({ type: 'theme:update', theme }, '*')
   }, [theme])
+
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage({ type: 'store-name:update', name: previewStoreName }, '*')
+  }, [previewStoreName])
 
   useEffect(() => {
     iframeRef.current?.contentWindow?.postMessage({ type: 'custom-sections:update', sections: customSections }, '*')
@@ -689,7 +700,7 @@ function handlePageContentChange(content: unknown) {
                 {sectionView === 'product-cart'    && <ProductCartButtonEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('products')} />}
                 {sectionView === 'nav-menu'        && <NavMenuEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('header')} />}
                 {sectionView === 'category-filter' && <CategoryFilterEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} storeId={storeId} />}
-                {sectionView === 'footer'        && <FooterEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} />}
+                {sectionView === 'footer'        && <FooterEdit storeId={storeId} storeName={dbStoreName} onPreviewChange={setPreviewStoreName} onSaveSuccess={name => { setDbStoreName(name); setPreviewStoreName(name) }} theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} />}
                 {sectionView === 'code'          && !systemPageSlug && <CustomCodeEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} />}
                 {sectionView === 'custom'        && !systemPageSlug && (
                   <CustomSectionsEdit
@@ -728,7 +739,7 @@ function handlePageContentChange(content: unknown) {
             {iframeLoading && (
               <PageSkeleton
                 theme={theme}
-                storeName={storeName}
+                storeName={dbStoreName}
                 pageType={activePage?.type ?? systemPageSlug ?? 'home'}
                 pageContent={activePage?.content}
                 heroSlides={heroSlides}

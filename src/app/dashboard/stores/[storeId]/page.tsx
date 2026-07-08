@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { Eye, Package, ShoppingCart, Palette, ArrowUpRight } from 'lucide-react'
+import { Eye, Package, ShoppingCart, Palette, ArrowUpRight, Check, Circle } from 'lucide-react'
 
 export default async function StoreDashboardPage({
   params,
@@ -11,10 +11,24 @@ export default async function StoreDashboardPage({
 
   const store = await prisma.store.findUnique({
     where: { id: storeId },
-    include: { _count: { select: { products: true, orders: true } } },
+    include: {
+      _count: { select: { products: true, orders: true } },
+      payment: true,
+    },
   })
 
   if (!store) return <div className="p-10 text-zinc-900 dark:text-zinc-50">Store not found</div>
+
+  // Onboarding state
+  const onboarding = [
+    { id: 'product',  label: 'Add your first product',     done: store._count.products > 0,                     href: `/dashboard/stores/${storeId}/products` },
+    { id: 'theme',    label: 'Customize your storefront',  done: false, /* hard to detect — surface it always */href: `/dashboard/stores/${storeId}/theme` },
+    { id: 'payment',  label: 'Connect Stripe to take card payments', done: !!store.payment?.stripeEnabled,      href: `/dashboard/stores/${storeId}/settings/payments` },
+    { id: 'domain',   label: 'Connect a custom domain (optional)',   done: !!store.customDomain,                href: `/dashboard/stores/${storeId}/settings/domain` },
+    { id: 'launch',   label: 'Share your store link',                done: store._count.orders > 0,             href: `/store/${store.subdomain}` },
+  ]
+  const remaining = onboarding.filter(s => !s.done).length
+  const showOnboarding = remaining > 0 && store._count.orders === 0
 
   return (
     <div className="p-10 max-w-7xl mx-auto">
@@ -32,6 +46,49 @@ export default async function StoreDashboardPage({
           View storefront
         </Link>
       </div>
+
+      {showOnboarding && (
+        <div className="mb-10 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Get your store ready</h2>
+              <p className="text-sm text-zinc-500 mt-0.5">{onboarding.length - remaining} of {onboarding.length} complete</p>
+            </div>
+            <div className="text-xs font-bold text-zinc-400">
+              {Math.round(((onboarding.length - remaining) / onboarding.length) * 100)}%
+            </div>
+          </div>
+          {/* Progress bar */}
+          <div className="h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden mb-5">
+            <div
+              className="h-full bg-emerald-500 transition-all"
+              style={{ width: `${((onboarding.length - remaining) / onboarding.length) * 100}%` }}
+            />
+          </div>
+          <ul className="space-y-2.5">
+            {onboarding.map(step => (
+              <li key={step.id}>
+                <Link
+                  href={step.href}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
+                    step.done ? 'opacity-50' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  {step.done ? (
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <Circle className="w-4 h-4 text-zinc-300 dark:text-zinc-600 shrink-0" />
+                  )}
+                  <span className={`flex-1 text-sm font-medium ${step.done ? 'line-through text-zinc-400' : 'text-zinc-700 dark:text-zinc-300'}`}>
+                    {step.label}
+                  </span>
+                  {!step.done && <ArrowUpRight className="w-4 h-4 text-zinc-400" />}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <StatCard title="Total Products" value={store._count.products} icon={<Package className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />} />

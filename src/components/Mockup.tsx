@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Check, Zap, ArrowUpRight, ShieldCheck, CreditCard, Sparkles } from "lucide-react";
+import { ShoppingBag, Check, ArrowUpRight, Sparkles } from "lucide-react";
 
 const SLIDES = [
   {

@@ -24,7 +24,6 @@ export default function HeaderEdit({ storeId, theme, updateTheme, onBack }: Head
             value={theme.logoUrl}
             onChange={url => updateTheme({ logoUrl: url })}
             accept="image"
-            placeholder="https://yoursite.com/logo.png"
           />
           <p className="text-[10px] text-zinc-400 mt-1">Leave empty to show your store name as text</p>
         </div>

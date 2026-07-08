@@ -33,6 +33,10 @@ export default function AddToCartButton({
   const { add } = useCart()
   const [isAdded, setIsAdded] = useState(false)
 
+  const isSolid = !!(style?.backgroundColor && style.backgroundColor !== 'transparent')
+  const isGhostBtn = !style?.border || style.border === 'none'
+  const btnType = style ? (isSolid ? 'solid' : isGhostBtn ? 'ghost' : 'outline') : undefined
+
   const handleAdd = () => {
     if (isAdded || disabled || isEditor) return
     const key = cartKey ?? product.id
@@ -56,6 +60,7 @@ export default function AddToCartButton({
       style={style}
       onClick={handleAdd}
       disabled={(isAdded || disabled) && !isEditor}
+      data-btn-type={btnType}
       className="group relative z-10 flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
     >
       <div className="flex h-5 items-center justify-center gap-2 overflow-hidden">
@@ -76,8 +81,14 @@ export default function AddToCartButton({
           </div>
         )}
       </div>
-      {!style?.border && style?.backgroundColor !== 'transparent' && !disabled && (
-        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+      {!disabled && (
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+          style={isSolid
+            ? { backgroundColor: 'rgba(255,255,255,0.18)' }
+            : { backgroundColor: style?.color ? `${style.color}12` : 'rgba(0,0,0,0.05)' }
+          }
+        />
       )}
     </button>
   )
