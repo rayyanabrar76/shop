@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
+import { auth } from '@clerk/nextjs/server'
 import OrdersClient from './OrdersClient'
 
 export default async function OrdersPage({
@@ -8,8 +9,10 @@ export default async function OrdersPage({
   params: Promise<{ storeId: string }>
 }) {
   const { storeId } = await params
+  const { userId: clerkId } = await auth()
+  if (!clerkId) redirect('/sign-in')
 
-  const store = await prisma.store.findUnique({ where: { id: storeId } })
+  const store = await prisma.store.findFirst({ where: { id: storeId, owner: { clerkId } } })
   if (!store) notFound()
 
   const orders = await prisma.order.findMany({

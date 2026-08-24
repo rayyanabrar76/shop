@@ -36,7 +36,6 @@ export async function GET(req: Request) {
 
   const tokenData = await tokenRes.json()
 
-  // Get Google user info
   const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
     headers: { Authorization: `Bearer ${tokenData.access_token}` },
   })

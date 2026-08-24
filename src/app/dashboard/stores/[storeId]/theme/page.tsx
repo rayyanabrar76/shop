@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
+import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import { Eye, Paintbrush } from 'lucide-react'
 
@@ -9,9 +10,10 @@ export default async function ThemePage({
   params: Promise<{ storeId: string }>
 }) {
   const { storeId } = await params
+  const { userId: clerkId } = await auth()
+  if (!clerkId) redirect('/sign-in')
 
-  const store = await prisma.store.findUnique({
-    where: { id: storeId },
+  const store = await prisma.store.findFirst({ where: { id: storeId, owner: { clerkId } },
     include: { theme: true },
   })
   if (!store) notFound()

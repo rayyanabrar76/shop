@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { Eye, Package, ShoppingCart, Palette, ArrowUpRight, Check, Circle } from 'lucide-react'
 
@@ -8,9 +10,10 @@ export default async function StoreDashboardPage({
   params: Promise<{ storeId: string }>
 }) {
   const { storeId } = await params
+  const { userId: clerkId } = await auth()
+  if (!clerkId) redirect('/sign-in')
 
-  const store = await prisma.store.findUnique({
-    where: { id: storeId },
+  const store = await prisma.store.findFirst({ where: { id: storeId, owner: { clerkId } },
     include: {
       _count: { select: { products: true, orders: true } },
       payment: true,
