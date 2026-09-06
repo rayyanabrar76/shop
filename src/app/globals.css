@@ -79,20 +79,52 @@ body {
   display: none;
 }
 
-/* Thin minimal scrollbar */
-.thin-scrollbar {
+/* ── Scrollbars ──────────────────────────────────────────────────────────
+   Applied to everything rather than opted into class by class, so modals,
+   textareas and panels all match without each one remembering to ask.
+   Driven by tokens so it follows data-theme="dark" like the rest of the UI.
+   3px was too thin to actually grab; 8px with a padded thumb reads as ~5px
+   while keeping a usable hit target. */
+:root {
+  --scrollbar-thumb:       rgba(0, 0, 0, 0.18);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.32);
+}
+[data-theme="dark"] {
+  --scrollbar-thumb:       rgba(255, 255, 255, 0.16);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.30);
+}
+
+* {
   scrollbar-width: thin;
-  scrollbar-color: #d4d4d8 transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
-.thin-scrollbar::-webkit-scrollbar {
-  width: 3px;
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
-.thin-scrollbar::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track {
   background: transparent;
 }
-.thin-scrollbar::-webkit-scrollbar-thumb {
-  background: #d4d4d8;
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
   border-radius: 999px;
+  /* Transparent border padded from the track keeps the thumb visually slim
+     while the scrollbar itself stays wide enough to hit. */
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Kept as a no-op alias: plenty of call sites already ask for it, and the
+   styling above is now the default everywhere. */
+.thin-scrollbar {
+  scrollbar-width: thin;
 }
 
 /* Editor sidebar pulse — fires when a section is activated from either direction */
