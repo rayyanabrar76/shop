@@ -16,8 +16,23 @@
 export interface CurrencyDefinition {
   code: string
   name: string
-  /** Currencies Stripe treats as having no minor unit (¥100 is 100, not 10000). */
+  /**
+   * Currencies Stripe treats as having no minor unit (¥100 is 100, not 10000).
+   * This mirrors Stripe's list exactly and drives the charge amount — it is NOT
+   * a display choice. Do not set it to hide decimals; use displayDecimals.
+   */
   zeroDecimal?: boolean
+  /**
+   * Overrides Intl's symbol. Under a fixed en-US locale, 20 of the currencies
+   * below render as their bare code ("PKR 120.00"), which is not how anyone
+   * writes a price locally.
+   */
+  symbol?: string
+  /**
+   * How many decimals to show. Purely presentational: PKR still settles in
+   * paisa at Stripe, but nobody prices donuts as "Rs. 120.00".
+   */
+  displayDecimals?: number
 }
 
 /**
@@ -28,34 +43,34 @@ export const CURRENCIES: CurrencyDefinition[] = [
   { code: 'USD', name: 'US Dollar' },
   { code: 'EUR', name: 'Euro' },
   { code: 'GBP', name: 'British Pound' },
-  { code: 'PKR', name: 'Pakistani Rupee' },
+  { code: 'PKR', name: 'Pakistani Rupee', symbol: 'Rs.', displayDecimals: 0 },
   { code: 'INR', name: 'Indian Rupee' },
   { code: 'AED', name: 'UAE Dirham' },
-  { code: 'SAR', name: 'Saudi Riyal' },
+  { code: 'SAR', name: 'Saudi Riyal', symbol: 'SR' },
   { code: 'CAD', name: 'Canadian Dollar' },
   { code: 'AUD', name: 'Australian Dollar' },
   { code: 'NZD', name: 'New Zealand Dollar' },
-  { code: 'SGD', name: 'Singapore Dollar' },
+  { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' },
   { code: 'HKD', name: 'Hong Kong Dollar' },
-  { code: 'MYR', name: 'Malaysian Ringgit' },
-  { code: 'IDR', name: 'Indonesian Rupiah' },
+  { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM' },
+  { code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp', displayDecimals: 0 },
   { code: 'PHP', name: 'Philippine Peso' },
-  { code: 'THB', name: 'Thai Baht' },
-  { code: 'BDT', name: 'Bangladeshi Taka' },
-  { code: 'LKR', name: 'Sri Lankan Rupee' },
-  { code: 'TRY', name: 'Turkish Lira' },
-  { code: 'ZAR', name: 'South African Rand' },
-  { code: 'NGN', name: 'Nigerian Naira' },
-  { code: 'KES', name: 'Kenyan Shilling' },
-  { code: 'EGP', name: 'Egyptian Pound' },
+  { code: 'THB', name: 'Thai Baht', symbol: '฿' },
+  { code: 'BDT', name: 'Bangladeshi Taka', symbol: '৳' },
+  { code: 'LKR', name: 'Sri Lankan Rupee', symbol: 'Rs.' },
+  { code: 'TRY', name: 'Turkish Lira', symbol: '₺' },
+  { code: 'ZAR', name: 'South African Rand', symbol: 'R' },
+  { code: 'NGN', name: 'Nigerian Naira', symbol: '₦' },
+  { code: 'KES', name: 'Kenyan Shilling', symbol: 'KSh' },
+  { code: 'EGP', name: 'Egyptian Pound', symbol: 'E£' },
   { code: 'BRL', name: 'Brazilian Real' },
   { code: 'MXN', name: 'Mexican Peso' },
   { code: 'CHF', name: 'Swiss Franc' },
-  { code: 'SEK', name: 'Swedish Krona' },
-  { code: 'NOK', name: 'Norwegian Krone' },
-  { code: 'DKK', name: 'Danish Krone' },
-  { code: 'PLN', name: 'Polish Zloty' },
-  { code: 'CZK', name: 'Czech Koruna' },
+  { code: 'SEK', name: 'Swedish Krona', symbol: 'kr' },
+  { code: 'NOK', name: 'Norwegian Krone', symbol: 'kr' },
+  { code: 'DKK', name: 'Danish Krone', symbol: 'kr' },
+  { code: 'PLN', name: 'Polish Zloty', symbol: 'zł' },
+  { code: 'CZK', name: 'Czech Koruna', symbol: 'Kč' },
   { code: 'CNY', name: 'Chinese Yuan' },
   { code: 'JPY', name: 'Japanese Yen', zeroDecimal: true },
   { code: 'KRW', name: 'South Korean Won', zeroDecimal: true },
@@ -82,28 +97,56 @@ export function getCurrency(code: string | null | undefined): CurrencyDefinition
  */
 const BASE_LOCALE = 'en-US'
 
-/** Format a stored integer amount for display, e.g. 1999 -> "$19.99" / "PKR 19.99". */
+/**
+ * How many decimals to show for this currency. Presentation only — never use
+ * this to derive a Stripe amount; that is toStripeAmount()'s job.
+ */
+export function currencyDecimals(currency: string | null | undefined): number {
+  const def = getCurrency(currency)
+  if (def.displayDecimals !== undefined) return def.displayDecimals
+  return def.zeroDecimal ? 0 : 2
+}
+
+/**
+ * Decimals to actually render for one amount. A currency set to 0 decimals can
+ * still hold a fractional value — a price entered before the setting existed,
+ * or an imported one. Showing "Rs. 121" while Stripe charges 120.50 would be a
+ * lie, so an amount that is not a whole unit keeps its decimals.
+ */
+function decimalsFor(amount: number, currency: string | null | undefined): number {
+  const preferred = currencyDecimals(currency)
+  if (preferred === 0 && Math.round(Number(amount) || 0) % 100 !== 0) return 2
+  return preferred
+}
+
+/** Format a stored integer amount for display, e.g. 1999 -> "$19.99", 12000 PKR -> "Rs. 120". */
 export function formatPrice(amount: number, currency: string | null | undefined): string {
   const def = getCurrency(currency)
   const value = (Number(amount) || 0) / 100
+  const decimals = decimalsFor(amount, currency)
   try {
-    return new Intl.NumberFormat(BASE_LOCALE, {
+    const parts = new Intl.NumberFormat(BASE_LOCALE, {
       style: 'currency',
       currency: def.code,
-      ...(def.zeroDecimal
-        ? { minimumFractionDigits: 0, maximumFractionDigits: 0 }
-        : { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-    }).format(value)
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).formatToParts(value)
+    // Swap Intl's symbol for our override while keeping its placement and
+    // spacing, which differ per currency.
+    return parts
+      .map(p => (p.type === 'currency' && def.symbol ? def.symbol : p.value))
+      .join('')
   } catch {
     // Unknown code slipped through — never blow up a product page over money
     // formatting.
-    return `${def.code} ${value.toFixed(def.zeroDecimal ? 0 : 2)}`
+    return `${def.symbol ?? def.code} ${value.toFixed(decimals)}`
   }
 }
 
-/** The bare symbol ("$", "₨", "€") for input prefixes and tight table cells. */
+/** The bare symbol ("$", "Rs.", "€") for input prefixes and tight table cells. */
 export function currencySymbol(currency: string | null | undefined): string {
   const def = getCurrency(currency)
+  if (def.symbol) return def.symbol
   try {
     const parts = new Intl.NumberFormat(BASE_LOCALE, {
       style: 'currency',
@@ -115,11 +158,6 @@ export function currencySymbol(currency: string | null | undefined): string {
   }
 }
 
-/** How many decimal places a price input should accept for this currency. */
-export function currencyDecimals(currency: string | null | undefined): number {
-  return getCurrency(currency).zeroDecimal ? 0 : 2
-}
-
 /**
  * Stored integer -> the value a price input should show, e.g. 114 -> "1.14".
  * Pairs with inputToAmount(); both forms edit prices in whole currency units
@@ -128,7 +166,9 @@ export function currencyDecimals(currency: string | null | undefined): number {
 export function amountToInput(amount: number | null | undefined, currency: string | null | undefined): string {
   if (amount === null || amount === undefined || Number.isNaN(Number(amount))) return ''
   const value = Number(amount) / 100
-  return value.toFixed(currencyDecimals(currency))
+  // decimalsFor, not currencyDecimals: opening and saving a product must never
+  // round an existing fractional price away.
+  return value.toFixed(decimalsFor(Number(amount), currency))
 }
 
 /**
