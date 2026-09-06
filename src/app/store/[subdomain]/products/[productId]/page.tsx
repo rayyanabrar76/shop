@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import StoreBanner from '../../StoreBanner'
 import StoreHeader from '../../StoreHeader'
@@ -8,6 +9,64 @@ import ProductDetailClient from './ProductDetailClient'
 import { ArrowLeft, Package } from 'lucide-react'
 import DarkModeSync from '../../DarkModeSync'
 import { formatPrice } from '@/lib/currency'
+
+import type { Metadata } from 'next'
+import { storeUrl } from '@/lib/config'
+
+/**
+ * Per-product metadata. Without this every product page inherited the store's
+ * generic title, so search results showed the same headline for all of them.
+ *
+ * The canonical points at one absolute URL, because the same product is
+ * reachable three ways — subdomain, /store/<sub>/ path, and by id — which
+ * otherwise reads as duplicate content competing with itself.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ subdomain: string; productId: string }>
+}): Promise<Metadata> {
+  const { subdomain, productId } = await params
+
+  const store = await prisma.store.findUnique({
+    where: { subdomain },
+    select: { id: true, name: true },
+  })
+  if (!store) return { title: 'Product not found' }
+
+  const product = await prisma.product.findFirst({
+    where: { storeId: store.id, OR: [{ slug: productId }, { id: productId }] },
+    select: { title: true, description: true, imageUrl: true, slug: true, id: true, tags: true },
+  })
+  if (!product) return { title: 'Product not found' }
+
+  const description =
+    product.description?.trim().slice(0, 160) ||
+    `Buy ${product.title} from ${store.name}.`
+  const canonical = storeUrl(subdomain, `/products/${product.slug || product.id}`)
+
+  return {
+    // The layout's title template appends the store name.
+    title: product.title,
+    description,
+    ...(product.tags.length > 0 ? { keywords: product.tags } : {}),
+    alternates: { canonical },
+    openGraph: {
+      title: product.title,
+      description,
+      url: canonical,
+      type: 'website',
+      siteName: store.name,
+      ...(product.imageUrl ? { images: [{ url: product.imageUrl }] } : {}),
+    },
+    twitter: {
+      card: product.imageUrl ? 'summary_large_image' : 'summary',
+      title: product.title,
+      description,
+      ...(product.imageUrl ? { images: [product.imageUrl] } : {}),
+    },
+  }
+}
 
 export default async function StoreProductPage({
   params,
@@ -20,10 +79,15 @@ export default async function StoreProductPage({
     where: { subdomain },
     include: { theme: true },
   })
-  if (!store) return <div className="p-10">Store not found</div>
+  if (!store) notFound()
 
+  // The route param is a slug now, but old links (and anything already indexed)
+  // still carry a cuid, so accept either.
   const product = await prisma.product.findFirst({
-    where: { id: productId, storeId: store.id },
+    where: {
+      storeId: store.id,
+      OR: [{ slug: productId }, { id: productId }],
+    },
     include: {
       images: { orderBy: { position: 'asc' } },
       variants: {
@@ -32,11 +96,11 @@ export default async function StoreProductPage({
       },
     },
   })
-  if (!product) return <div className="p-10">Product not found</div>
+  if (!product) notFound()
 
   const theme = store.theme
   const headerTheme = theme ? { ...theme, navLinks: (theme.navLinks as any) ?? null } : null
-  const primary = theme?.primaryColor ?? '#6c47ff'
+  const primary = theme?.primaryColor ?? '#0a0a0a'
   const radius = theme?.borderRadius ?? '0.75rem'
   const buttonStyle = theme?.buttonStyle ?? 'solid'
   const textColor = theme?.textColor ?? '#09090b'
@@ -53,6 +117,32 @@ export default async function StoreProductPage({
     ...product.images.map(i => i.url).filter(u => u !== product.imageUrl),
   ]
 
+  // Product structured data — what puts price and availability into a Google
+  // rich result rather than a plain blue link. Prices are stored as minor
+  // units, so divide by 100 for schema.org, which expects a decimal amount.
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    ...(product.description ? { description: product.description } : {}),
+    // schema.org needs absolute URLs; uploads are stored as site-relative paths.
+    ...(allImages.length
+      ? { image: allImages.map(u => (u.startsWith('http') ? u : storeUrl(subdomain, u))) }
+      : {}),
+    ...(product.sku ? { sku: product.sku } : {}),
+    brand: { '@type': 'Brand', name: store.name },
+    offers: {
+      '@type': 'Offer',
+      price: (product.price / 100).toFixed(2),
+      priceCurrency: store.currency,
+      availability:
+        product.inventory > 0
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
+      url: storeUrl(subdomain, `/products/${product.slug || product.id}`),
+    },
+  }
+
   return (
     <div
       className="min-h-screen flex flex-col"
@@ -62,6 +152,10 @@ export default async function StoreProductPage({
         fontFamily: font === 'serif' ? 'serif' : font === 'mono' ? 'monospace' : 'inherit',
       }}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
       <DarkModeSync />
       <StoreBanner theme={theme} />
       <StoreHeader store={store} theme={headerTheme} subdomain={subdomain} />
@@ -110,7 +204,7 @@ export default async function StoreProductPage({
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
               {related.map(p => (
-                <Link key={p.id} href={`/store/${subdomain}/products/${p.id}`} className="group flex flex-col">
+                <Link key={p.id} href={`/store/${subdomain}/products/${p.slug || p.id}`} className="group flex flex-col">
                   <div className="w-full bg-zinc-100 overflow-hidden mb-3" style={{ borderRadius: radius, aspectRatio: '1 / 1' }}>
                     {p.imageUrl ? (
                       <img src={p.imageUrl} alt={p.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -129,7 +223,7 @@ export default async function StoreProductPage({
         )}
       </main>
 
-      <StoreFooter store={store} theme={theme} />
+      <StoreFooter store={store} theme={theme} subdomain={subdomain} />
       <CartSidebar themeStyle={{ primaryColor: primary, borderRadius: radius, buttonStyle }} subdomain={subdomain} />
     </div>
   )

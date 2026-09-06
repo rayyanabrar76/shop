@@ -73,8 +73,9 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
   const slide = slides[current]
   if (!slide) return null
 
-  const primary = theme?.primaryColor ?? '#6c47ff'
+  const primary = theme?.primaryColor ?? '#0a0a0a'
   const buttonStyle = theme?.buttonStyle ?? 'solid'
+  const radius = theme?.borderRadius ?? '0px'
   const notify = onEdit ?? (() => {})
   const hasMedia = !!slide.imageUrl
   const isVideo = isVideoUrl(slide.imageUrl)
@@ -149,17 +150,43 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
           </EditorItem>
           <div className="flex items-center gap-3 mt-2">
             <EditorItem section="hero" field="hero-cta" meta={{ slideIndex: current }} label="CTA Button" isEditor={isEditor} onEdit={notify}>
+              {/* A solid button was also being given the white 2px border meant
+                  for outline buttons, so it read as a black chip ringed in
+                  white. Each style now gets only what it should:
+                    solid   — filled, no border. Over a photo it flips to white
+                              on the brand colour, which stays legible on any
+                              image instead of a dark fill on a dark donut.
+                    outline — a hairline, never 2px, which reads as chunky.
+                    ghost   — type only, with a rule that draws in on hover. */}
               <a
                 href={slide.ctaUrl}
-                className="inline-flex items-center px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all hover:opacity-80"
+                className={`group/cta relative inline-flex items-center px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-300 ${
+                  buttonStyle === 'ghost' ? '' : 'hover:-translate-y-0.5'
+                }`}
                 style={{
-                  backgroundColor: buttonStyle === 'solid' ? primary : 'transparent',
-                  color: buttonStyle === 'solid' ? '#fff' : (hasMedia ? '#fff' : primary),
-                  border: buttonStyle === 'ghost' ? 'none' : `2px solid ${hasMedia ? '#fff' : primary}`,
-                  borderRadius: '0.5rem',
+                  backgroundColor:
+                    buttonStyle !== 'solid' ? 'transparent' : hasMedia ? '#ffffff' : primary,
+                  color:
+                    buttonStyle === 'solid'
+                      ? hasMedia ? primary : '#ffffff'
+                      : hasMedia ? '#ffffff' : primary,
+                  border:
+                    buttonStyle === 'outline'
+                      ? `1px solid ${hasMedia ? 'rgba(255,255,255,0.85)' : primary}`
+                      : 'none',
+                  borderRadius: radius,
+                  // Lifts the button off busy photography without an outline.
+                  boxShadow:
+                    buttonStyle === 'solid' && hasMedia ? '0 6px 24px rgba(0,0,0,0.28)' : 'none',
                 }}
               >
                 {slide.ctaLabel}
+                {buttonStyle === 'ghost' && (
+                  <span
+                    className="pointer-events-none absolute bottom-2 left-7 right-7 h-px origin-left scale-x-0 transition-transform duration-300 group-hover/cta:scale-x-100"
+                    style={{ backgroundColor: hasMedia ? '#ffffff' : primary }}
+                  />
+                )}
               </a>
             </EditorItem>
           </div>
@@ -187,13 +214,15 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
         <>
           <button
             onClick={() => goTo((current - 1 + slides.length) % slides.length)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/80 backdrop-blur flex items-center justify-center hover:bg-white transition-colors text-base font-bold shadow-lg"
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 bg-white/80 backdrop-blur flex items-center justify-center hover:bg-white transition-colors text-base font-bold shadow-lg"
+            style={{ borderRadius: radius }}
           >
             &#8249;
           </button>
           <button
             onClick={() => goTo((current + 1) % slides.length)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/80 backdrop-blur flex items-center justify-center hover:bg-white transition-colors text-base font-bold shadow-lg"
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 bg-white/80 backdrop-blur flex items-center justify-center hover:bg-white transition-colors text-base font-bold shadow-lg"
+            style={{ borderRadius: radius }}
           >
             &#8250;
           </button>

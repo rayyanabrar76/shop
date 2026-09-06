@@ -112,8 +112,8 @@ export default function ProductDetailClient({ product, theme }: ProductDetailCli
               <button
                 key={i}
                 onClick={() => setActiveImage(i)}
-                className="shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all"
-                style={{ borderColor: activeImage === i ? primary : 'transparent' }}
+                className="shrink-0 w-16 h-16 overflow-hidden border-2 transition-all"
+                style={{ borderColor: activeImage === i ? primary : 'transparent', borderRadius: radius }}
               >
                 <img src={img} alt="" className="w-full h-full object-cover" />
               </button>
@@ -154,14 +154,14 @@ export default function ProductDetailClient({ product, theme }: ProductDetailCli
                   <button
                     key={option.id}
                     onClick={() => !soldOut && setSelections(s => ({ ...s, [variant.id]: option.id }))}
-                    className={`px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all ${
+                    className={`px-4 py-2 text-sm font-semibold border-2 transition-all ${
                       selected
                         ? 'text-white'
                         : soldOut
                         ? 'border-zinc-100 text-zinc-300 line-through cursor-not-allowed'
                         : 'border-zinc-200 hover:border-zinc-400 cursor-pointer'
                     }`}
-                    style={selected ? { backgroundColor: primary, borderColor: primary, color: '#fff' } : {}}
+                    style={{ borderRadius: radius, ...(selected ? { backgroundColor: primary, borderColor: primary, color: '#fff' } : {}) }}
                   >
                     {option.label}
                     {option.priceOverride !== null && option.priceOverride !== product.price && (
@@ -199,7 +199,7 @@ export default function ProductDetailClient({ product, theme }: ProductDetailCli
               fontWeight: 700,
               letterSpacing: '0.04em',
               textTransform: 'uppercase',
-              borderRadius: '0.5rem',
+              borderRadius: radius,
               backgroundColor: outOfStock ? '#d4d4d8' : (buttonStyle === 'solid' ? primary : 'transparent'),
               color: buttonStyle === 'solid' ? '#fff' : primary,
               border: buttonStyle === 'ghost' ? 'none' : `2px solid ${outOfStock ? '#d4d4d8' : primary}`,

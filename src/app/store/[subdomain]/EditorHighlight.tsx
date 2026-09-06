@@ -112,3 +112,41 @@ export function EditorItem({
     </span>
   )
 }
+
+/**
+ * A zero-height hover strip between sections. Hovering reveals a rule and an
+ * "Add section" pill; clicking asks the parent editor to open the section
+ * picker. Editor-only — it renders nothing on the live storefront.
+ */
+export function AddSectionSlot({ isEditor }: { isEditor: boolean }) {
+  if (!isEditor) return null
+  return (
+    <div className="relative h-0 group/add z-100">
+      <div className="absolute inset-x-0 -top-5 h-10 flex items-center gap-3 px-6 pointer-events-none">
+        <span
+          className="flex-1 h-px opacity-0 group-hover/add:opacity-100 transition-opacity"
+          style={{ backgroundColor: BLUE }}
+        />
+        <button
+          type="button"
+          onClick={e => {
+            e.preventDefault()
+            e.stopPropagation()
+            window.parent.postMessage({ type: 'add-section' }, '*')
+          }}
+          className="pointer-events-auto flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold text-white opacity-0 group-hover/add:opacity-100 transition-opacity shadow-lg"
+          style={{ backgroundColor: BLUE }}
+        >
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Add section
+        </button>
+        <span
+          className="flex-1 h-px opacity-0 group-hover/add:opacity-100 transition-opacity"
+          style={{ backgroundColor: BLUE }}
+        />
+      </div>
+    </div>
+  )
+}

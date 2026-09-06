@@ -14,7 +14,7 @@ import {
   HiExclamation,
 } from 'react-icons/hi'
 import { useAdminTheme, type AdminThemeMode } from '@/components/dashboard/AdminThemeProvider'
-import { APP_URL } from '@/lib/config'
+import { storeUrl as buildStoreUrl } from '@/lib/config'
 import { normalizeSubdomainInput, slugifySubdomain, validateSubdomain } from '@/lib/subdomain'
 import { CURRENCIES, formatPrice } from '@/lib/currency'
 
@@ -57,7 +57,7 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
   // Built from NEXT_PUBLIC_APP_URL — this used to be hardcoded to
   // localhost:3000, so the deployed dashboard showed (and copied) a URL that
   // only worked on the developer's own machine.
-  const storeUrl = `${APP_URL}/store/${store.subdomain}`
+  const storeUrl = buildStoreUrl(store.subdomain)
   const storeUrlDisplay = storeUrl.replace(/^https?:\/\//, '')
   const subdomainError = validateSubdomain(subdomain)
 
@@ -163,7 +163,7 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
               <span className="text-zinc-500 dark:text-zinc-400 text-sm">Settings</span>
             </div>
           </div>
-          <Link href={`/store/${store.subdomain}`} target="_blank" className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 transition-colors">
+          <Link href={buildStoreUrl(store.subdomain)} target="_blank" className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 transition-colors">
             <ExternalLink size={13} /> View Store
           </Link>
         </div>
@@ -324,7 +324,7 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                       <button onClick={copyUrl} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-white dark:hover:bg-zinc-800 transition-colors text-zinc-600 dark:text-zinc-300">
                         <Copy size={12} />{copied ? 'Copied!' : 'Copy'}
                       </button>
-                      <Link href={`/store/${store.subdomain}`} target="_blank" className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-white dark:hover:bg-zinc-800 transition-colors text-zinc-600 dark:text-zinc-300">
+                      <Link href={buildStoreUrl(store.subdomain)} target="_blank" className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-white dark:hover:bg-zinc-800 transition-colors text-zinc-600 dark:text-zinc-300">
                         <ExternalLink size={12} />Open
                       </Link>
                     </div>

@@ -4,6 +4,7 @@ import { useCart } from './cart'
 import { X, ShoppingBag, Plus, Minus, ArrowRight, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { usePrice } from '@/components/CurrencyProvider'
+import { useStoreBase } from '@/components/StoreBaseProvider'
 
 interface CartSidebarProps {
   themeStyle?: {
@@ -15,18 +16,19 @@ interface CartSidebarProps {
 }
 
 export default function CartSidebar({ themeStyle, subdomain }: CartSidebarProps) {
+  const storeBase = useStoreBase()
   const price = usePrice()
   const { items, total, remove, add, clear, isOpen, setIsOpen } = useCart()
   const router = useRouter()
 
-  const primary = themeStyle?.primaryColor ?? '#6c47ff'
+  const primary = themeStyle?.primaryColor ?? '#0a0a0a'
   const radius = themeStyle?.borderRadius ?? '0.75rem'
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0)
 
   function handleCheckout() {
     if (!subdomain) return
     setIsOpen(false)
-    router.push(`/store/${subdomain}/checkout`)
+    router.push(`${storeBase}/checkout`)
   }
 
   return (

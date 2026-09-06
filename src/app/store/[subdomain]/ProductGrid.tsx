@@ -6,6 +6,7 @@ import { Plus, Pencil } from 'lucide-react'
 import AddToCartButton from './add-to-cart-button'
 import { EditorItem } from './EditorHighlight'
 import { usePrice } from '@/components/CurrencyProvider'
+import { useStoreBase } from '@/components/StoreBaseProvider'
 
 interface Product {
   id: string
@@ -13,6 +14,7 @@ interface Product {
   description?: string | null
   price: number
   imageUrl?: string | null
+  slug?: string | null
   category?: string | null
 }
 
@@ -42,6 +44,9 @@ interface ThemeStyle {
   productPricePaddingLeft?: number
   productPricePaddingRight?: number
   cartBtnLabel?: string
+  cartBtnBgColor?: string
+  cartBtnTextColor?: string
+  cartBtnDisplay?: string
   cartBtnShowIcon?: boolean
   cartBtnWidth?: string
   cartBtnFontSize?: number
@@ -122,7 +127,7 @@ function CardTitleLink({ isEditor, href, style, children }: {
       href={href}
       style={style}
       onClick={e => e.stopPropagation()}
-      className="hover:underline underline-offset-2"
+      className="hover:underline underline-offset-2 line-clamp-2"
     >
       {children}
     </Link>
@@ -138,6 +143,7 @@ const HIGHLIGHT: React.CSSProperties = {
 export default function ProductGrid({
   products, theme, subdomain, themeStyle, isEditor = false, onEdit, activeProductField,
 }: ProductGridProps) {
+  const storeBase = useStoreBase()
   const price = usePrice()
   const router = useRouter()
   const { primaryColor, borderRadius, buttonStyle, headingFont, featuredLabel, font } = themeStyle
@@ -148,10 +154,13 @@ export default function ProductGrid({
   // Card covers can opt out of the global curvature — squared-off images read
   // very differently from the buttons, which usually still want rounding.
   const imageRadius = themeStyle.productImageRadius || borderRadius
+  // always = button always shown (default), hover = fades in on hover,
+  // icon = no button, a cart chip on the image instead, hidden = neither.
+  const cartDisplay = (themeStyle.cartBtnDisplay ?? 'always') as 'always' | 'hover' | 'icon' | 'hidden'
   const notify = onEdit ?? (() => {})
 
-  function navigateTo(id: string) {
-    if (!isEditor) router.push(`/store/${subdomain}/products/${id}`)
+  function navigateTo(handle: string) {
+    if (!isEditor) router.push(`${storeBase}/products/${handle}`)
   }
 
   // — title computed style —
@@ -179,10 +188,14 @@ export default function ProductGrid({
   }
 
   // — cart button computed style —
+  // Blank falls back to the grid button colour, so existing stores are
+  // unchanged; setting one overrides just this button.
+  const cartBg = themeStyle.cartBtnBgColor || primaryColor
+  const cartFg = themeStyle.cartBtnTextColor || '#fff'
   const cartBtnStyle: React.CSSProperties = {
-    backgroundColor: buttonStyle === 'solid' ? primaryColor : 'transparent',
-    color: buttonStyle === 'solid' ? '#fff' : primaryColor,
-    border: buttonStyle === 'ghost' ? 'none' : `1.5px solid ${primaryColor}`,
+    backgroundColor: buttonStyle === 'solid' ? cartBg : 'transparent',
+    color: buttonStyle === 'solid' ? cartFg : cartBg,
+    border: buttonStyle === 'ghost' ? 'none' : `1.5px solid ${cartBg}`,
     borderRadius,
     fontSize: themeStyle.cartBtnFontSize ? `${themeStyle.cartBtnFontSize}px` : '10px',
     fontWeight: 700,
@@ -226,7 +239,7 @@ export default function ProductGrid({
               <div
                 className="relative flex gap-4 border bg-white p-3 transition-shadow cursor-pointer"
                 style={{ borderRadius, ...shadowStyle, borderColor: 'var(--store-card-border, #e4e4e7)', ...(fontFamily ? { fontFamily } : {}) }}
-                onClick={() => navigateTo(p.id)}
+                onClick={() => navigateTo(p.slug || p.id)}
               >
                 {isEditor && (
                   <button
@@ -247,7 +260,7 @@ export default function ProductGrid({
                   <div>
                     <div style={titleHighlight}>
                       <EditorItem section="products" field="product-title" label="Product Title" isEditor={isEditor} onEdit={notify} block>
-                        <CardTitleLink isEditor={isEditor} href={`/store/${subdomain}/products/${p.id}`} style={titleStyle}>
+                        <CardTitleLink isEditor={isEditor} href={`${storeBase}/products/${p.slug || p.id}`} style={titleStyle}>
                           {p.title}
                         </CardTitleLink>
                       </EditorItem>
@@ -281,20 +294,28 @@ export default function ProductGrid({
               <div
                 className="group flex flex-col cursor-pointer"
                 style={fontFamily ? { fontFamily } : undefined}
-                onClick={() => navigateTo(p.id)}
+                onClick={() => navigateTo(p.slug || p.id)}
               >
                 {/* The card has no frame of its own — the image is the object,
                     sitting on the page. Theme radius and shadow move onto it so
                     both settings still read. */}
                 <div
                   className="relative shrink-0 overflow-hidden bg-zinc-50"
-                  style={{ borderRadius: imageRadius, ...shadowStyle, aspectRatio: '1 / 1' }}
+                  style={{
+                    borderRadius: imageRadius,
+                    // A hairline keeps white-background product shots from
+                    // floating on a white page. Uses the same var as the rest
+                    // of the storefront so dark mode inverts it.
+                    border: '1px solid var(--store-card-border, #e7e7e7)',
+                    ...shadowStyle,
+                    aspectRatio: '1 / 1',
+                  }}
                 >
                   {p.imageUrl ? (
                     <img
                       src={p.imageUrl}
                       alt={p.title}
-                      className="w-full h-full object-cover transition-transform duration-[700ms] ease-out group-hover:scale-[1.04]"
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-zinc-200">
@@ -313,6 +334,34 @@ export default function ProductGrid({
                       <Pencil className="w-2.5 h-2.5" /> Edit
                     </button>
                   )}
+
+                  {/* Icon mode: a quiet chip on the image instead of a button
+                      under the card. Slides up on hover on desktop; on touch,
+                      where there is no hover, it stays put. */}
+                  {cartDisplay === 'icon' && (
+                    <div
+                      className="absolute bottom-3 right-3 z-10 transition-all duration-300 ease-out md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0"
+                      style={cartHighlight}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <EditorItem section="products" field="add-to-cart-btn" label="Cart Button" isEditor={isEditor} onEdit={notify}>
+                        <AddToCartButton
+                          product={{ id: p.id, title: p.title, price: p.price, imageUrl: p.imageUrl }}
+                          label=""
+                          showIcon
+                          iconOnly
+                          isEditor={isEditor}
+                          style={{
+                            backgroundColor: cartBg,
+                            color: cartFg,
+                            border: 'none',
+                            borderRadius: imageRadius === '0px' ? '0px' : '9999px',
+                            padding: '10px',
+                          }}
+                        />
+                      </EditorItem>
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-3.5 flex flex-col gap-1.5 flex-1">
@@ -321,9 +370,9 @@ export default function ProductGrid({
                       {p.category}
                     </span>
                   )}
-                  <div style={titleHighlight}>
+                  <div style={{ ...titleHighlight, minHeight: '2.9em' }}>
                     <EditorItem section="products" field="product-title" label="Product Title" isEditor={isEditor} onEdit={notify} block>
-                      <CardTitleLink isEditor={isEditor} href={`/store/${subdomain}/products/${p.id}`} style={titleStyle}>
+                      <CardTitleLink isEditor={isEditor} href={`${storeBase}/products/${p.slug || p.id}`} style={titleStyle}>
                         {p.title}
                       </CardTitleLink>
                     </EditorItem>
@@ -335,13 +384,15 @@ export default function ProductGrid({
                       </span>
                     </EditorItem>
                   </div>
+                  {(cartDisplay === 'always' || cartDisplay === 'hover') && (
+                  <>
                   {/* Reveals on hover so the products carry the page. It keeps
                       its space in the layout (only opacity animates), so
                       nothing shifts. Touch devices have no hover, and the
                       editor needs it clickable, so both show it outright. */}
                   <div
                     className={`mt-auto pt-1.5 transition-all duration-300 ease-out focus-within:opacity-100 focus-within:translate-y-0 ${
-                      isEditor
+                      isEditor || cartDisplay !== 'hover'
                         ? ''
                         : 'md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0'
                     }`}
@@ -361,6 +412,8 @@ export default function ProductGrid({
                       />
                     </EditorItem>
                   </div>
+                  </>
+                  )}
                 </div>
               </div>
               </EditorItem>

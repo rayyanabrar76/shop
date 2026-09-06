@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { storeUrl } from '@/lib/config'
 import { redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
@@ -28,7 +29,7 @@ export default async function StoreDashboardPage({
     { id: 'theme',    label: 'Customize your storefront',  done: false, /* hard to detect — surface it always */href: `/dashboard/stores/${storeId}/theme` },
     { id: 'payment',  label: 'Connect Stripe to take card payments', done: !!store.payment?.stripeEnabled,      href: `/dashboard/stores/${storeId}/settings/payments` },
     { id: 'domain',   label: 'Connect a custom domain (optional)',   done: !!store.customDomain,                href: `/dashboard/stores/${storeId}/settings/domain` },
-    { id: 'launch',   label: 'Share your store link',                done: store._count.orders > 0,             href: `/store/${store.subdomain}` },
+    { id: 'launch',   label: 'Share your store link',                done: store._count.orders > 0,             href: storeUrl(store.subdomain) },
   ]
   const remaining = onboarding.filter(s => !s.done).length
   const showOnboarding = remaining > 0 && store._count.orders === 0
@@ -43,7 +44,7 @@ export default async function StoreDashboardPage({
         <Link
           target="_blank"
           className="flex items-center gap-2 rounded-xl bg-black dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-all shadow-sm w-fit"
-          href={`/store/${store.subdomain}`}
+          href={storeUrl(store.subdomain, '?owner=1')}
         >
           <Eye className="w-4 h-4" />
           View storefront

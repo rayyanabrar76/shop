@@ -18,16 +18,25 @@ export async function GET(
 
   const where: any = { storeId: store.id, status: 'active' }
   if (q) {
-    where.title = { contains: q, mode: 'insensitive' }
+    // Title or tag — see the note in the products page.
+    where.OR = [
+      { title: { contains: q, mode: 'insensitive' } },
+      { tags: { has: q.toLowerCase() } },
+    ]
   }
   if (category) {
-    where.category = category
+    // Match slug or name — see the note in the products page.
+    const cat = await prisma.category.findFirst({
+      where: { storeId: store.id, slug: category },
+      select: { slug: true, name: true },
+    })
+    where.category = cat ? { in: [cat.slug, cat.name] } : category
   }
 
   const [products, total] = await Promise.all([
     prisma.product.findMany({
       where,
-      select: { id: true, title: true, price: true, imageUrl: true, category: true, inventory: true },
+      select: { id: true, title: true, price: true, imageUrl: true, category: true, inventory: true, slug: true },
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip,

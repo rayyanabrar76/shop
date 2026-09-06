@@ -2,6 +2,53 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import ProductsPageClient from './ProductsPageClient'
 
+import type { Metadata } from 'next'
+import { storeUrl } from '@/lib/config'
+
+/**
+ * Canonical for the listing. When a ?category= filter is applied the canonical
+ * points at that category's own path URL, so the query-string form does not
+ * compete with it for the same content.
+ */
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ subdomain: string }>
+  searchParams: Promise<{ category?: string; q?: string; page?: string }>
+}): Promise<Metadata> {
+  const { subdomain } = await params
+  const { category, q } = await searchParams
+
+  const store = await prisma.store.findUnique({
+    where: { subdomain },
+    select: { id: true, name: true },
+  })
+  if (!store) return { title: 'Not found' }
+
+  if (category) {
+    const cat = await prisma.category.findFirst({
+      where: { storeId: store.id, slug: category },
+      select: { name: true, description: true },
+    })
+    if (cat) {
+      return {
+        title: cat.name,
+        description: cat.description?.trim().slice(0, 160) || `Browse ${cat.name} at ${store.name}.`,
+        alternates: { canonical: storeUrl(subdomain, `/categories/${category}`) },
+      }
+    }
+  }
+
+  return {
+    title: 'All products',
+    description: `Browse every product available at ${store.name}.`,
+    // A search is a filtered view, not its own page — point it at the listing.
+    alternates: { canonical: storeUrl(subdomain, '/products') },
+    ...(q ? { robots: { index: false, follow: true } } : {}),
+  }
+}
+
 export default async function ProductsPage({
   params,
   searchParams,
@@ -20,7 +67,7 @@ export default async function ProductsPage({
 
   const t = store.theme
   const theme = {
-    primaryColor:    t?.primaryColor    ?? '#6c47ff',
+    primaryColor:    t?.primaryColor    ?? '#0a0a0a',
     backgroundColor: t?.backgroundColor ?? '#ffffff',
     footerColor:     t?.footerColor     ?? '#f4f4f5',
     accentColor:     t?.accentColor     ?? '#000000',
@@ -33,7 +80,23 @@ export default async function ProductsPage({
     showBanner:      t?.showBanner      ?? true,
     logoUrl:         t?.logoUrl         ?? '',
     logoWidth:       t?.logoWidth       ?? 120,
+    logoHeight:       t?.logoHeight       ?? 48,
+    headerLayout:       t?.headerLayout       ?? 'left',
+    menuPosition: t?.menuPosition ?? 'auto',
+    headerWidth: t?.headerWidth ?? 'page',
+    headerHeight: t?.headerHeight ?? 'standard',
+    headerSticky: t?.headerSticky ?? true,
+    headerBorderWidth: t?.headerBorderWidth ?? 1,
+    headerBgColor: t?.headerBgColor ?? '',
+    headerTextColor: t?.headerTextColor ?? '',
+    utilityStyle: t?.utilityStyle ?? 'icons',
+    headerTransparent: t?.headerTransparent ?? false,
+    headerInverseLogoUrl: t?.headerInverseLogoUrl ?? '',
+    headerTransparentText: t?.headerTransparentText ?? '#ffffff',
     footerText:      t?.footerText      ?? '',
+    footerLogoUrl:      t?.footerLogoUrl      ?? '',
+    footerLogoWidth:      t?.footerLogoWidth      ?? 130,
+    footerLogoHeight:      t?.footerLogoHeight      ?? 56,
     instagramHandle: t?.instagramHandle ?? '',
     twitterHandle:   t?.twitterHandle   ?? '',
     facebookUrl:     t?.facebookUrl     ?? '',
@@ -71,6 +134,9 @@ export default async function ProductsPage({
     productPricePaddingLeft:   t?.productPricePaddingLeft   ?? 0,
     productPricePaddingRight:  t?.productPricePaddingRight  ?? 0,
     cartBtnLabel:         t?.cartBtnLabel         ?? '',
+    cartBtnBgColor:       t?.cartBtnBgColor       ?? '',
+    cartBtnTextColor:     t?.cartBtnTextColor     ?? '',
+    cartBtnDisplay:       t?.cartBtnDisplay       ?? 'always',
     cartBtnShowIcon:      t?.cartBtnShowIcon      ?? true,
     cartBtnWidth:         t?.cartBtnWidth         ?? '',
     cartBtnFontSize:      t?.cartBtnFontSize      ?? 10,
@@ -105,10 +171,22 @@ export default async function ProductsPage({
 
   const where: any = { storeId: store.id, status: 'active' }
   if (category) {
+    // Product.category is a loose string: current data holds the slug, but rows
+    // saved by an older form hold the name. Match either, or a category filtered
+    // by slug returns nothing for products stored under the name (and vice versa).
     const matchedCat = categories.find(c => c.slug === category)
-    where.category = matchedCat ? matchedCat.name : category
+    where.category = matchedCat
+      ? { in: [matchedCat.slug, matchedCat.name] }
+      : category
   }
-  if (q) where.title = { contains: q, mode: 'insensitive' }
+  if (q) {
+    // Tags exist so a shopper searching "soy wax" finds a candle titled
+    // "Winter Ember". has is exact per tag, which is what a keyword list wants.
+    where.OR = [
+      { title: { contains: q, mode: 'insensitive' } },
+      { tags: { has: q.toLowerCase() } },
+    ]
+  }
 
   const [products, totalCount] = await Promise.all([
     prisma.product.findMany({ where, orderBy: { createdAt: 'desc' }, take: PAGE_SIZE, skip }),

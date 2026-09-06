@@ -32,7 +32,7 @@ export default async function SuccessPage({
 
   const t = store?.theme
   const theme = {
-    primaryColor:    t?.primaryColor    ?? '#6c47ff',
+    primaryColor:    t?.primaryColor    ?? '#0a0a0a',
     backgroundColor: t?.backgroundColor ?? '#ffffff',
     footerColor:     t?.footerColor     ?? '#f4f4f5',
     accentColor:     t?.accentColor     ?? '#000000',
@@ -45,7 +45,23 @@ export default async function SuccessPage({
     showBanner:      t?.showBanner      ?? false,
     logoUrl:         t?.logoUrl         ?? '',
     logoWidth:       t?.logoWidth       ?? 120,
+    logoHeight:       t?.logoHeight       ?? 48,
+    headerLayout:       t?.headerLayout       ?? 'left',
+    menuPosition: t?.menuPosition ?? 'auto',
+    headerWidth: t?.headerWidth ?? 'page',
+    headerHeight: t?.headerHeight ?? 'standard',
+    headerSticky: t?.headerSticky ?? true,
+    headerBorderWidth: t?.headerBorderWidth ?? 1,
+    headerBgColor: t?.headerBgColor ?? '',
+    headerTextColor: t?.headerTextColor ?? '',
+    utilityStyle: t?.utilityStyle ?? 'icons',
+    headerTransparent: t?.headerTransparent ?? false,
+    headerInverseLogoUrl: t?.headerInverseLogoUrl ?? '',
+    headerTransparentText: t?.headerTransparentText ?? '#ffffff',
     footerText:      t?.footerText      ?? '',
+    footerLogoUrl:      t?.footerLogoUrl      ?? '',
+    footerLogoWidth:      t?.footerLogoWidth      ?? 130,
+    footerLogoHeight:      t?.footerLogoHeight      ?? 56,
     instagramHandle: t?.instagramHandle ?? '',
     twitterHandle:   t?.twitterHandle   ?? '',
     facebookUrl:     t?.facebookUrl     ?? '',
@@ -159,7 +175,7 @@ export default async function SuccessPage({
         </div>
       </main>
 
-      {store && <StoreFooter store={store} theme={theme} />}
+      {store && <StoreFooter store={store} theme={theme} subdomain={subdomain} />}
       {store && (
         <CartSidebar
           themeStyle={{ primaryColor: theme.primaryColor, borderRadius: theme.borderRadius, buttonStyle: theme.buttonStyle }}

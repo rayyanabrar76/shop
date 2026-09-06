@@ -24,7 +24,23 @@ interface ThemeState {
   showBanner: boolean
   logoUrl: string
   logoWidth: number
+  logoHeight?: number
+  headerLayout?: string
+  menuPosition?: string
+  headerWidth?: string
+  headerHeight?: string
+  headerSticky?: boolean
+  headerBorderWidth?: number
+  headerBgColor?: string
+  headerTextColor?: string
+  utilityStyle?: string
+  headerTransparent?: boolean
+  headerInverseLogoUrl?: string
+  headerTransparentText?: string
   footerText: string
+  footerLogoUrl?: string
+  footerLogoWidth?: number
+  footerLogoHeight?: number
   instagramHandle: string
   twitterHandle: string
   facebookUrl: string
@@ -340,7 +356,7 @@ export default function StorePageClient({
       </EditorSection>
 
       <EditorSection id="section-footer" label="Footer" section="footer" isEditor={isEditor} onEdit={notifyParent}>
-        <StoreFooter store={store} theme={theme} isEditor={isEditor} onEdit={notifyParent} />
+        <StoreFooter store={store} theme={theme} subdomain={subdomain} isEditor={isEditor} onEdit={notifyParent} />
       </EditorSection>
 
       <CartSidebar

@@ -24,7 +24,7 @@ export default function StoreBanner({ theme, isEditor = false, onEdit }: StoreBa
     <div
       className="py-2 px-4 text-center text-sm font-medium relative flex items-center justify-center gap-2"
       style={{
-        backgroundColor: theme?.primaryColor ?? '#6c47ff',
+        backgroundColor: theme?.primaryColor ?? '#0a0a0a',
         color: '#ffffff',
       }}
     >

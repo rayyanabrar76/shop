@@ -10,6 +10,7 @@ import ProductGrid from '../ProductGrid'
 import DarkModeSync from '../DarkModeSync'
 import { EditorSection, EditorItem } from '../EditorHighlight'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useStoreBase } from '@/components/StoreBaseProvider'
 
 interface Product {
   id: string
@@ -41,7 +42,23 @@ interface ThemeState {
   showBanner: boolean
   logoUrl: string
   logoWidth: number
+  logoHeight?: number
+  headerLayout?: string
+  menuPosition?: string
+  headerWidth?: string
+  headerHeight?: string
+  headerSticky?: boolean
+  headerBorderWidth?: number
+  headerBgColor?: string
+  headerTextColor?: string
+  utilityStyle?: string
+  headerTransparent?: boolean
+  headerInverseLogoUrl?: string
+  headerTransparentText?: string
   footerText: string
+  footerLogoUrl?: string
+  footerLogoWidth?: number
+  footerLogoHeight?: number
   instagramHandle: string
   twitterHandle: string
   facebookUrl: string
@@ -84,6 +101,9 @@ interface ThemeState {
   productPricePaddingLeft?: number
   productPricePaddingRight?: number
   cartBtnLabel?: string
+  cartBtnBgColor?: string
+  cartBtnTextColor?: string
+  cartBtnDisplay?: string
   cartBtnShowIcon?: boolean
   cartBtnWidth?: string
   cartBtnFontSize?: number
@@ -132,6 +152,7 @@ export default function ProductsPageClient({
   totalCount,
   searchQuery,
 }: Props) {
+  const storeBase = useStoreBase()
   const [theme, setTheme] = useState<ThemeState>(initialTheme)
   const [isEditor, setIsEditor] = useState(false)
 
@@ -202,6 +223,9 @@ export default function ProductsPageClient({
     productPricePaddingLeft:   theme.productPricePaddingLeft,
     productPricePaddingRight:  theme.productPricePaddingRight,
     cartBtnLabel:              theme.cartBtnLabel,
+    cartBtnBgColor:            theme.cartBtnBgColor,
+    cartBtnTextColor:          theme.cartBtnTextColor,
+    cartBtnDisplay:            theme.cartBtnDisplay,
     cartBtnShowIcon:           theme.cartBtnShowIcon,
     cartBtnWidth:              theme.cartBtnWidth,
     cartBtnFontSize:           theme.cartBtnFontSize,
@@ -214,11 +238,15 @@ export default function ProductsPageClient({
   const { primaryColor } = theme
 
   function buildUrl(cat: string | null, page = 1) {
+    // A category is its own page (/categories/<slug>), not a query filter —
+    // a path ranks as a page in its own right, a query string does not.
+    const base = cat
+      ? `${storeBase}/categories/${encodeURIComponent(cat)}`
+      : `${storeBase}/products`
     const parts: string[] = []
-    if (cat) parts.push(`category=${cat}`)
     if (searchQuery) parts.push(`q=${encodeURIComponent(searchQuery)}`)
     if (page > 1) parts.push(`page=${page}`)
-    return `/store/${subdomain}/products${parts.length ? '?' + parts.join('&') : ''}`
+    return `${base}${parts.length ? '?' + parts.join('&') : ''}`
   }
 
   function NavLink({ href, className, style, children }: {
@@ -267,7 +295,7 @@ export default function ProductsPageClient({
           <div className="px-4 md:px-8 pt-8 pb-4 max-w-7xl mx-auto w-full">
             <EditorItem section="products" field="products-back" label="Back to store" isEditor={isEditor} onEdit={notifyParent}>
               <NavLink
-                href={`/store/${subdomain}`}
+                href={storeBase || '/'}
                 className="inline-flex items-center gap-1.5 font-semibold text-zinc-400 hover:text-zinc-700 transition-colors mb-5"
                 style={{
                   fontSize: (theme.catFilterFontSize ?? 12) + 'px',
@@ -389,7 +417,7 @@ export default function ProductsPageClient({
       </EditorSection>
 
       <EditorSection id="section-footer" label="Footer" section="footer" isEditor={isEditor} onEdit={notifyParent}>
-        <StoreFooter store={store} theme={theme} isEditor={isEditor} onEdit={notifyParent} />
+        <StoreFooter store={store} theme={theme} subdomain={subdomain} isEditor={isEditor} onEdit={notifyParent} />
       </EditorSection>
 
       <CartSidebar

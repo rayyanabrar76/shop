@@ -23,7 +23,7 @@ export default function DarkModeSync() {
         el.removeAttribute('data-dark')
         el.style.setProperty('--store-bg', t.backgroundColor || '#ffffff')
         el.style.setProperty('--store-text', t.textColor || '#09090b')
-        el.style.setProperty('--store-footer', t.footerColor || '#f4f4f5')
+        el.style.setProperty('--store-footer', t.footerColor || '#ffffff')
         el.style.setProperty('--store-pg-bg', t.productGridBg || '#ffffff')
         el.style.setProperty('--store-divider', 'rgba(0,0,0,0.08)')
         el.style.setProperty('--store-card-border', '#f1f1f1')
