@@ -33,6 +33,18 @@ export default clerkMiddleware(async (auth, request) => {
   const isRootDomain = host === ROOT_DOMAIN || host === `www.${ROOT_DOMAIN}`
   const isSubdomain = host.endsWith(`.${ROOT_DOMAIN}`)
 
+  // Hosts the platform itself is served on. A merchant cannot own one of these,
+  // so they are never a custom domain — however NEXT_PUBLIC_APP_DOMAIN is set.
+  //
+  // Without this, a wrong APP_DOMAIN takes the whole site down rather than
+  // degrading: every host stops matching root or subdomain, falls through to
+  // the custom-domain branch, and rewrites to a store that does not exist. The
+  // symptom is a 404 on every page with nothing to explain it.
+  const isPlatformHost =
+    isLocalhost ||
+    host.endsWith('.vercel.app') ||
+    host === 'vercel.app'
+
   // API routes are mounted at the app root and are the same on every host, so
   // they must never be rewritten under a store prefix — /api/x on a shop's own
   // domain would become /store/<sub>/api/x, which does not exist. That 404s
@@ -40,7 +52,7 @@ export default clerkMiddleware(async (auth, request) => {
   const isApiPath = url.pathname.startsWith('/api/')
 
   // ── Custom domain — not localhost, not root, not subdomain ──────────────
-  if (!isLocalhost && !isRootDomain && !isSubdomain && !isApiPath) {
+  if (!isPlatformHost && !isRootDomain && !isSubdomain && !isApiPath) {
     const base = `/custom-domain/${host}`
     const alreadyScoped = url.pathname === base || url.pathname.startsWith(`${base}/`)
     const res = NextResponse.rewrite(
