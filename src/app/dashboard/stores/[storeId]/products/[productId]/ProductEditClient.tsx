@@ -1,13 +1,19 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { storeUrl } from '@/lib/config'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   HiArrowLeft, HiCheck, HiTag,
   HiChevronDown, HiEye, HiPlus, HiTrash, HiX,
 } from 'react-icons/hi'
+import { HiSparkles, HiPhoto } from 'react-icons/hi2'
 import MediaPicker from '@/components/MediaPicker'
+import AiWriteModal from '@/components/ai/AiWriteModal'
+import AiImageModal from '@/components/ai/AiImageModal'
+import TagsInput from '@/components/TagsInput'
+import CategoryFormModal from '@/components/CategoryFormModal'
 import { useDashboardCurrency } from '@/components/CurrencyProvider'
 import { amountToInput, currencyDecimals, currencySymbol, inputToAmount } from '@/lib/currency'
 
@@ -44,7 +50,9 @@ interface Product {
   status: string
   category: string | null
   sku: string | null
+  tags: string[]
   imageUrl: string | null
+  slug: string | null
   createdAt: Date
   store: { subdomain: string }
   images: ProductImage[]
@@ -109,10 +117,14 @@ function CustomDropdown({ options, value, onChange, placeholder = 'Select...', r
   )
 }
 
-export default function ProductEditClient({ storeId, product, categories }: {
+export default function ProductEditClient({ storeId, product, categories, embedded = false, onSaved }: {
   storeId: string
   product: Product
   categories: Category[]
+  /** Renders without the page chrome, for the visual editor's modal. */
+  embedded?: boolean
+  /** Fired after a successful save so the caller can refresh its preview. */
+  onSaved?: () => void
 }) {
   const router = useRouter()
   const currency = useDashboardCurrency()
@@ -124,7 +136,14 @@ export default function ProductEditClient({ storeId, product, categories }: {
   const [status, setStatus] = useState(product.status)
   const [category, setCategory] = useState(product.category ?? '')
   const [sku, setSku] = useState(product.sku ?? '')
+  const [tags, setTags] = useState<string[]>(product.tags ?? [])
   const [imageUrl, setImageUrl] = useState(product.imageUrl ?? '')
+
+  const [writeOpen, setWriteOpen] = useState(false)
+  const [imageAiOpen, setImageAiOpen] = useState(false)
+  const [categoryModal, setCategoryModal] = useState(false)
+  // Local copy so a category created from the modal shows up without a reload.
+  const [cats, setCats] = useState<Category[]>(categories)
 
   const [extraImages, setExtraImages] = useState<string[]>(
     product.images.map(i => i.url).filter(u => u !== product.imageUrl)
@@ -158,7 +177,7 @@ export default function ProductEditClient({ storeId, product, categories }: {
 
   const categoryOptions = [
     { value: '', label: 'No category' },
-    ...categories.map(c => ({ value: c.slug, label: c.name })),
+    ...cats.map(c => ({ value: c.slug, label: c.name })),
   ]
 
   function addVariant() {
@@ -212,6 +231,7 @@ export default function ProductEditClient({ storeId, product, categories }: {
           inventory: parseInt(inventory) || 0,
           status, category: category || null,
           sku: sku || null,
+          tags,
           imageUrl: imageUrl || null,
           images: allImages,
           variants: variants.map(v => ({
@@ -231,7 +251,11 @@ export default function ProductEditClient({ storeId, product, categories }: {
       if (!res.ok) throw new Error(data.error ?? 'Failed to save')
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
-      router.refresh()
+      // Best effort: the save already succeeded, so a failure refreshing the
+      // caller's preview must not be reported as a failed save.
+      try { onSaved?.() } catch { /* ignore */ }
+      // The dashboard page needs re-rendering; the modal has no server data.
+      if (!embedded) router.refresh()
     } catch (e: any) {
       setError(e.message)
     } finally {
@@ -242,24 +266,26 @@ export default function ProductEditClient({ storeId, product, categories }: {
   const isValid = title.trim().length > 0 && price !== '' && Number(price) > 0
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <div className="p-8 max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200">
-              <HiArrowLeft className="w-4 h-4" />
-            </button>
-            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 truncate max-w-72">{product.title}</h1>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Edit product details</p>
+    <div className={embedded ? '' : 'min-h-screen bg-zinc-50 dark:bg-zinc-950'}>
+      <div className={embedded ? 'p-5' : 'p-8 max-w-5xl mx-auto'}>
+        {/* Header — the modal supplies its own title, so only actions there */}
+        <div className={`flex items-center justify-between ${embedded ? 'mb-4' : 'mb-8'}`}>
+          {embedded ? <div /> : (
+            <div className="flex items-center gap-3">
+              <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200">
+                <HiArrowLeft className="w-4 h-4" />
+              </button>
+              <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 truncate max-w-72">{product.title}</h1>
+                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Edit product details</p>
+              </div>
             </div>
-          </div>
+          )}
           <div className="flex items-center gap-2">
             {saved && <span className="text-xs text-emerald-600 font-medium flex items-center gap-1"><HiCheck className="w-3.5 h-3.5" /> Saved</span>}
             {error && <span className="text-xs text-red-500 font-medium">{error}</span>}
-            <Link href={`/store/${product.store.subdomain}/products/${product.id}`} target="_blank"
+            <Link href={storeUrl(product.store.subdomain, `/products/${product.slug || product.id}?owner=1`)} target="_blank"
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
               <HiEye className="w-3.5 h-3.5" /> View Live
             </Link>
@@ -271,13 +297,22 @@ export default function ProductEditClient({ storeId, product, categories }: {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className={embedded ? 'space-y-4' : 'grid grid-cols-1 lg:grid-cols-3 gap-5'}>
 
           {/* ── Left ── */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className={embedded ? 'space-y-4' : 'lg:col-span-2 space-y-4'}>
 
             {/* Title + Description */}
             <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <p className={labelCls + ' mb-0'}>Details</p>
+                <button
+                  onClick={() => setWriteOpen(true)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
+                >
+                  <HiSparkles className="w-3.5 h-3.5" /> Rewrite with AI
+                </button>
+              </div>
               <div>
                 <label className={labelCls}>Product Title <span className="text-red-400">*</span></label>
                 <input value={title} onChange={e => setTitle(e.target.value)}
@@ -286,6 +321,13 @@ export default function ProductEditClient({ storeId, product, categories }: {
               <div>
                 <label className={labelCls}>Description</label>
                 <textarea rows={5} value={description} onChange={e => setDescription(e.target.value)} className={`${inputCls} resize-none`} />
+              </div>
+              <div>
+                <label className={labelCls}>Tags</label>
+                <TagsInput value={tags} onChange={setTags} />
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1.5">
+                  Words shoppers might search for. Used for on-site search and SEO keywords.
+                </p>
               </div>
             </div>
 
@@ -315,7 +357,15 @@ export default function ProductEditClient({ storeId, product, categories }: {
 
             {/* Images */}
             <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-5 space-y-4">
-              <label className={labelCls}>Product Images</label>
+              <div className="flex items-center justify-between">
+                <label className={labelCls + ' mb-0'}>Product Images</label>
+                <button
+                  onClick={() => setImageAiOpen(true)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
+                >
+                  <HiPhoto className="w-3.5 h-3.5" /> Generate with AI
+                </button>
+              </div>
               <div>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">Main image</p>
                 <MediaPicker storeId={storeId} value={imageUrl} onChange={setImageUrl} accept="image" />
@@ -442,14 +492,20 @@ export default function ProductEditClient({ storeId, product, categories }: {
             <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-5">
               <div className="flex items-center justify-between mb-3">
                 <label className={labelCls + ' mb-0'}>Category</label>
-                <Link href={`/dashboard/stores/${storeId}/categories`} className="text-[10px] text-zinc-400 dark:text-zinc-500 hover:text-black dark:hover:text-white transition-colors flex items-center gap-1">
-                  <HiTag className="w-3 h-3" /> Manage
-                </Link>
+                {/* A modal, not a link: leaving would drop unsaved edits, and
+                    in the visual editor it would close the editor. */}
+                <button
+                  type="button"
+                  onClick={() => setCategoryModal(true)}
+                  className="text-[10px] text-zinc-400 dark:text-zinc-500 hover:text-black dark:hover:text-white transition-colors flex items-center gap-1"
+                >
+                  <HiTag className="w-3 h-3" /> New category
+                </button>
               </div>
-              {categories.length === 0 ? (
+              {cats.length === 0 ? (
                 <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700">
                   <span className="text-xs text-zinc-400 dark:text-zinc-500">No categories yet</span>
-                  <Link href={`/dashboard/stores/${storeId}/categories`} className="text-[10px] font-bold text-black dark:text-white underline">Create one</Link>
+                  <button type="button" onClick={() => setCategoryModal(true)} className="text-[10px] font-bold text-black dark:text-white underline">Create one</button>
                 </div>
               ) : (
                 <CustomDropdown options={categoryOptions} value={category} onChange={setCategory} placeholder="No category"
@@ -484,6 +540,43 @@ export default function ProductEditClient({ storeId, product, categories }: {
           </div>
         </div>
       </div>
+
+      {categoryModal && (
+        <CategoryFormModal
+          storeId={storeId}
+          onClose={() => setCategoryModal(false)}
+          onCreated={created => {
+            setCats(prev => [...prev, created])
+            setCategory(created.slug)
+            setCategoryModal(false)
+          }}
+        />
+      )}
+
+      <AiWriteModal
+        open={writeOpen}
+        onClose={() => setWriteOpen(false)}
+        storeId={storeId}
+        existingTitle={title}
+        onImage={url => { if (imageUrl && imageUrl !== url) setExtraImages(imgs => imgs.includes(imageUrl) ? imgs : [...imgs, imageUrl]); setImageUrl(url) }}
+        onApply={(copy, pick) => {
+          if (pick.title) setTitle(copy.title)
+          if (pick.description) setDescription(copy.description)
+          if (pick.tags) setTags(copy.tags)
+        }}
+      />
+
+      <AiImageModal
+        open={imageAiOpen}
+        onClose={() => setImageAiOpen(false)}
+        storeId={storeId}
+        seed={title}
+        onApply={url => {
+          // An existing main image is kept as a gallery shot rather than lost.
+          if (imageUrl && imageUrl !== url) setExtraImages(imgs => imgs.includes(imageUrl) ? imgs : [...imgs, imageUrl])
+          setImageUrl(url)
+        }}
+      />
     </div>
   )
 }

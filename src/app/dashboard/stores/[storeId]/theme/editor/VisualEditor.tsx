@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { storeUrl } from '@/lib/config'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -19,6 +20,7 @@ import ProductGridEdit from './sections/ProductGridEdit'
 import FooterEdit from './sections/FooterEdit'
 import CustomSectionsEdit, { type CustomSection } from './sections/CustomSectionsEdit'
 import CustomCodeEdit from './sections/CustomCodeEdit'
+import SeoEdit from './sections/SeoEdit'
 import ThemePanel, { DARK_PRESET, LIGHT_PRESET } from './panels/ThemePanel'
 import PageContentEdit from './sections/PageContentEdit'
 import SystemPageEdit from './sections/SystemPageEdit'
@@ -29,6 +31,8 @@ import NavMenuEdit from './sections/NavMenuEdit'
 import CategoryFilterEdit from './sections/CategoryFilterEdit'
 import PageSkeleton from './PageSkeleton'
 import AddPageModal, { type PageResult } from '@/components/AddPageModal'
+import ProductModal from './ProductModal'
+import { resolveSectionOrder, serializeSectionOrder } from '@/lib/section-order'
 
 export interface StorePage {
   id: string
@@ -40,7 +44,7 @@ export interface StorePage {
 
 type DeviceMode = 'desktop' | 'tablet' | 'mobile'
 type Tab = 'sections' | 'theme'
-type SectionView = 'list' | 'banner' | 'header' | 'hero' | 'products' | 'footer' | 'custom' | 'code' | 'product-title' | 'product-price' | 'product-cart' | 'nav-menu' | 'category-filter'
+type SectionView = 'list' | 'banner' | 'header' | 'hero' | 'products' | 'footer' | 'custom' | 'code' | 'seo' | 'product-title' | 'product-price' | 'product-cart' | 'nav-menu' | 'category-filter'
 
 const DEVICE_WIDTHS: Record<DeviceMode, string> = {
   desktop: '100%',
@@ -68,12 +72,14 @@ export default function VisualEditor({
   storeName,
   initialTheme,
   initialHeroSlides,
+  initialCustomSections,
 }: {
   storeId: string
   subdomain: string
   storeName: string
   initialTheme: any
   initialHeroSlides?: HeroSlide[] | null
+  initialCustomSections?: CustomSection[]
 }) {
   const router = useRouter()
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -108,20 +114,36 @@ export default function VisualEditor({
     el.classList.add('field-pulse')
   }
 
+  /**
+   * Reloads the storefront preview. Used after the product modal saves: the
+   * grid is server-rendered inside the iframe, so a postMessage cannot update
+   * it. Same-origin (/store/<sub>), so reload() is allowed.
+   */
+  function refreshPreview() {
+    const frame = iframeRef.current
+    if (!frame) return
+    setIframeLoading(true)
+    try {
+      // Same-origin (/store/<sub>), so this is normally allowed.
+      frame.contentWindow?.location.reload()
+    } catch {
+      // Reassigning src reloads it without touching the inner document, which
+      // works even when reading contentWindow.location is refused.
+      const src = frame.src
+      frame.src = src
+    }
+  }
+
   function sendHighlightToPreview(section: string) {
     iframeRef.current?.contentWindow?.postMessage({ type: 'section:highlight', section }, '*')
   }
 
   const [device, setDevice] = useState<DeviceMode>('desktop')
   const [tab, setTab] = useState<Tab>('sections')
-  const [sectionView, setSectionView] = useState<SectionView>(() => {
-    const saved = typeof window !== 'undefined' ? sessionStorage.getItem('editor-return-section') : null
-    if (saved) { sessionStorage.removeItem('editor-return-section'); return saved as SectionView }
-    return 'list'
-  })
+  const [sectionView, setSectionView] = useState<SectionView>('list')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [customSections, setCustomSections] = useState<CustomSection[]>([])
+  const [customSections, setCustomSections] = useState<CustomSection[]>(initialCustomSections ?? [])
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(
     (initialHeroSlides && initialHeroSlides.length > 0) ? initialHeroSlides : DEFAULT_SLIDES
   )
@@ -132,11 +154,17 @@ export default function VisualEditor({
   const [systemPageSlug, setSystemPageSlug] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [showAddPageModal, setShowAddPageModal] = useState(false)
+  // Creating a page from the page picker means "take me there". Creating one
+  // from the footer panel means "add it to the footer" — jumping to a blank
+  // new page would throw away what they were doing.
+  const [addPageOrigin, setAddPageOrigin] = useState<'picker' | 'footer'>('picker')
+  // null = closed. { productId: null } opens the create form, an id opens edit.
+  const [productModal, setProductModal] = useState<{ productId: string | null } | null>(null)
   const [customSectionFocus, setCustomSectionFocus] = useState<{ id: string; ts: number } | null>(null)
   const [pageContentNav, setPageContentNav] = useState<{ section: string; ts: number } | null>(null)
 
   const [theme, setTheme] = useState<ThemeState>({
-    primaryColor:    initialTheme?.primaryColor    ?? '#6c47ff',
+    primaryColor:    initialTheme?.primaryColor    ?? '#0a0a0a',
     backgroundColor: initialTheme?.backgroundColor ?? '#ffffff',
     footerColor:     initialTheme?.footerColor     ?? '#f4f4f5',
     accentColor:     initialTheme?.accentColor     ?? '#000000',
@@ -150,7 +178,31 @@ export default function VisualEditor({
     showBanner:      initialTheme?.showBanner      ?? true,
     logoUrl:         initialTheme?.logoUrl         ?? '',
     logoWidth:       initialTheme?.logoWidth       ?? 120,
+    logoHeight:      initialTheme?.logoHeight      ?? 48,
+    headerLayout:    initialTheme?.headerLayout    ?? 'left',
+    menuPosition: initialTheme?.menuPosition ?? 'auto',
+    headerWidth: initialTheme?.headerWidth ?? 'page',
+    headerHeight: initialTheme?.headerHeight ?? 'standard',
+    headerSticky: initialTheme?.headerSticky ?? true,
+    headerBorderWidth: initialTheme?.headerBorderWidth ?? 1,
+    headerBgColor: initialTheme?.headerBgColor ?? '',
+    headerTextColor: initialTheme?.headerTextColor ?? '',
+    utilityStyle: initialTheme?.utilityStyle ?? 'icons',
+    headerTransparent: initialTheme?.headerTransparent ?? false,
+    headerInverseLogoUrl: initialTheme?.headerInverseLogoUrl ?? '',
+    headerTransparentText: initialTheme?.headerTransparentText ?? '#ffffff',
     footerText:      initialTheme?.footerText      ?? '',
+    seoTitle:        initialTheme?.seoTitle        ?? '',
+    seoDescription:  initialTheme?.seoDescription  ?? '',
+    faviconUrl:      initialTheme?.faviconUrl      ?? '',
+    sectionOrder:    initialTheme?.sectionOrder    ?? '',
+    footerNewsletter:        initialTheme?.footerNewsletter        ?? true,
+    footerNewsletterHeading: initialTheme?.footerNewsletterHeading ?? '',
+    footerNewsletterText:    initialTheme?.footerNewsletterText    ?? '',
+    footerShowLinks:         initialTheme?.footerShowLinks         ?? true,
+    footerLogoUrl:   initialTheme?.footerLogoUrl   ?? '',
+    footerLogoWidth: initialTheme?.footerLogoWidth ?? 130,
+    footerLogoHeight: initialTheme?.footerLogoHeight ?? 56,
     instagramHandle: initialTheme?.instagramHandle ?? '',
     twitterHandle:   initialTheme?.twitterHandle   ?? '',
     facebookUrl:     initialTheme?.facebookUrl     ?? '',
@@ -186,6 +238,9 @@ export default function VisualEditor({
     productPricePaddingRight:  initialTheme?.productPricePaddingRight  ?? 0,
     // Cart button block
     cartBtnLabel:         initialTheme?.cartBtnLabel         ?? '',
+    cartBtnBgColor:       initialTheme?.cartBtnBgColor       ?? '',
+    cartBtnTextColor:     initialTheme?.cartBtnTextColor     ?? '',
+    cartBtnDisplay:       initialTheme?.cartBtnDisplay       ?? 'always',
     cartBtnShowIcon:      initialTheme?.cartBtnShowIcon      ?? true,
     cartBtnWidth:         initialTheme?.cartBtnWidth         ?? 'fill',
     cartBtnFontSize:      initialTheme?.cartBtnFontSize      ?? 0,
@@ -265,27 +320,45 @@ export default function VisualEditor({
     return () => window.removeEventListener('message', handleSectionEdit)
   }, [])
 
+  const [openAddSection, setOpenAddSection] = useState<number | null>(null)
+
+  // Consumed once. CustomSectionsEdit tracks "the picker was dismissed" in its
+  // own state, which is lost when the panel unmounts — so leaving the custom
+  // view and coming back made a still-set timestamp reopen the picker on its
+  // own. Clearing it here means only a fresh click opens it.
+  useEffect(() => {
+    if (sectionView !== 'custom') setOpenAddSection(null)
+  }, [sectionView])
+  useEffect(() => {
+    function handleAddSection(e: MessageEvent) {
+      if (e.data?.type !== 'add-section') return
+      setTab('sections')
+      setSectionView('custom')
+      triggerSidebarPulse()
+      // Timestamped so repeated clicks re-open it.
+      setOpenAddSection(Date.now())
+    }
+    window.addEventListener('message', handleAddSection)
+    return () => window.removeEventListener('message', handleAddSection)
+  }, [])
+
   useEffect(() => {
     function handleAddProduct(e: MessageEvent) {
       if (e.data?.type !== 'add-product') return
-      router.push(`/dashboard/stores/${storeId}/products/create`)
+      setProductModal({ productId: null })
     }
     window.addEventListener('message', handleAddProduct)
     return () => window.removeEventListener('message', handleAddProduct)
-  }, [storeId, router])
-
-  const sectionViewRef = useRef<SectionView>('list')
-  useEffect(() => { sectionViewRef.current = sectionView }, [sectionView])
+  }, [])
 
   useEffect(() => {
     function handleEditProduct(e: MessageEvent) {
       if (e.data?.type !== 'edit-product') return
-      sessionStorage.setItem('editor-return-section', sectionViewRef.current)
-      router.push(`/dashboard/stores/${storeId}/products/${e.data.productId}`)
+      setProductModal({ productId: e.data.productId })
     }
     window.addEventListener('message', handleEditProduct)
     return () => window.removeEventListener('message', handleEditProduct)
-  }, [storeId, router])
+  }, [])
 
   useEffect(() => {
     function handleFieldFocus(e: MessageEvent) {
@@ -449,8 +522,16 @@ function handlePageContentChange(content: unknown) {
   }
 
   function handleAddPageModalCreated(page: PageResult) {
-    handlePageCreated(page as StorePage)
+    if (addPageOrigin === 'footer') {
+      setStorePages(prev => (prev.some(p => p.id === page.id) ? prev : [...prev, page as StorePage]))
+      // The footer reads its links once when it mounts, so the preview has to
+      // reload before a new page shows up down there.
+      refreshPreview()
+    } else {
+      handlePageCreated(page as StorePage)
+    }
     setShowAddPageModal(false)
+    setAddPageOrigin('picker')
   }
 
   async function handleSave() {
@@ -520,7 +601,7 @@ function handlePageContentChange(content: unknown) {
           <button onClick={undo} disabled={history.length === 0} className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-30">
             <Undo2 className="w-4 h-4" />
           </button>
-          <Link href={`/store/${subdomain}`} target="_blank" className="group relative p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
+          <Link href={storeUrl(subdomain, '?owner=1')} target="_blank" className="group relative p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
             <Eye className="w-4 h-4" />
             <span className="absolute right-0 top-full mt-1.5 px-2 py-1 bg-zinc-700 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">View Store</span>
           </Link>
@@ -608,7 +689,7 @@ function handlePageContentChange(content: unknown) {
                   {/* Add New Page */}
                   <div className="border-t border-zinc-100 dark:border-zinc-800" />
                   <button
-                    onClick={() => { setPickerOpen(false); setShowAddPageModal(true) }}
+                    onClick={() => { setPickerOpen(false); setAddPageOrigin('picker'); setShowAddPageModal(true) }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
                   >
                     <div className="w-4 h-4 rounded-full bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center shrink-0">
@@ -668,7 +749,23 @@ function handlePageContentChange(content: unknown) {
               <>
                 {/* Section lists */}
                 {sectionView === 'list' && !systemPageSlug && (
-                  <SectionsList onSectionClick={s => { setSectionView(s as SectionView); sendHighlightToPreview(s); triggerSidebarPulse() }} />
+                  <SectionsList
+                    customSections={customSections}
+                    order={resolveSectionOrder(theme.sectionOrder, customSections.filter(c => c.visible).map(c => c.id))}
+                    onReorder={keys => updateTheme({ sectionOrder: serializeSectionOrder(keys) })}
+                    onSectionClick={s => { setSectionView(s as SectionView); sendHighlightToPreview(s); triggerSidebarPulse() }}
+                    onCustomSectionClick={id => {
+                      setSectionView('custom')
+                      // Timestamped so clicking the same section twice re-focuses it.
+                      setCustomSectionFocus({ id, ts: Date.now() })
+                      triggerSidebarPulse()
+                    }}
+                    onAddSection={() => {
+                      setSectionView('custom')
+                      setOpenAddSection(Date.now())
+                      triggerSidebarPulse()
+                    }}
+                  />
                 )}
                 {sectionView === 'list' && systemPageSlug && (
                   <SystemPageEdit
@@ -679,7 +776,7 @@ function handlePageContentChange(content: unknown) {
                 )}
 
                 {/* Shared section sub-editors (home page + system pages that support them) */}
-                {sectionView === 'banner'   && <BannerEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} />}
+                {sectionView === 'banner'   && <BannerEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} storeId={storeId} />}
                 {sectionView === 'header'   && <HeaderEdit storeId={storeId} theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} />}
                 {sectionView === 'hero'     && !systemPageSlug && (
                   <HeroEdit
@@ -698,13 +795,24 @@ function handlePageContentChange(content: unknown) {
                 {sectionView === 'products'      && <ProductGridEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} storeId={storeId} isProductsPage={systemPageSlug === 'products'} />}
                 {sectionView === 'product-title' && <ProductTitleEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('products')} />}
                 {sectionView === 'product-price' && <ProductPriceEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('products')} />}
-                {sectionView === 'product-cart'    && <ProductCartButtonEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('products')} />}
+                {sectionView === 'product-cart'    && <ProductCartButtonEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('products')} storeId={storeId} />}
                 {sectionView === 'nav-menu'        && <NavMenuEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('header')} />}
                 {sectionView === 'category-filter' && <CategoryFilterEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} storeId={storeId} />}
-                {sectionView === 'footer'        && <FooterEdit storeId={storeId} storeName={dbStoreName} onPreviewChange={setPreviewStoreName} onSaveSuccess={name => { setDbStoreName(name); setPreviewStoreName(name) }} theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} />}
+                {sectionView === 'footer'        && <FooterEdit storeId={storeId} storeName={dbStoreName} onPreviewChange={setPreviewStoreName} onSaveSuccess={name => { setDbStoreName(name); setPreviewStoreName(name) }} theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} pages={storePages} onAddPage={() => { setAddPageOrigin('footer'); setShowAddPageModal(true) }} />}
                 {sectionView === 'code'          && !systemPageSlug && <CustomCodeEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} />}
+                {sectionView === 'seo'           && !systemPageSlug && (
+                  <SeoEdit
+                    theme={theme}
+                    updateTheme={updateTheme}
+                    onBack={() => setSectionView('list')}
+                    storeId={storeId}
+                    storeName={dbStoreName}
+                    storeUrl={storeUrl(subdomain).replace(/^https?:\/\//, '')}
+                  />
+                )}
                 {sectionView === 'custom'        && !systemPageSlug && (
                   <CustomSectionsEdit
+            openAddModal={openAddSection}
                     storeId={storeId}
                     subdomain={subdomain}
                     pageId={null}
@@ -749,6 +857,15 @@ function handlePageContentChange(content: unknown) {
           </div>
         </main>
       </div>
+
+      {productModal && (
+        <ProductModal
+          storeId={storeId}
+          productId={productModal.productId}
+          onClose={() => setProductModal(null)}
+          onSaved={refreshPreview}
+        />
+      )}
 
       {showAddPageModal && (
         <AddPageModal

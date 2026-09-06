@@ -10,6 +10,8 @@ interface MediaPickerProps {
   onChange: (url: string) => void
   accept?: 'image' | 'video' | 'all'
   placeholder?: string
+  /** For callers that render their own, larger preview. */
+  hidePreview?: boolean
 }
 
 export default function MediaPicker({
@@ -18,6 +20,7 @@ export default function MediaPicker({
   onChange,
   accept = 'image',
   placeholder,
+  hidePreview = false,
 }: MediaPickerProps) {
   const [showLibrary, setShowLibrary] = useState(false)
 
@@ -31,7 +34,7 @@ export default function MediaPicker({
         className="px-3 py-2 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition-colors flex items-center gap-1.5"
       >
         <ImagePlus className="w-3.5 h-3.5" />
-        Choose from Library
+        {value ? 'Change image' : 'Choose from Library'}
       </button>
 
       {!value && placeholder && (
@@ -39,7 +42,7 @@ export default function MediaPicker({
       )}
 
       {/* Preview */}
-      {value && (
+      {value && !hidePreview && (
         <div className="relative rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
           {isVideo ? (
             <video src={value} className="w-full max-h-32 object-cover" controls={false} muted />

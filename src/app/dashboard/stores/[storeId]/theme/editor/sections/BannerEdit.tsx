@@ -2,14 +2,16 @@
 
 import SectionHeader from './SectionHeader'
 import { ThemeState, labelCls, inputCls, EDITOR_COLOR } from '../types'
+import AiFieldLabel from '@/components/ai/AiFieldLabel'
 
 interface BannerEditProps {
   theme: ThemeState
   updateTheme: (patch: Partial<ThemeState>) => void
   onBack: () => void
+  storeId: string
 }
 
-export default function BannerEdit({ theme, updateTheme, onBack }: BannerEditProps) {
+export default function BannerEdit({ theme, updateTheme, onBack, storeId }: BannerEditProps) {
   return (
     <div>
       <SectionHeader title="Announcement Banner" description="Top banner shown on every page" onBack={onBack} />
@@ -34,8 +36,16 @@ export default function BannerEdit({ theme, updateTheme, onBack }: BannerEditPro
         </div>
 
         {theme.showBanner && (
-          <div data-field="banner-text">
-            <label className={labelCls}>Banner Text</label>
+          <div data-field="banner-text" className="group/ai">
+            <AiFieldLabel
+              label="Banner Text"
+              storeId={storeId}
+              kind="banner"
+              current={theme.bannerText}
+              hint="a thin bar across the very top of every page"
+              onWrite={text => updateTheme({ bannerText: text })}
+              labelClassName={labelCls + ' mb-0'}
+            />
             <input
               className={inputCls}
               value={theme.bannerText}

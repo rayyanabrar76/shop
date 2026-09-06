@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { SignOutButton } from "@clerk/nextjs";
+import { storeUrl } from "@/lib/config";
 import {
   LayoutDashboard,
   Package,
@@ -18,6 +19,7 @@ import {
   ChevronsUpDown,
   Palette,
   Eye,
+  Pencil,
   Tag,
   CreditCard,
   Truck,
@@ -40,7 +42,7 @@ type Props = {
 
 function getStoreNav(storeId: string) {
   return [
-    { label: "Overview",      href: `/dashboard/stores/${storeId}`,                  icon: LayoutDashboard, exact: true },
+    { label: "Home",          href: `/dashboard/stores/${storeId}`,                  icon: LayoutDashboard, exact: true },
     { label: "Products",      href: `/dashboard/stores/${storeId}/products`,          icon: Package },
     { label: "Categories",    href: `/dashboard/stores/${storeId}/categories`,        icon: Tag },
     { label: "Orders",        href: `/dashboard/stores/${storeId}/orders`,            icon: ShoppingBag },
@@ -56,6 +58,26 @@ function getStoreNav(storeId: string) {
 export default function Sidebar({ firstName, lastName, email, imageUrl, stores }: Props) {
   const pathname = usePathname();
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const switcherRef = useRef<HTMLDivElement>(null);
+
+  // Switching stores is the only job this menu has now that the store picker
+  // page is gone, so it has to be dismissable without navigating.
+  useEffect(() => {
+    if (!switcherOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (switcherRef.current && !switcherRef.current.contains(e.target as Node))
+        setSwitcherOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSwitcherOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [switcherOpen]);
 
   const activeStoreId =
     pathname.match(/\/dashboard\/stores\/([^/]+)/)?.[1] ?? stores[0]?.id ?? "";
@@ -111,7 +133,7 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
             </button>
           </Link>
         ) : (
-          <div className="relative">
+          <div className="relative" ref={switcherRef}>
             <button
               onClick={() => setSwitcherOpen((v) => !v)}
               className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-left"
@@ -173,7 +195,7 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
                       </Link>
 
                       <Link
-                        href={`/store/${store.subdomain}`}
+                        href={storeUrl(store.subdomain)}
                         target="_blank"
                         className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-all"
                         style={{ color: "var(--admin-text-3)" }}
@@ -219,17 +241,10 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
 
       {/* ── Navigation ── */}
       <nav className="flex-1 overflow-y-auto hide-scrollbar px-3 py-2 space-y-0.5">
-        <NavItem
-          href="/dashboard"
-          icon={LayoutDashboard}
-          label="Home"
-          active={pathname === "/dashboard"}
-        />
-
         {activeStore && (
           <>
             <p
-              className="text-[10px] font-bold uppercase tracking-[0.15em] px-3 pt-5 pb-1.5"
+              className="text-[10px] font-bold uppercase tracking-[0.15em] px-3 pt-2 pb-1.5"
               style={{ color: "var(--admin-text-4)" }}
             >
               {activeStore.name}
@@ -241,6 +256,27 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
                 icon={icon}
                 label={label}
                 active={isNavActive(href, exact, label)}
+                // Customization is the one row with somewhere else worth going:
+                // the live shop, and the editor itself.
+                actions={
+                  label === "Customization" && activeStore
+                    ? [
+                        {
+                          key: "view",
+                          title: "View storefront",
+                          icon: Eye,
+                          href: storeUrl(activeStore.subdomain),
+                          external: true,
+                        },
+                        {
+                          key: "edit",
+                          title: "Open the visual editor",
+                          icon: Pencil,
+                          href: `/dashboard/stores/${activeStore.id}/theme/editor`,
+                        },
+                      ]
+                    : undefined
+                }
               />
             ))}
           </>
@@ -288,50 +324,86 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
   );
 }
 
+type NavAction = {
+  key: string;
+  title: string;
+  icon: React.ElementType;
+  href: string;
+  external?: boolean;
+};
+
 function NavItem({
   href,
   icon: Icon,
   label,
   active,
+  actions,
 }: {
   href: string;
   icon: React.ElementType;
   label: string;
   active: boolean;
+  /** Shortcuts revealed on hover, shown instead of the active marker. */
+  actions?: NavAction[];
 }) {
   return (
-    <Link href={href}>
-      <div
-        className="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all"
-        style={{ background: active ? "var(--admin-bg-muted)" : "transparent" }}
-        onMouseEnter={(e) => {
-          if (!active) (e.currentTarget as HTMLElement).style.background = "var(--admin-bg-subtle)";
-        }}
-        onMouseLeave={(e) => {
-          if (!active) (e.currentTarget as HTMLElement).style.background = "transparent";
-        }}
-      >
-        <Icon
-          className="w-4 h-4 shrink-0"
-          style={{ color: active ? "var(--admin-text)" : "var(--admin-text-3)" }}
-          strokeWidth={active ? 2.2 : 1.8}
-        />
-        <span
-          className="text-[13px] flex-1"
-          style={{
-            color: active ? "var(--admin-text)" : "var(--admin-text-2)",
-            fontWeight: active ? 600 : 450,
-          }}
-        >
-          {label}
-        </span>
-        {active && (
-          <div
-            className="w-1 h-3.5 rounded-full shrink-0"
-            style={{ background: "var(--admin-text)" }}
+    <div
+      className="group/nav relative rounded-xl transition-all"
+      style={{ background: active ? "var(--admin-bg-muted)" : "transparent" }}
+      onMouseEnter={(e) => {
+        if (!active) (e.currentTarget as HTMLElement).style.background = "var(--admin-bg-subtle)";
+      }}
+      onMouseLeave={(e) => {
+        if (!active) (e.currentTarget as HTMLElement).style.background = "transparent";
+      }}
+    >
+      <Link href={href}>
+        <div className="flex items-center gap-2.5 px-3 py-2">
+          <Icon
+            className="w-4 h-4 shrink-0"
+            style={{ color: active ? "var(--admin-text)" : "var(--admin-text-3)" }}
+            strokeWidth={active ? 2.2 : 1.8}
           />
-        )}
-      </div>
-    </Link>
+          <span
+            className="text-[13px] flex-1"
+            style={{
+              color: active ? "var(--admin-text)" : "var(--admin-text-2)",
+              fontWeight: active ? 600 : 450,
+            }}
+          >
+            {label}
+          </span>
+          {/* Hidden while the actions are showing, so they do not stack up. */}
+          {active && (
+            <div
+              className={`w-1 h-3.5 rounded-full shrink-0 ${actions ? "group-hover/nav:opacity-0" : ""}`}
+              style={{ background: "var(--admin-text)" }}
+            />
+          )}
+        </div>
+      </Link>
+
+      {actions && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover/nav:opacity-100 focus-within:opacity-100 transition-opacity">
+          {actions.map(a => {
+            const Ico = a.icon;
+            return (
+              <a
+                key={a.key}
+                href={a.href}
+                title={a.title}
+                aria-label={a.title}
+                {...(a.external ? { target: "_blank", rel: "noreferrer" } : {})}
+                className="p-1.5 rounded-lg transition-colors"
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--admin-bg-muted)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ""; }}
+              >
+                <Ico className="w-3.5 h-3.5" style={{ color: "var(--admin-text-2)" }} />
+              </a>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

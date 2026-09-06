@@ -18,7 +18,31 @@ export interface ThemeState {
   showBanner: boolean
   logoUrl: string
   logoWidth: number
+  logoHeight: number
+  headerLayout: string
+  menuPosition: string
+  headerWidth: string
+  headerHeight: string
+  headerSticky: boolean
+  headerBorderWidth: number
+  headerBgColor: string
+  headerTextColor: string
+  utilityStyle: string
+  headerTransparent: boolean
+  headerInverseLogoUrl: string
+  headerTransparentText: string
   footerText: string
+  seoTitle: string
+  seoDescription: string
+  faviconUrl: string
+  sectionOrder: string
+  footerNewsletter: boolean
+  footerNewsletterHeading: string
+  footerNewsletterText: string
+  footerShowLinks: boolean
+  footerLogoUrl: string
+  footerLogoWidth: number
+  footerLogoHeight: number
   instagramHandle: string
   twitterHandle: string
   facebookUrl: string
@@ -54,6 +78,9 @@ export interface ThemeState {
   productPricePaddingRight: number
   // Cart button block
   cartBtnLabel: string
+  cartBtnBgColor: string
+  cartBtnTextColor: string
+  cartBtnDisplay: string
   cartBtnShowIcon: boolean
   cartBtnWidth: string
   cartBtnFontSize: number

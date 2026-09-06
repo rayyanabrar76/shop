@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import SectionHeader from './SectionHeader'
 import MediaPicker from '@/components/MediaPicker'
+import CategoryPicker from './CategoryPicker'
 import { labelCls, inputCls } from '../types'
 import { Plus, Trash2, GripVertical, Eye, EyeOff, Pencil } from 'lucide-react'
 import AddSectionModal from './AddSectionModal'
 import UrlPicker from '@/components/UrlPicker'
+import AiFieldLabel from '@/components/ai/AiFieldLabel'
 
 export interface CustomSection {
   id: string
@@ -22,6 +24,8 @@ export interface CustomSection {
   buttonColor?: string | null
   buttonFont?: string | null
   showButton?: boolean
+  categoryIds?: string
+  showCount?: boolean
   bgColor?: string | null
   position: number
   visible: boolean
@@ -36,15 +40,25 @@ interface CustomSectionsEditProps {
   onPageCreated?: (page: any) => void
   focusSectionId?: { id: string; ts: number } | null
   initialSections?: CustomSection[]
+  /** Timestamp from the preview's "Add section" pill; each new value opens the picker. */
+  openAddModal?: number | null
 }
 
 const inactiveBtnCls = 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-600 dark:text-zinc-300'
 const activeBtnCls = 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
 
-export default function CustomSectionsEdit({ storeId, subdomain, pageId = null, onBack, onSectionsChange, onPageCreated, focusSectionId, initialSections }: CustomSectionsEditProps) {
+export default function CustomSectionsEdit({ storeId, subdomain, pageId = null, onBack, onSectionsChange, onPageCreated, focusSectionId, openAddModal, initialSections }: CustomSectionsEditProps) {
   const [sections, setSections] = useState<CustomSection[]>(initialSections ?? [])
   const [loading, setLoading] = useState(!initialSections || initialSections.length === 0)
-  const [showAddModal, setShowAddModal] = useState(false)
+  // Derived rather than synced in an effect: the picker is open if it was
+  // opened from this panel, or if the preview's "Add section" pill fired a
+  // timestamp newer than the last dismissal. Clicking the pill twice reopens
+  // it because the timestamp changes.
+  const [manualAddOpen, setManualAddOpen] = useState(false)
+  const [addDismissedAt, setAddDismissedAt] = useState(0)
+  const showAddModal = manualAddOpen || (!!openAddModal && openAddModal > addDismissedAt)
+  const openAdd  = () => setManualAddOpen(true)
+  const closeAdd = () => { setManualAddOpen(false); setAddDismissedAt(Date.now()) }
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
@@ -81,7 +95,7 @@ export default function CustomSectionsEdit({ storeId, subdomain, pageId = null, 
       const updated = [...sections, newSection]
       setSections(updated)
       onSectionsChange(updated)
-      setShowAddModal(false)
+      closeAdd()
       setEditingId(newSection.id)
     }
   }
@@ -109,9 +123,12 @@ export default function CustomSectionsEdit({ storeId, subdomain, pageId = null, 
   const editing = sections.find(s => s.id === editingId)
 
   if (editing) {
-    const usesImage = editing.layout === 'image-text' || editing.layout === 'text-image' || editing.layout === 'image-banner'
+    const isCategoryGrid = editing.layout === 'shop-by-category'
+    // A category grid supplies its own tiles, so the image and generic button
+    // controls do not apply to it.
+    const usesImage = !isCategoryGrid && (editing.layout === 'image-text' || editing.layout === 'text-image' || editing.layout === 'image-banner')
     const usesText = editing.layout !== 'heading-only'
-    const usesButton = editing.layout !== 'heading-text' && editing.layout !== 'heading-only'
+    const usesButton = !isCategoryGrid && editing.layout !== 'heading-text' && editing.layout !== 'heading-only'
 
     return (
       <>
@@ -125,14 +142,83 @@ export default function CustomSectionsEdit({ storeId, subdomain, pageId = null, 
               <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">For your reference — not shown to customers</p>
             </div>
 
-            <div data-field="custom-heading">
-              <label className={labelCls}>Heading</label>
+            <div data-field="custom-heading" className="group/ai">
+              <AiFieldLabel
+                label="Heading"
+                storeId={storeId}
+                kind="heading"
+                current={editing.heading ?? ''}
+                hint={`the heading of a "${editing.layout}" section on the storefront`}
+                onWrite={text => handleUpdate(editing.id, { heading: text })}
+                labelClassName={labelCls + ' mb-0'}
+              />
               <input className={inputCls} value={editing.heading ?? ''} onChange={e => handleUpdate(editing.id, { heading: e.target.value })} placeholder="Big bold heading" />
             </div>
 
+            {isCategoryGrid && (
+              <>
+                <div data-field="custom-categories">
+                  <label className={labelCls}>Categories</label>
+                  <CategoryPicker
+                    storeId={storeId}
+                    value={editing.categoryIds ?? ''}
+                    onChange={v => handleUpdate(editing.id, { categoryIds: v })}
+                  />
+                  <p className="text-[10px] text-zinc-400 mt-1">Leave empty to show every category.</p>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0">
+                    <label className={labelCls}>Show View All Link</label>
+                    <p className="text-[10px] text-zinc-400">A link beside the heading</p>
+                  </div>
+                  <button
+                    onClick={() => handleUpdate(editing.id, { showButton: !editing.showButton })}
+                    className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${editing.showButton ? 'bg-zinc-900 dark:bg-zinc-100' : 'bg-zinc-200 dark:bg-zinc-700'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white dark:bg-zinc-900 shadow transition-transform ${editing.showButton ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+
+                {editing.showButton && (
+                  <>
+                    <div>
+                      <label className={labelCls}>Link Label</label>
+                      <input className={inputCls} value={editing.buttonLabel ?? ''} onChange={e => handleUpdate(editing.id, { buttonLabel: e.target.value })} placeholder="View all" />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Link</label>
+                      <input className={inputCls} value={editing.buttonUrl ?? ''} onChange={e => handleUpdate(editing.id, { buttonUrl: e.target.value })} placeholder={`/store/${subdomain}/products`} />
+                    </div>
+                  </>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0">
+                    <label className={labelCls}>Show Product Count</label>
+                    <p className="text-[10px] text-zinc-400">e.g. &quot;4 products&quot; under each tile</p>
+                  </div>
+                  <button
+                    onClick={() => handleUpdate(editing.id, { showCount: !editing.showCount })}
+                    className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${editing.showCount ? 'bg-zinc-900 dark:bg-zinc-100' : 'bg-zinc-200 dark:bg-zinc-700'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white dark:bg-zinc-900 shadow transition-transform ${editing.showCount ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+              </>
+            )}
+
             {usesText && (
-              <div data-field="custom-text">
-                <label className={labelCls}>Text</label>
+              <div data-field="custom-text" className="group/ai">
+                <AiFieldLabel
+                  label="Text"
+                  storeId={storeId}
+                  kind="paragraph"
+                  current={editing.text ?? ''}
+                  hint={`the body text of a "${editing.layout}" section, under the heading "${editing.heading ?? ''}"`}
+                  onWrite={text => handleUpdate(editing.id, { text })}
+                  labelClassName={labelCls + ' mb-0'}
+                />
                 <textarea
                   className={inputCls + ' min-h-20 resize-none'}
                   value={editing.text ?? ''}
@@ -170,8 +256,16 @@ export default function CustomSectionsEdit({ storeId, subdomain, pageId = null, 
 
                 {editing.showButton && (
                   <div className="space-y-4">
-                    <div>
-                      <label className={labelCls}>Button Label</label>
+                    <div className="group/ai">
+                      <AiFieldLabel
+                        label="Button Label"
+                        storeId={storeId}
+                        kind="button"
+                        current={editing.buttonLabel ?? ''}
+                        hint={`the button in a "${editing.layout}" section headed "${editing.heading ?? ''}"`}
+                        onWrite={text => handleUpdate(editing.id, { buttonLabel: text })}
+                        labelClassName={labelCls + ' mb-0'}
+                      />
                       <input className={inputCls} value={editing.buttonLabel ?? ''} onChange={e => handleUpdate(editing.id, { buttonLabel: e.target.value })} placeholder="Shop Now" />
                     </div>
                     <div>
@@ -338,7 +432,7 @@ export default function CustomSectionsEdit({ storeId, subdomain, pageId = null, 
       <div className="p-4 space-y-3">
 
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={() => openAdd()}
           className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-700 text-white text-sm font-bold transition-opacity hover:opacity-90"
         >
           <Plus className="w-4 h-4" /> Add New Section
@@ -376,7 +470,7 @@ export default function CustomSectionsEdit({ storeId, subdomain, pageId = null, 
 
         {showAddModal && (
           <AddSectionModal
-            onClose={() => setShowAddModal(false)}
+            onClose={() => closeAdd()}
             onAdd={handleAdd}
           />
         )}

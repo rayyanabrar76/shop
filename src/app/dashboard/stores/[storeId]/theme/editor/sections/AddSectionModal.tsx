@@ -10,6 +10,22 @@ interface AddSectionModalProps {
 
 const LAYOUTS = [
   {
+    value: 'shop-by-category',
+    label: 'Shop by Category',
+    description: 'Grid of your categories',
+    bestFor: 'Best for helping people browse a large catalogue',
+    preview: (
+      <div className="grid grid-cols-3 gap-1.5">
+        {[0, 1, 2].map(i => (
+          <div key={i} className="space-y-1">
+            <div className="aspect-square bg-zinc-300 rounded" />
+            <div className="h-1 w-3/4 bg-zinc-700 rounded" />
+          </div>
+        ))}
+      </div>
+    ),
+  },
+  {
     value: 'heading-text',
     label: 'Heading + Text',
     description: 'Centered heading and paragraph',

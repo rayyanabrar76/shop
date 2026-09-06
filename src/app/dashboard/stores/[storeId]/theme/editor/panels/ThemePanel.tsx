@@ -20,8 +20,8 @@ export const DARK_PRESET = {
 export const LIGHT_PRESET = {
   darkMode: false,
   backgroundColor: '#ffffff',
-  textColor: '#09090b',
-  footerColor: '#f4f4f5',
+  textColor: '#0a0a0a',
+  footerColor: '#ffffff',
   accentColor: '#000000',
   productGridBg: '#ffffff',
 }

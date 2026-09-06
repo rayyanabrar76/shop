@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import SectionHeader from './SectionHeader'
+import AiFieldLabel from '@/components/ai/AiFieldLabel'
 import { ThemeState, labelCls, inputCls } from '../types'
 import { ExternalLink } from 'lucide-react'
 
@@ -235,8 +236,16 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
 
         {/* Products page heading — products page only */}
         {isProductsPage && (
-          <div data-field="products-heading">
-            <label className={labelCls}>Page Heading</label>
+          <div data-field="products-heading" className="group/ai">
+            <AiFieldLabel
+              label="Page Heading"
+              storeId={storeId}
+              kind="heading"
+              current={theme.featuredLabel}
+              hint="the heading above the product grid"
+              onWrite={text => updateTheme({ featuredLabel: text })}
+              labelClassName={labelCls + ' mb-0'}
+            />
             <input
               type="text"
               className={inputCls}

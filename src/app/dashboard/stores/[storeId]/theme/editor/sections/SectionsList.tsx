@@ -1,73 +1,188 @@
 'use client'
 
-import { Megaphone, LayoutGrid, Image as ImageIcon, Layout, Type, ChevronRight, Sparkles, Code2 } from 'lucide-react'
+import { useState } from 'react'
+import {
+  Megaphone, LayoutGrid, Image as ImageIcon, Layout, Type,
+  ChevronRight, Code2, Search, Plus, Rows3, GripVertical,
+} from 'lucide-react'
+import { isCustomKey, customIdFromKey } from '@/lib/section-order'
+
+interface CustomSectionRow {
+  id: string
+  name: string
+  layout: string
+}
 
 interface SectionsListProps {
   onSectionClick: (section: string) => void
+  /** Opens the custom-sections panel focused on one section. */
+  onCustomSectionClick: (id: string) => void
+  /** Opens the "add a section" picker. */
+  onAddSection: () => void
+  customSections: CustomSectionRow[]
+  /** Resolved order of the movable sections, as section-order keys. */
+  order: string[]
+  onReorder: (keys: string[]) => void
 }
 
-export default function SectionsList({ onSectionClick }: SectionsListProps) {
-  const sections = [
-    { id: 'banner',   label: 'Announcement Banner', icon: Megaphone,  desc: 'Top banner with text' },
-    { id: 'header',   label: 'Header',              icon: Layout,     desc: 'Logo and navigation' },
-    { id: 'hero',     label: 'Hero Slides',         icon: ImageIcon,  desc: 'Welcome carousel' },
-    { id: 'products', label: 'Product Grid',        icon: LayoutGrid, desc: 'Layout, shadows, cards' },
-    { id: 'footer',   label: 'Footer',              icon: Type,       desc: 'Text and social links' },
-  ]
+/**
+ * The page outline, grouped the way a theme actually stacks: what is above the
+ * page, the page itself, and what is below it. Custom sections are listed by
+ * name inside Template rather than hidden behind one "Custom Sections" entry —
+ * a section you added is a section, and should read like the built-in ones.
+ *
+ * Only Template is reorderable. The announcement bar and header are always
+ * above the page and the footer always below, and the header's sticky and
+ * transparent modes both assume it is at the top.
+ */
+export default function SectionsList({
+  onSectionClick,
+  onCustomSectionClick,
+  onAddSection,
+  customSections,
+  order,
+  onReorder,
+}: SectionsListProps) {
+  const [dragKey, setDragKey] = useState<string | null>(null)
+  const [overKey, setOverKey] = useState<string | null>(null)
+
+  function handleDrop(target: string) {
+    if (!dragKey || dragKey === target) { setDragKey(null); setOverKey(null); return }
+    const next = order.filter(k => k !== dragKey)
+    const at = next.indexOf(target)
+    next.splice(at < 0 ? next.length : at, 0, dragKey)
+    onReorder(next)
+    setDragKey(null)
+    setOverKey(null)
+  }
+
+  /** What each key in the order actually renders as. */
+  function rowFor(key: string) {
+    if (key === 'hero') return { icon: ImageIcon, label: 'Hero Slides', open: () => onSectionClick('hero') }
+    if (key === 'products') return { icon: LayoutGrid, label: 'Product Grid', open: () => onSectionClick('products') }
+    if (!isCustomKey(key)) return null
+    const id = customIdFromKey(key)
+    const cs = customSections.find(c => c.id === id)
+    if (!cs) return null
+    return { icon: Rows3, label: cs.name || 'Untitled section', open: () => onCustomSectionClick(id) }
+  }
 
   return (
-    <div className="p-4 space-y-2">
-      <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-3">Page Sections</p>
-      {sections.map(s => (
-        <button
-          key={s.id}
-          onClick={() => onSectionClick(s.id)}
-          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all text-left group"
-        >
-          <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center group-hover:bg-zinc-200 dark:group-hover:bg-zinc-700 transition-colors shrink-0">
-            <s.icon className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{s.label}</p>
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">{s.desc}</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-zinc-300 dark:text-zinc-600 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors shrink-0" />
-        </button>
-      ))}
+    <div className="py-2">
+      <Row icon={Search} label="SEO & Favicon" onClick={() => onSectionClick('seo')} />
 
-      {/* Custom Code */}
-      <div className="pt-3 mt-3 border-t border-zinc-100 dark:border-zinc-800">
-        <button
-          onClick={() => onSectionClick('code')}
-          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all text-left group"
-        >
-          <div className="w-9 h-9 rounded-lg bg-zinc-900 flex items-center justify-center shrink-0">
-            <Code2 className="w-4 h-4 text-green-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Custom Code</p>
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">Inject CSS, scripts & head tags</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-zinc-300 dark:text-zinc-600 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors shrink-0" />
-        </button>
-      </div>
+      <Group label="Header">
+        <Row icon={Megaphone} label="Announcement Banner" onClick={() => onSectionClick('banner')} />
+        <Row icon={Layout} label="Header" onClick={() => onSectionClick('header')} />
+        <AddRow onClick={onAddSection} />
+      </Group>
 
-      {/* Custom Sections — special highlight */}
-      <div className="mt-2">
-        <button
-          onClick={() => onSectionClick('custom')}
-          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-600 hover:border-zinc-900 dark:hover:border-zinc-400 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all text-left group"
-        >
-          <div className="w-9 h-9 rounded-lg bg-linear-to-brrom-violet-500 to-pink-500 flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-zinc-900 dark:text-zinc-50">Custom Sections</p>
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">Add your own content blocks</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-zinc-300 dark:text-zinc-600 group-hover:text-zinc-900 dark:group-hover:text-zinc-200 transition-colors shrink-0" />
-        </button>
+      <Group label="Template">
+        {order.map(key => {
+          const row = rowFor(key)
+          if (!row) return null
+          return (
+            <Row
+              key={key}
+              icon={row.icon}
+              label={row.label}
+              onClick={row.open}
+              draggable
+              dragging={dragKey === key}
+              dropTarget={overKey === key && dragKey !== key}
+              onDragStart={() => setDragKey(key)}
+              onDragEnd={() => { setDragKey(null); setOverKey(null) }}
+              onDragOver={() => setOverKey(key)}
+              onDrop={() => handleDrop(key)}
+            />
+          )
+        })}
+        <AddRow onClick={onAddSection} />
+      </Group>
+
+      <Group label="Footer">
+        <Row icon={Type} label="Footer" onClick={() => onSectionClick('footer')} />
+        <AddRow onClick={onAddSection} />
+      </Group>
+
+      <div className="border-t border-zinc-100 dark:border-zinc-800 mt-1 pt-1">
+        <Row icon={Code2} label="Custom Code" onClick={() => onSectionClick('code')} />
       </div>
     </div>
+  )
+}
+
+function Group({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="border-t border-zinc-100 dark:border-zinc-800 mt-1 pt-2 first:border-t-0 first:mt-0">
+      <p className="px-4 pb-1 text-[11px] font-bold text-zinc-800 dark:text-zinc-200">{label}</p>
+      {children}
+    </div>
+  )
+}
+
+function Row({
+  icon: Icon,
+  label,
+  onClick,
+  draggable = false,
+  dragging = false,
+  dropTarget = false,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDrop,
+}: {
+  icon: React.ElementType
+  label: string
+  onClick: () => void
+  draggable?: boolean
+  dragging?: boolean
+  dropTarget?: boolean
+  onDragStart?: () => void
+  onDragEnd?: () => void
+  onDragOver?: () => void
+  onDrop?: () => void
+}) {
+  return (
+    <div
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={e => { if (draggable) { e.preventDefault(); onDragOver?.() } }}
+      onDrop={e => { if (draggable) { e.preventDefault(); onDrop?.() } }}
+      className={`group/row flex items-center gap-1 pr-3 transition-colors ${
+        dragging ? 'opacity-40' : ''
+      } ${dropTarget ? 'border-t-2 border-blue-500' : 'border-t-2 border-transparent'} hover:bg-zinc-50 dark:hover:bg-zinc-800`}
+    >
+      {draggable ? (
+        <span
+          className="pl-1.5 py-2 cursor-grab active:cursor-grabbing text-zinc-300 dark:text-zinc-600 opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0"
+          title="Drag to reorder"
+        >
+          <GripVertical className="w-3.5 h-3.5" />
+        </span>
+      ) : (
+        <span className="pl-1.5 w-5.5 shrink-0" />
+      )}
+
+      <button onClick={onClick} className="flex-1 flex items-center gap-2.5 py-2 min-w-0 text-left">
+        <Icon className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
+        <span className="flex-1 text-[13px] text-zinc-700 dark:text-zinc-200 truncate">{label}</span>
+        <ChevronRight className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600 group-hover/row:text-zinc-500 dark:group-hover/row:text-zinc-400 transition-colors shrink-0" />
+      </button>
+    </div>
+  )
+}
+
+function AddRow({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-2.5 pl-7.5 pr-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left"
+    >
+      <Plus className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100 shrink-0" />
+      <span className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100">Add section</span>
+    </button>
   )
 }

@@ -37,6 +37,8 @@ export async function PATCH(
       buttonColor:   body.buttonColor,
       buttonFont:    body.buttonFont,
       showButton:    body.showButton,
+      categoryIds: body.categoryIds ?? undefined,
+      showCount: body.showCount ?? undefined,
       bgColor:       body.bgColor,
       position:      body.position,
       visible:       body.visible,

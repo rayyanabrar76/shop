@@ -60,6 +60,8 @@ export async function POST(
       buttonColor:   body.buttonColor   ?? null,
       buttonFont:    body.buttonFont    ?? null,
       showButton:    body.showButton    ?? false,
+      categoryIds: body.categoryIds ?? undefined,
+      showCount: body.showCount ?? undefined,
       bgColor:       body.bgColor       ?? null,
       position,
       visible:     body.visible ?? true,

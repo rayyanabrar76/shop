@@ -4,7 +4,7 @@ import { useState } from 'react'
 import {
   Globe, X,
   Users, Mail, HelpCircle, BookOpen,
-  Package, Shield, FileText, Layers,
+  Package, Shield, FileText, Layers, RotateCcw,
 } from 'lucide-react'
 
 export interface PageResult {
@@ -22,6 +22,7 @@ export const PAGE_TEMPLATES = [
   { type: 'blog',     name: 'Blog',             slug: 'blog',            Icon: BookOpen,    desc: 'Articles & updates' },
   { type: 'shipping', name: 'Shipping Policy',  slug: 'shipping-policy', Icon: Package,     desc: 'Delivery info' },
   { type: 'privacy',  name: 'Privacy Policy',   slug: 'privacy-policy',  Icon: Shield,      desc: 'Data handling' },
+  { type: 'refund',   name: 'Refund Policy',    slug: 'refund-policy',   Icon: RotateCcw,   desc: 'Returns & refunds' },
   { type: 'terms',    name: 'Terms of Service', slug: 'terms',           Icon: FileText,    desc: 'Legal terms' },
   { type: 'custom',   name: 'Custom Page',      slug: '',                Icon: Layers,      desc: 'Name it yourself' },
 ]

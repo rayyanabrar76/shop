@@ -6,6 +6,7 @@ import MediaPicker from '@/components/MediaPicker'
 import { ThemeState, inputCls } from '../types'
 import { GripVertical, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import UrlPicker from '@/components/UrlPicker'
+import AiFieldLabel, { type AiFieldKind } from '@/components/ai/AiFieldLabel'
 
 export interface HeroSlide {
   id: string
@@ -133,10 +134,17 @@ interface SlideCardProps {
 }
 
 function SlideCard({ storeId, subdomain, slide, index, total, isOpen, onToggle, onUpdate, onRemove, onDragStart, onDragOver, onDrop, onPageCreated }: SlideCardProps) {
-  const textFields: { key: keyof HeroSlide; label: string; placeholder: string; fieldId: string }[] = [
-    { key: 'heading',    label: 'Heading',      placeholder: 'Big bold headline', fieldId: 'hero-heading' },
-    { key: 'subheading', label: 'Subheading',   placeholder: 'Supporting line',   fieldId: 'hero-subheading' },
-    { key: 'ctaLabel',   label: 'Button Label', placeholder: 'Shop Now',          fieldId: 'hero-cta' },
+  const textFields: {
+    key: keyof HeroSlide
+    label: string
+    placeholder: string
+    fieldId: string
+    aiKind: AiFieldKind
+    aiHint: string
+  }[] = [
+    { key: 'heading',    label: 'Heading',      placeholder: 'Big bold headline', fieldId: 'hero-heading',    aiKind: 'heading',    aiHint: 'the big headline on the home page hero slide' },
+    { key: 'subheading', label: 'Subheading',   placeholder: 'Supporting line',   fieldId: 'hero-subheading', aiKind: 'subheading', aiHint: 'the supporting line under the hero headline' },
+    { key: 'ctaLabel',   label: 'Button Label', placeholder: 'Shop Now',          fieldId: 'hero-cta',        aiKind: 'button',     aiHint: 'the call-to-action button on the hero slide' },
   ]
 
   return (
@@ -161,8 +169,17 @@ function SlideCard({ storeId, subdomain, slide, index, total, isOpen, onToggle, 
       {isOpen && (
         <div className="px-3 pb-3 space-y-2 border-t border-zinc-100 dark:border-zinc-800">
           {textFields.map(f => (
-            <div key={f.key} className="space-y-1 pt-2" data-field={f.fieldId}>
-              <label className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">{f.label}</label>
+            <div key={f.key} className="group/ai space-y-1 pt-2" data-field={f.fieldId}>
+              <AiFieldLabel
+                label={f.label}
+                storeId={storeId}
+                kind={f.aiKind}
+                current={(slide[f.key] as string) ?? ''}
+                hint={f.aiHint}
+                onWrite={text => onUpdate(slide.id, f.key, text)}
+                className="mb-0"
+                labelClassName="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider"
+              />
               <input
                 className={inputCls}
                 value={(slide[f.key] as string) ?? ''}

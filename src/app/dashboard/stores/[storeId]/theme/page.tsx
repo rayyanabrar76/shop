@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { storeUrl } from '@/lib/config'
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
@@ -46,7 +47,7 @@ export default async function ThemePage({
         <div className="space-y-3">
           {/* View Live Store */}
           <Link
-            href={`/store/${store.subdomain}?customerView=1`}
+            href={storeUrl(store.subdomain, '?customerView=1')}
             target="_blank"
             className="flex items-center justify-between w-full px-5 py-4 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all group"
           >
@@ -62,11 +63,15 @@ export default async function ThemePage({
             <span className="text-zinc-300 dark:text-zinc-600 text-lg">→</span>
           </Link>
 
-          {/* Customize — goes to full visual editor */}
+          {/* Customize — goes to full visual editor.
+              The border is deliberately not the primary colour: this card is
+              filled with the store's own colour, so a black theme on the dark
+              admin page gave a black card a black border and the edge vanished.
+              A theme-derived hairline always has something to contrast with. */}
           <Link
             href={`/dashboard/stores/${storeId}/theme/editor`}
-            className="flex items-center justify-between w-full px-5 py-4 rounded-2xl border transition-all group"
-            style={{ backgroundColor: primary, borderColor: primary }}
+            className="flex items-center justify-between w-full px-5 py-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-md transition-all group"
+            style={{ backgroundColor: primary }}
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
@@ -74,14 +79,14 @@ export default async function ThemePage({
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold" style={{ color: buttonTextColor }}>Customize Your Store</p>
-                <p className={`text-xs mt-0.5 ${buttonTextOpacity}`}> sections, theme - live editor</p>
+                <p className={`text-xs mt-0.5 ${buttonTextOpacity}`}>sections, theme - live editor</p>
               </div>
             </div>
             <span className={`text-lg ${buttonArrowColor}`}>→</span>
           </Link>
         </div>
 
-        <p className="text-xs text-zinc-400 dark:text-zinc-600 font-mono">/store/{store.subdomain}</p>
+        <p className="text-xs text-zinc-400 dark:text-zinc-600 font-mono">{storeUrl(store.subdomain).replace(/^https?:\/\//, '')}</p>
       </div>
     </div>
   )

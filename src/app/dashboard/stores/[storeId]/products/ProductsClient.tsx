@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { storeUrl } from '@/lib/config'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -18,6 +19,7 @@ interface Product {
   price: number
   category: string | null
   imageUrl: string | null
+  slug: string | null
   store: { subdomain: string }
 }
 
@@ -193,7 +195,7 @@ export default function ProductsClient({ storeId, products: initial, categories 
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-1">
                       <Link
-                        href={`/store/${p.store.subdomain}/products/${p.id}`}
+                        href={storeUrl(p.store.subdomain, `/products/${p.slug || p.id}?owner=1`)}
                         target="_blank"
                         className="p-2 text-zinc-400 dark:text-zinc-500 hover:text-black dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all"
                         title="View on store"
