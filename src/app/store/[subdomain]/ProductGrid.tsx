@@ -87,6 +87,22 @@ const TITLE_SIZE: Record<string, React.CSSProperties> = {
   h6: { fontSize: '1rem', fontWeight: 600, lineHeight: 1.4 },
 }
 
+/**
+ * Editorial defaults for the card text. Spread *before* the preset lookup, so
+ * a merchant who picks a size in the theme editor still wins — these only fill
+ * in the "default" preset, which maps to nothing.
+ */
+const TITLE_BASE: React.CSSProperties = {
+  fontSize: '0.9375rem',
+  fontWeight: 500,
+  lineHeight: 1.45,
+  letterSpacing: '0.005em',
+}
+
+const PRICE_BASE: React.CSSProperties = {
+  letterSpacing: '0.01em',
+}
+
 const PRICE_SIZE: Record<string, React.CSSProperties> = {
   h1: { fontSize: '2.25rem', fontWeight: 900 },
   h2: { fontSize: '1.875rem', fontWeight: 900 },
@@ -137,6 +153,7 @@ export default function ProductGrid({
   // — title computed style —
   const titlePreset = themeStyle.productTitlePreset || 'default'
   const titleStyle: React.CSSProperties = {
+    ...TITLE_BASE,
     ...(TITLE_SIZE[titlePreset] ?? {}),
     textAlign: (themeStyle.productTitleAlign || 'left') as React.CSSProperties['textAlign'],
     ...(themeStyle.productTitleBg ? { backgroundColor: themeStyle.productTitleBg } : {}),
@@ -148,6 +165,7 @@ export default function ProductGrid({
   // — price computed style —
   const pricePreset = themeStyle.productPricePreset || 'h6'
   const priceStyle: React.CSSProperties = {
+    ...PRICE_BASE,
     ...(PRICE_SIZE[pricePreset] ?? { fontSize: '0.875rem', fontWeight: 900 }),
     textAlign: (themeStyle.productPriceAlign || 'left') as React.CSSProperties['textAlign'],
     ...(themeStyle.productPriceTextColor ? { color: themeStyle.productPriceTextColor } : {}),
@@ -177,7 +195,7 @@ export default function ProductGrid({
     <main className="flex-1 px-4 md:px-8 py-6 max-w-7xl mx-auto w-full" id="products">
 
       {/* Section heading */}
-      <div className="mb-5 flex items-center gap-2">
+      <div className="mb-7 flex items-center gap-2">
         <div className="h-4 w-1 rounded-full" style={{ backgroundColor: primaryColor }} />
         <EditorItem section="products" field="featured-label" label="Section heading" isEditor={isEditor} onEdit={notify}>
           <h2
@@ -194,7 +212,7 @@ export default function ProductGrid({
           className={
             isList
               ? 'flex flex-col gap-3 max-w-lg'
-              : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3'
+              : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-9 sm:gap-x-6 sm:gap-y-10'
           }
         >
           {products.map((p) => (
@@ -257,17 +275,22 @@ export default function ProductGrid({
               /* ── GRID layout ── */
               <EditorItem key={p.id} section="products" field="layout" label="Card layout" isEditor={isEditor} onEdit={notify} block>
               <div
-                className="group flex flex-col bg-white overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
-                style={{ borderRadius, ...shadowStyle, border: '1px solid var(--store-card-border, #f1f1f1)', ...(fontFamily ? { fontFamily } : {}) }}
+                className="group flex flex-col cursor-pointer"
+                style={fontFamily ? { fontFamily } : undefined}
                 onClick={() => navigateTo(p.id)}
               >
-                {/* Image with category badge overlay */}
-                <div className="relative shrink-0 bg-zinc-50 overflow-hidden" style={{ height: 210 }}>
+                {/* The card has no frame of its own — the image is the object,
+                    sitting on the page. Theme radius and shadow move onto it so
+                    both settings still read. */}
+                <div
+                  className="relative shrink-0 overflow-hidden bg-zinc-50"
+                  style={{ borderRadius, ...shadowStyle, aspectRatio: '1 / 1' }}
+                >
                   {p.imageUrl ? (
                     <img
                       src={p.imageUrl}
                       alt={p.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-[700ms] ease-out group-hover:scale-[1.04]"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-zinc-200">
@@ -286,17 +309,14 @@ export default function ProductGrid({
                       <Pencil className="w-2.5 h-2.5" /> Edit
                     </button>
                   )}
+                </div>
+
+                <div className="pt-3.5 flex flex-col gap-1.5 flex-1">
                   {p.category && (
-                    <span
-                      className="absolute top-2.5 left-2.5 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: primaryColor + '18', color: primaryColor }}
-                    >
+                    <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-400 leading-none">
                       {p.category}
                     </span>
                   )}
-                </div>
-
-                <div className="p-3 flex flex-col gap-2 flex-1">
                   <div style={titleHighlight}>
                     <EditorItem section="products" field="product-title" label="Product Title" isEditor={isEditor} onEdit={notify} block>
                       <CardTitleLink isEditor={isEditor} href={`/store/${subdomain}/products/${p.id}`} style={titleStyle}>
@@ -311,7 +331,19 @@ export default function ProductGrid({
                       </span>
                     </EditorItem>
                   </div>
-                  <div className="mt-auto" style={cartHighlight} onClick={e => e.stopPropagation()}>
+                  {/* Reveals on hover so the products carry the page. It keeps
+                      its space in the layout (only opacity animates), so
+                      nothing shifts. Touch devices have no hover, and the
+                      editor needs it clickable, so both show it outright. */}
+                  <div
+                    className={`mt-auto pt-1.5 transition-all duration-300 ease-out focus-within:opacity-100 focus-within:translate-y-0 ${
+                      isEditor
+                        ? ''
+                        : 'md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0'
+                    }`}
+                    style={cartHighlight}
+                    onClick={e => e.stopPropagation()}
+                  >
                     <EditorItem section="products" field="add-to-cart-btn" label="Cart Button" isEditor={isEditor} onEdit={notify} block>
                       <AddToCartButton
                         product={{ id: p.id, title: p.title, price: p.price, imageUrl: p.imageUrl }}
