@@ -415,7 +415,7 @@ export default function CreateProductPage() {
                     className="w-full flex items-center justify-between px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
                   >
                     <span className={category ? 'text-zinc-800 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500'}>
-                      {category || 'No category'}
+                      {category ? (categories.find(c => c.slug === category)?.name ?? category) : 'No category'}
                     </span>
                     <HiChevronDown className={`w-4 h-4 text-zinc-400 dark:text-zinc-500 transition-transform ${catOpen ? 'rotate-180' : ''}`} />
                   </button>
@@ -435,14 +435,14 @@ export default function CreateProductPage() {
                       {categories.map(cat => (
                         <button
                           key={cat.id}
-                          onClick={() => { setCategory(cat.name); setCatOpen(false) }}
+                          onClick={() => { setCategory(cat.slug); setCatOpen(false) }}
                           className="w-full flex items-center justify-between px-3.5 py-2.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
                         >
                           <div className="flex items-center gap-2">
                             <HiTag className="w-3 h-3 text-zinc-300 dark:text-zinc-600" />
                             <span className="text-zinc-700 dark:text-zinc-200 font-medium">{cat.name}</span>
                           </div>
-                          {category === cat.name && <HiCheck className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-100" />}
+                          {category === cat.slug && <HiCheck className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-100" />}
                         </button>
                       ))}
                     </div>

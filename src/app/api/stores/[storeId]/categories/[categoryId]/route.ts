@@ -18,6 +18,12 @@ export async function PATCH(
     const store = await prisma.store.findFirst({ where: { id: storeId, owner: { clerkId } } })
     if (!store) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+    const existing = await prisma.category.findFirst({
+      where: { id: categoryId, storeId },
+      select: { slug: true, name: true },
+    })
+    if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
     const updateData: any = {}
     if (name !== undefined) updateData.name = name.trim()
     if (slug !== undefined) {
@@ -33,6 +39,15 @@ export async function PATCH(
       where: { id: categoryId },
       data: updateData,
     })
+
+    // Products reference the category by slug string, so a renamed slug would
+    // otherwise orphan every product still pointing at the old one.
+    if (updateData.slug && updateData.slug !== existing.slug) {
+      await prisma.product.updateMany({
+        where: { storeId, category: { in: [existing.slug, existing.name] } },
+        data: { category: updateData.slug },
+      })
+    }
 
     return NextResponse.json({ ok: true, category })
   } catch (err) {
@@ -55,9 +70,19 @@ export async function DELETE(
     const store = await prisma.store.findFirst({ where: { id: storeId, owner: { clerkId } } })
     if (!store) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    // Nullify category on products before deleting
+    const category = await prisma.category.findFirst({
+      where: { id: categoryId, storeId },
+      select: { slug: true, name: true },
+    })
+    if (!category) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+    // Clear the category off its products first. Product.category is a plain
+    // string holding the slug, not a foreign key, so this matched the category
+    // *id* before and silently updated nothing — leaving products labelled with
+    // a category that no longer existed. Name is matched too, because an older
+    // version of the create form saved the name instead of the slug.
     await prisma.product.updateMany({
-      where: { storeId, category: { equals: categoryId } },
+      where: { storeId, category: { in: [category.slug, category.name] } },
       data: { category: null },
     })
 

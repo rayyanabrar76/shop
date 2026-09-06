@@ -106,8 +106,11 @@ function RowMenu({ product, storeId, onDelete }: { product: Product; storeId: st
   )
 }
 
-export default function ProductsClient({ storeId, products: initial }: { storeId: string; subdomain: string; products: Product[] }) {
+export default function ProductsClient({ storeId, products: initial, categories = [] }: { storeId: string; subdomain: string; products: Product[]; categories?: { name: string; slug: string }[] }) {
   const price = useDashboardPrice()
+  // Match on slug or name: products created by an older form saved the name.
+  const categoryLabel = (value: string | null) =>
+    value ? (categories.find(c => c.slug === value || c.name === value)?.name ?? null) : null
   const router = useRouter()
   const [products, setProducts] = useState<Product[]>(initial)
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
@@ -174,7 +177,7 @@ export default function ProductsClient({ storeId, products: initial }: { storeId
                         <Link href={`/dashboard/stores/${storeId}/products/${p.id}`} className="font-semibold text-zinc-900 dark:text-zinc-50 hover:underline block truncate">
                           {p.title}
                         </Link>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{p.category || 'No category'}</p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{categoryLabel(p.category) ?? 'No category'}</p>
                       </div>
                     </div>
                   </td>
@@ -212,7 +215,7 @@ export default function ProductsClient({ storeId, products: initial }: { storeId
               <HiCube className="w-6 h-6 text-zinc-300 dark:text-zinc-600" />
             </div>
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">No products found</h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-[200px]">Get started by creating your first product.</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-50">Get started by creating your first product.</p>
             <Link href={`/dashboard/stores/${storeId}/products/create`} className="mt-4 text-xs font-bold text-black dark:text-white underline">
               Add your first product
             </Link>

@@ -21,5 +21,13 @@ export default async function ProductsPage({
     orderBy: { createdAt: 'desc' },
   })
 
-  return <ProductsClient storeId={storeId} subdomain={store.subdomain} products={products} />
+  // Product.category holds a slug string rather than a foreign key, so the
+  // label is resolved against the live categories — a deleted one then reads
+  // as "No category" instead of a name that no longer exists.
+  const categories = await prisma.category.findMany({
+    where: { storeId },
+    select: { name: true, slug: true },
+  })
+
+  return <ProductsClient storeId={storeId} subdomain={store.subdomain} products={products} categories={categories} />
 }
