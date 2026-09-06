@@ -29,7 +29,7 @@ export async function POST(
     if (!clerkId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { storeId } = await params
-    const { name, slug } = await req.json()
+    const { name, slug, description, imageUrl, productIds } = await req.json()
 
     if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 })
 
@@ -42,8 +42,23 @@ export async function POST(
     if (existing) return NextResponse.json({ error: 'A category with this slug already exists.' }, { status: 409 })
 
     const category = await prisma.category.create({
-      data: { storeId, name: name.trim(), slug },
+      data: {
+        storeId,
+        name: name.trim(),
+        slug,
+        description: description?.trim() || null,
+        imageUrl: imageUrl?.trim() || null,
+      },
     })
+
+    // Products reference a category by slug, so assigning them is a plain
+    // update rather than a join table.
+    if (Array.isArray(productIds) && productIds.length > 0) {
+      await prisma.product.updateMany({
+        where: { storeId, id: { in: productIds.filter((x: unknown) => typeof x === 'string') } },
+        data: { category: slug },
+      })
+    }
 
     return NextResponse.json({ ok: true, category })
   } catch (err) {

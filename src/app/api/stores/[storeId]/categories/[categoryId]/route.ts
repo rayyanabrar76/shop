@@ -13,7 +13,7 @@ export async function PATCH(
     if (!clerkId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { storeId, categoryId } = await params
-    const { name, slug, visible } = await req.json()
+    const { name, slug, visible, description, imageUrl, productIds } = await req.json()
 
     const store = await prisma.store.findFirst({ where: { id: storeId, owner: { clerkId } } })
     if (!store) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -34,6 +34,8 @@ export async function PATCH(
       updateData.slug = slug
     }
     if (visible !== undefined) updateData.visible = visible
+    if (description !== undefined) updateData.description = description?.trim() || null
+    if (imageUrl !== undefined) updateData.imageUrl = imageUrl?.trim() || null
 
     const category = await prisma.category.update({
       where: { id: categoryId },
@@ -47,6 +49,23 @@ export async function PATCH(
         where: { storeId, category: { in: [existing.slug, existing.name] } },
         data: { category: updateData.slug },
       })
+    }
+
+    // Replacing the membership: clear whoever points here now, then set the
+    // new list. Matches on the old name too, for rows an earlier form wrote.
+    if (Array.isArray(productIds)) {
+      const finalSlug = category.slug
+      await prisma.product.updateMany({
+        where: { storeId, category: { in: [finalSlug, existing.slug, existing.name] } },
+        data: { category: null },
+      })
+      const ids = productIds.filter((x: unknown) => typeof x === 'string')
+      if (ids.length > 0) {
+        await prisma.product.updateMany({
+          where: { storeId, id: { in: ids } },
+          data: { category: finalSlug },
+        })
+      }
     }
 
     return NextResponse.json({ ok: true, category })
@@ -85,6 +104,24 @@ export async function DELETE(
       where: { storeId, category: { in: [category.slug, category.name] } },
       data: { category: null },
     })
+
+    // Shop-by-category sections store a comma-separated id list, so a deleted
+    // category would otherwise linger there — the picker counting a selection
+    // that no longer resolves to anything.
+    const sections = await prisma.customSection.findMany({
+      where: { storeId, categoryIds: { contains: categoryId } },
+      select: { id: true, categoryIds: true },
+    })
+    for (const section of sections) {
+      const kept = section.categoryIds
+        .split(',')
+        .map(x => x.trim())
+        .filter(x => x && x !== categoryId)
+      await prisma.customSection.update({
+        where: { id: section.id },
+        data: { categoryIds: kept.join(',') },
+      })
+    }
 
     await prisma.category.delete({ where: { id: categoryId } })
 
