@@ -295,11 +295,14 @@ export default function ProductEditClient({ storeId, product, categories }: {
               <div className="grid grid-cols-2 gap-4 mt-3">
                 <div>
                   <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5 block">Price <span className="text-red-400">*</span></label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 text-xs">{currencySymbol(currency)}</span>
+                  {/* The symbol sits in the flow rather than absolutely over the
+                      field: codes like PKR or CHF are far wider than "$" and
+                      overlapped a fixed padding. */}
+                  <div className={`flex items-center rounded-xl border overflow-hidden transition-all bg-white dark:bg-zinc-800 focus-within:border-zinc-400 dark:focus-within:border-zinc-500 ${price === '' || Number(price) <= 0 ? 'border-red-200 dark:border-red-900' : 'border-zinc-200 dark:border-zinc-700'}`}>
+                    <span className="pl-3 pr-1.5 text-zinc-400 dark:text-zinc-500 text-xs shrink-0 select-none">{currencySymbol(currency)}</span>
                     <input type="number" min="0" step={currencyDecimals(currency) === 0 ? "1" : "0.01"} value={price} onChange={e => setPrice(e.target.value)}
                       onKeyDown={e => ['e','E','+','-'].includes(e.key) && e.preventDefault()}
-                      className={`w-full rounded-xl border pl-7 pr-3 py-2 text-sm outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-all bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 ${price === '' || Number(price) <= 0 ? 'border-red-200 dark:border-red-900' : 'border-zinc-200 dark:border-zinc-700'}`} />
+                      className="flex-1 min-w-0 pr-3 py-2 text-sm outline-none bg-transparent text-zinc-900 dark:text-zinc-50" />
                   </div>
                 </div>
                 <div>
