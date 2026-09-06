@@ -14,6 +14,8 @@ import {
   HiExclamation,
 } from 'react-icons/hi'
 import { useAdminTheme, type AdminThemeMode } from '@/components/dashboard/AdminThemeProvider'
+import { APP_URL } from '@/lib/config'
+import { normalizeSubdomainInput, slugifySubdomain, validateSubdomain } from '@/lib/subdomain'
 
 interface StoreData {
   id: string
@@ -49,7 +51,12 @@ export default function SettingsClient({ store }: { store: StoreData }) {
   const [deleteError, setDeleteError] = useState('')
 
   const primary = store.theme?.primaryColor ?? '#6c47ff'
-  const storeUrl = `localhost:3000/store/${store.subdomain}`
+  // Built from NEXT_PUBLIC_APP_URL — this used to be hardcoded to
+  // localhost:3000, so the deployed dashboard showed (and copied) a URL that
+  // only worked on the developer's own machine.
+  const storeUrl = `${APP_URL}/store/${store.subdomain}`
+  const storeUrlDisplay = storeUrl.replace(/^https?:\/\//, '')
+  const subdomainError = validateSubdomain(subdomain)
 
   async function handleSave() {
     setSaving(true); setError(''); setSaved(false)
@@ -171,7 +178,7 @@ export default function SettingsClient({ store }: { store: StoreData }) {
                   ${activeSection === id
                     ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-zinc-50 border border-zinc-200 dark:border-zinc-700'
                     : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-white/60 dark:hover:bg-zinc-800/60'}
-                  ${id === 'danger' && activeSection !== 'danger' ? '!text-red-500 hover:!text-red-600' : ''}`}
+                  ${id === 'danger' && activeSection !== 'danger' ? 'text-red-500! hover:text-red-600!' : ''}`}
               >
                 <Icon size={14} className={id === 'danger' && activeSection !== 'danger' ? 'text-red-400' : ''} />
                 {label}
@@ -270,19 +277,23 @@ export default function SettingsClient({ store }: { store: StoreData }) {
               <Card title="Domain & URL" description="Manage your store's public address.">
                 <div className="space-y-5">
                   <Field label="Subdomain" hint="Lowercase letters, numbers, and hyphens only.">
-                    <div className="flex items-center border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-offset-1 dark:focus-within:ring-offset-zinc-900 focus-within:ring-black/10 dark:focus-within:ring-white/10 transition-shadow">
+                    <div className={`flex items-center border rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-offset-1 dark:focus-within:ring-offset-zinc-900 focus-within:ring-black/10 dark:focus-within:ring-white/10 transition-shadow ${subdomainError ? 'border-red-300 dark:border-red-800' : 'border-zinc-200 dark:border-zinc-700'}`}>
                       <span className="px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 text-sm border-r border-zinc-200 dark:border-zinc-700 shrink-0">/store/</span>
                       <input
                         className="flex-1 px-3 py-2.5 text-sm focus:outline-none bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50"
                         value={subdomain}
-                        onChange={e => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                        onChange={e => setSubdomain(normalizeSubdomainInput(e.target.value))}
+                        onBlur={() => setSubdomain(s => slugifySubdomain(s))}
                       />
                     </div>
+                    {subdomainError && (
+                      <p className="text-[11px] text-red-500 dark:text-red-400 font-medium mt-1.5">{subdomainError}</p>
+                    )}
                   </Field>
                   <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-4 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Store URL</p>
-                      <p className="text-sm font-mono text-zinc-700 dark:text-zinc-200 truncate">{storeUrl}</p>
+                      <p className="text-sm font-mono text-zinc-700 dark:text-zinc-200 truncate">{storeUrlDisplay}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <button onClick={copyUrl} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-white dark:hover:bg-zinc-800 transition-colors text-zinc-600 dark:text-zinc-300">
@@ -294,7 +305,7 @@ export default function SettingsClient({ store }: { store: StoreData }) {
                     </div>
                   </div>
                   <StatusLine saved={saved} error={error} />
-                  <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50 hover:opacity-90 transition-opacity" style={{ backgroundColor: primary }}>
+                  <button onClick={handleSave} disabled={saving || Boolean(subdomainError)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity" style={{ backgroundColor: primary }}>
                     <Save size={14} />
                     {saving ? 'Saving...' : 'Save Changes'}
                   </button>
