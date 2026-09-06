@@ -23,6 +23,7 @@ interface ThemeStyle {
   headingFont: string
   font?: string | null
   cardShadow?: string
+  productImageRadius?: string
   featuredLabel?: string
   productTitleWidth?: string
   productTitleAlign?: string
@@ -144,6 +145,9 @@ export default function ProductGrid({
   const cardShadow = themeStyle.cardShadow ?? theme?.cardShadow ?? 'none'
   const isList = theme?.layout === 'list'
   const shadowStyle = getCardShadow(cardShadow, primaryColor)
+  // Card covers can opt out of the global curvature — squared-off images read
+  // very differently from the buttons, which usually still want rounding.
+  const imageRadius = themeStyle.productImageRadius || borderRadius
   const notify = onEdit ?? (() => {})
 
   function navigateTo(id: string) {
@@ -232,7 +236,7 @@ export default function ProductGrid({
                     <Pencil className="w-2.5 h-2.5" /> Edit
                   </button>
                 )}
-                <div className="w-20 h-20 shrink-0 bg-zinc-100 overflow-hidden" style={{ borderRadius }}>
+                <div className="w-20 h-20 shrink-0 bg-zinc-100 overflow-hidden" style={{ borderRadius: imageRadius }}>
                   {p.imageUrl ? (
                     <img src={p.imageUrl} alt={p.title} className="w-full h-full object-cover" />
                   ) : (
@@ -284,7 +288,7 @@ export default function ProductGrid({
                     both settings still read. */}
                 <div
                   className="relative shrink-0 overflow-hidden bg-zinc-50"
-                  style={{ borderRadius, ...shadowStyle, aspectRatio: '1 / 1' }}
+                  style={{ borderRadius: imageRadius, ...shadowStyle, aspectRatio: '1 / 1' }}
                 >
                   {p.imageUrl ? (
                     <img

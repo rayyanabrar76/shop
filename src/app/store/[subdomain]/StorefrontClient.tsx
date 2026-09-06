@@ -35,6 +35,7 @@ interface ThemeStyle {
   shopAllLabel: string
   featuredLabel: string
   productGridBg: string
+  productImageRadius?: string
   productGridButtonColor: string
   productGridTextColor: string
   productGridFont: string
@@ -179,6 +180,7 @@ export default function StorefrontClient({
     darkMode:       theme.darkMode,
     showDarkToggle: theme.showDarkToggle,
     productGridBg:  theme.productGridBg,
+    productImageRadius: theme.productImageRadius,
   }
 
   const btnColor = theme.productGridButtonColor || theme.primaryColor
@@ -194,6 +196,7 @@ export default function StorefrontClient({
     font: theme.productGridFont || theme.font,
     headingFont: theme.headingFont,
     cardShadow: theme.cardShadow,
+    productImageRadius: theme.productImageRadius,
     featuredLabel: theme.featuredLabel || 'Featured Products',
     productTitleWidth:         theme.productTitleWidth,
     productTitleMaxWidth:      theme.productTitleMaxWidth,

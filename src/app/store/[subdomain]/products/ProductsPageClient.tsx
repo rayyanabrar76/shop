@@ -55,6 +55,7 @@ interface ThemeState {
   darkMode?: boolean
   showDarkToggle?: boolean
   productGridBg?: string
+  productImageRadius?: string
   productGridButtonColor?: string
   productGridTextColor?: string
   productGridFont?: string
@@ -176,6 +177,7 @@ export default function ProductsPageClient({
     font:                      theme.productGridFont || theme.font,
     headingFont:               theme.headingFont,
     cardShadow:                theme.cardShadow,
+    productImageRadius:        theme.productImageRadius,
     featuredLabel:             theme.featuredLabel || 'All Products',
     productTitleWidth:         theme.productTitleWidth,
     productTitleMaxWidth:      theme.productTitleMaxWidth,

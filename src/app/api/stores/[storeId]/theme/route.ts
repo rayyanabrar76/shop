@@ -64,6 +64,7 @@ export async function POST(
     shopAllLabel:    body.shopAllLabel    ?? undefined,
     featuredLabel:   body.featuredLabel   ?? undefined,
     productGridBg:          body.productGridBg          ?? undefined,
+    productImageRadius:     body.productImageRadius     ?? undefined,
     productGridButtonColor: body.productGridButtonColor ?? undefined,
     productGridTextColor:   body.productGridTextColor   ?? undefined,
     productGridFont:        body.productGridFont        ?? undefined,

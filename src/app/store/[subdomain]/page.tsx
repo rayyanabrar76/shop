@@ -53,6 +53,7 @@ export default async function StorefrontPage({
     shopAllLabel:    t?.shopAllLabel    ?? 'Shop All Products',
     featuredLabel:   t?.featuredLabel   ?? 'Featured Products',
     productGridBg:          t?.productGridBg          ?? '#ffffff',
+    productImageRadius:     t?.productImageRadius     ?? '',
     productGridButtonColor: t?.productGridButtonColor ?? '',
     productGridTextColor:   t?.productGridTextColor   ?? '',
     productGridFont:        t?.productGridFont        ?? '',

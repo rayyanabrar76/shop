@@ -190,6 +190,39 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
           </div>
         </div>
 
+        {/* Card cover corners — independent of the global curvature above, so a
+            store can square off its product images while buttons stay rounded. */}
+        <div data-field="product-image-radius">
+          <label className={labelCls}>
+            Card Cover Corners <span className="normal-case font-normal opacity-60">— the product image</span>
+          </label>
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { label: 'Theme', value: '',        radius: theme.borderRadius },
+              { label: 'Box',   value: '0px',     radius: '0px' },
+              { label: 'Soft',  value: '0.5rem',  radius: '0.5rem' },
+              { label: 'Round', value: '1rem',    radius: '1rem' },
+            ].map(opt => (
+              <button
+                key={opt.label}
+                onClick={() => updateTheme({ productImageRadius: opt.value })}
+                title={opt.value === '' ? 'Follow the Curvature setting above' : undefined}
+                className={`flex flex-col items-center gap-1.5 py-2 rounded-xl border text-[10px] font-bold transition-all ${
+                  (theme.productImageRadius ?? '') === opt.value
+                    ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
+                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800'
+                }`}
+              >
+                <span
+                  className="w-6 h-6 border-2 border-current opacity-70"
+                  style={{ borderRadius: opt.radius }}
+                />
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Button Style */}
         <div>
           <label className={labelCls}>Button Style</label>

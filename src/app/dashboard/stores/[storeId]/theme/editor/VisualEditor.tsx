@@ -160,6 +160,7 @@ export default function VisualEditor({
     featuredLabel:       initialTheme?.featuredLabel       ?? 'Featured Products',
     productsPageHeading: initialTheme?.productsPageHeading ?? '',
     productGridBg:          initialTheme?.productGridBg          ?? '#ffffff',
+    productImageRadius:     initialTheme?.productImageRadius     ?? '',
     productGridButtonColor: initialTheme?.productGridButtonColor ?? '',
     productGridTextColor:   initialTheme?.productGridTextColor   ?? '',
     productGridFont:        initialTheme?.productGridFont        ?? '',

@@ -28,6 +28,7 @@ export interface ThemeState {
   featuredLabel: string
   productsPageHeading: string
   productGridBg: string
+  productImageRadius: string
   productGridButtonColor: string
   productGridTextColor: string
   productGridFont: string
