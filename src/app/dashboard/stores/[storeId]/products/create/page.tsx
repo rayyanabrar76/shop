@@ -8,7 +8,7 @@ import {
   HiExclamation, HiTag, HiChevronDown, HiEye,
 } from 'react-icons/hi'
 import { useDashboardPrice, useDashboardCurrency } from '@/components/CurrencyProvider'
-import { currencySymbol, currencyDecimals } from '@/lib/currency'
+import { currencySymbol, currencyDecimals, inputToAmount } from '@/lib/currency'
 
 interface Category {
   id: string
@@ -101,7 +101,7 @@ export default function CreateProductPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title, description,
-          price: Math.round(parseFloat(price) * 100),
+          price: inputToAmount(price),
           inventory: parseInt(inventory) || 0,
           category: category || null,
           sku: sku || null,
@@ -134,7 +134,7 @@ export default function CreateProductPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title, description,
-          price: Math.round(parseFloat(price) * 100),
+          price: inputToAmount(price),
           inventory: parseInt(inventory) || 0,
           category: category || null,
           sku: sku || null,

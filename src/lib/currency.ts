@@ -121,6 +121,28 @@ export function currencyDecimals(currency: string | null | undefined): number {
 }
 
 /**
+ * Stored integer -> the value a price input should show, e.g. 114 -> "1.14".
+ * Pairs with inputToAmount(); both forms edit prices in whole currency units
+ * rather than making the merchant think in minor units.
+ */
+export function amountToInput(amount: number | null | undefined, currency: string | null | undefined): string {
+  if (amount === null || amount === undefined || Number.isNaN(Number(amount))) return ''
+  const value = Number(amount) / 100
+  return value.toFixed(currencyDecimals(currency))
+}
+
+/**
+ * Price input -> stored integer, e.g. "1.14" -> 114. Rounding absorbs binary
+ * float error (1.14 * 100 is 114.00000000000001), so a round-trip through the
+ * form never shifts a price by a minor unit.
+ */
+export function inputToAmount(input: string | number): number {
+  const value = typeof input === 'number' ? input : parseFloat(input)
+  if (!Number.isFinite(value)) return 0
+  return Math.round(value * 100)
+}
+
+/**
  * Convert a stored amount to the integer Stripe expects. Stripe wants the
  * smallest currency unit: cents for USD (our stored value as-is), but whole yen
  * for JPY — passing 100000 there would charge ¥100,000 instead of ¥1,000.

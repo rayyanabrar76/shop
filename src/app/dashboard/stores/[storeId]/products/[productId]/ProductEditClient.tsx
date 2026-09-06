@@ -8,6 +8,8 @@ import {
   HiChevronDown, HiEye, HiPlus, HiTrash, HiX,
 } from 'react-icons/hi'
 import MediaPicker from '@/components/MediaPicker'
+import { useDashboardCurrency } from '@/components/CurrencyProvider'
+import { amountToInput, currencyDecimals, currencySymbol, inputToAmount } from '@/lib/currency'
 
 interface Category { id: string; name: string; slug: string }
 
@@ -113,10 +115,11 @@ export default function ProductEditClient({ storeId, product, categories }: {
   categories: Category[]
 }) {
   const router = useRouter()
+  const currency = useDashboardCurrency()
 
   const [title, setTitle] = useState(product.title)
   const [description, setDescription] = useState(product.description ?? '')
-  const [price, setPrice] = useState(String(product.price))
+  const [price, setPrice] = useState(amountToInput(product.price, currency))
   const [inventory, setInventory] = useState(String(product.inventory))
   const [status, setStatus] = useState(product.status)
   const [category, setCategory] = useState(product.category ?? '')
@@ -136,7 +139,7 @@ export default function ProductEditClient({ storeId, product, categories }: {
       options: v.options.map(o => ({
         id: o.id,
         label: o.label,
-        priceOverride: o.priceOverride !== null ? String(o.priceOverride) : '',
+        priceOverride: o.priceOverride !== null ? amountToInput(o.priceOverride, currency) : '',
         inventory: String(o.inventory),
         sku: o.sku ?? '',
       })),
@@ -205,7 +208,7 @@ export default function ProductEditClient({ storeId, product, categories }: {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title, description,
-          price: parseInt(price),
+          price: inputToAmount(price),
           inventory: parseInt(inventory) || 0,
           status, category: category || null,
           sku: sku || null,
@@ -217,7 +220,7 @@ export default function ProductEditClient({ storeId, product, categories }: {
             options: v.options.map(o => ({
               id: o.isNew ? undefined : o.id,
               label: o.label,
-              priceOverride: o.priceOverride ? parseInt(o.priceOverride) : null,
+              priceOverride: o.priceOverride ? inputToAmount(o.priceOverride) : null,
               inventory: parseInt(o.inventory) || 0,
               sku: o.sku || null,
             })),
@@ -291,10 +294,10 @@ export default function ProductEditClient({ storeId, product, categories }: {
               <p className={labelCls}>Pricing & Inventory</p>
               <div className="grid grid-cols-2 gap-4 mt-3">
                 <div>
-                  <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5 block">Price (cents) <span className="text-red-400">*</span></label>
+                  <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5 block">Price <span className="text-red-400">*</span></label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 text-xs">¢</span>
-                    <input type="number" min="0" value={price} onChange={e => setPrice(e.target.value)}
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 text-xs">{currencySymbol(currency)}</span>
+                    <input type="number" min="0" step={currencyDecimals(currency) === 0 ? "1" : "0.01"} value={price} onChange={e => setPrice(e.target.value)}
                       onKeyDown={e => ['e','E','+','-'].includes(e.key) && e.preventDefault()}
                       className={`w-full rounded-xl border pl-7 pr-3 py-2 text-sm outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-all bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 ${price === '' || Number(price) <= 0 ? 'border-red-200 dark:border-red-900' : 'border-zinc-200 dark:border-zinc-700'}`} />
                   </div>
@@ -393,7 +396,7 @@ export default function ProductEditClient({ storeId, product, categories }: {
                   <div className="p-4 space-y-2">
                     <div className="grid grid-cols-4 gap-2 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase px-1">
                       <span>Label</span>
-                      <span>Price (¢)</span>
+                      <span>Price ({currencySymbol(currency)})</span>
                       <span>Stock</span>
                       <span></span>
                     </div>
@@ -402,7 +405,7 @@ export default function ProductEditClient({ storeId, product, categories }: {
                         <input value={opt.label} onChange={e => updateOption(variant.id, opt.id, 'label', e.target.value)}
                           placeholder="e.g. Small"
                           className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 text-sm outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50" />
-                        <input type="number" value={opt.priceOverride} onChange={e => updateOption(variant.id, opt.id, 'priceOverride', e.target.value)}
+                        <input type="number" min="0" step={currencyDecimals(currency) === 0 ? "1" : "0.01"} value={opt.priceOverride} onChange={e => updateOption(variant.id, opt.id, 'priceOverride', e.target.value)}
                           placeholder="Base"
                           className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 text-sm outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50" />
                         <input type="number" value={opt.inventory} onChange={e => updateOption(variant.id, opt.id, 'inventory', e.target.value)}
