@@ -24,7 +24,7 @@ export async function GET(
       taxName: store.payment.taxName,
     } : null
 
-    return NextResponse.json({ storeId: store.id, payment })
+    return NextResponse.json({ storeId: store.id, country: store.country, payment })
   } catch {
     return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 })
   }

@@ -10,6 +10,7 @@ import {
 } from 'react-icons/hi'
 import DarkModeSync from '../DarkModeSync'
 import { usePrice } from '@/components/CurrencyProvider'
+import { addressPlaceholders, getCountry } from '@/lib/countries'
 
 interface PaymentConfig {
   codEnabled: boolean
@@ -37,6 +38,9 @@ export default function CheckoutClient({ params }: { params: { subdomain: string
   const { items, clear } = useCart()
 
   const [payment, setPayment] = useState<PaymentConfig | null>(null)
+  // Where the shop trades from. Drives the address examples, which otherwise
+  // showed American ones to a shop selling anywhere else.
+  const [storeCountry, setStoreCountry] = useState('')
   const [selectedMethod, setSelectedMethod] = useState<'cod' | 'stripe' | ''>('')
   const [storeId, setStoreId] = useState('')
 
@@ -67,6 +71,12 @@ export default function CheckoutClient({ params }: { params: { subdomain: string
       .then(r => r.json())
       .then(data => {
         setPayment(data.payment)
+        if (data.country) {
+          setStoreCountry(data.country)
+          // Prefill rather than only hint: most orders are domestic, and the
+          // customer can still change it.
+          setCountry(prev => prev || (getCountry(data.country)?.name ?? ''))
+        }
         setStoreId(data.storeId)
         if (data.payment?.codEnabled) setSelectedMethod('cod')
         else if (data.payment?.stripeEnabled) setSelectedMethod('stripe')
@@ -201,7 +211,7 @@ export default function CheckoutClient({ params }: { params: { subdomain: string
                 </div>
                 <div className="col-span-2 md:col-span-1">
                   <label className={labelCls}>City *</label>
-                  <input value={city} onChange={e => setCity(e.target.value)} placeholder="New York" className={inputCls} />
+                  <input value={city} onChange={e => setCity(e.target.value)} placeholder={addressPlaceholders(storeCountry).city} className={inputCls} />
                 </div>
                 <div className="col-span-2">
                   <label className={labelCls}>Address *</label>
@@ -209,7 +219,7 @@ export default function CheckoutClient({ params }: { params: { subdomain: string
                 </div>
                 <div className="col-span-2 md:col-span-1">
                   <label className={labelCls}>Country</label>
-                  <input value={country} onChange={e => setCountry(e.target.value)} placeholder="United States" className={inputCls} />
+                  <input value={country} onChange={e => setCountry(e.target.value)} placeholder={addressPlaceholders(storeCountry).country} className={inputCls} />
                 </div>
                 <div className="col-span-2">
                   <label className={labelCls}>Order Notes (optional)</label>

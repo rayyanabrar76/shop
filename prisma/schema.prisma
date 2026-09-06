@@ -22,6 +22,9 @@ model Store {
   name           String
   subdomain      String   @unique
   currency       String   @default("USD")
+  // Where the shop trades from. Drives the address defaults at checkout, which
+  // otherwise showed American examples to a shop selling in rupees.
+  country        String   @default("")
   customDomain   String?  @unique
   domainVerified Boolean  @default(false)
   createdAt      DateTime @default(now())

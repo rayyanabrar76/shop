@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { validateSubdomain } from '@/lib/subdomain'
 import { isSupportedCurrency } from '@/lib/currency'
+import { isSupportedCountry } from '@/lib/countries'
 
 // GET /api/stores/[storeId]/settings
 export async function GET(
@@ -17,11 +18,11 @@ export async function GET(
     const { storeId } = await params
     const store = await prisma.store.findFirst({
       where: { id: storeId, owner: { clerkId } },
-      select: { name: true, subdomain: true, currency: true },
+      select: { name: true, subdomain: true, currency: true, country: true },
     })
     if (!store) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    return NextResponse.json({ name: store.name, subdomain: store.subdomain, currency: store.currency })
+    return NextResponse.json({ name: store.name, subdomain: store.subdomain, currency: store.currency, country: store.country })
   } catch (err) {
     console.error('[settings:get]', err)
     return NextResponse.json({ error: 'Failed' }, { status: 500 })
@@ -38,7 +39,7 @@ export async function PATCH(
     if (!clerkId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { storeId } = await params          // ← await params
-    const { name, subdomain, currency } = await req.json()
+    const { name, subdomain, currency, country } = await req.json()
 
     // Verify ownership
     const store = await prisma.store.findFirst({
@@ -72,6 +73,14 @@ export async function PATCH(
     const nextCurrency =
       typeof currency === 'string' ? currency.trim().toUpperCase() : ''
 
+    // Unlike currency this is not locked by orders: it only drives the address
+    // examples shown at checkout, so changing it cannot misread past sales.
+    const nextCountry =
+      typeof country === 'string' ? country.trim().toUpperCase() : ''
+    if (nextCountry && !isSupportedCountry(nextCountry)) {
+      return NextResponse.json({ error: 'Unsupported country.' }, { status: 400 })
+    }
+
     if (nextCurrency && nextCurrency !== store.currency) {
       if (!isSupportedCurrency(nextCurrency)) {
         return NextResponse.json({ error: 'Unsupported currency.' }, { status: 400 })
@@ -93,8 +102,11 @@ export async function PATCH(
         ...(name?.trim()   && { name: name.trim() }),
         ...(nextSubdomain  && { subdomain: nextSubdomain }),
         ...(nextCurrency   && { currency: nextCurrency }),
+        // "" is a real choice here — it clears the country back to unset —
+        // so this checks for undefined rather than truthiness.
+        ...(country !== undefined && { country: nextCountry }),
       },
-      select: { name: true, subdomain: true, currency: true },
+      select: { name: true, subdomain: true, currency: true, country: true },
     })
 
     if (previousSubdomain !== updated.subdomain) revalidatePath(`/store/${previousSubdomain}`)
