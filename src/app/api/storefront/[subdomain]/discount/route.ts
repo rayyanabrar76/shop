@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { formatPrice } from '@/lib/currency'
 
 export async function POST(
   req: NextRequest,
@@ -28,7 +29,7 @@ export async function POST(
   }
   if (subtotal < discount.minOrder) {
     return NextResponse.json({
-      error: `Minimum order of $${(discount.minOrder / 100).toFixed(2)} required`,
+      error: `Minimum order of ${formatPrice(discount.minOrder, store.currency)} required`,
     }, { status: 400 })
   }
 

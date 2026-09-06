@@ -6,6 +6,7 @@ import { Search, X, User, LogOut, ShoppingBag, ChevronDown, Menu, Sun, Moon } fr
 import CartIcon from './cart-icon'
 import { useAuth } from './auth-context'
 import { EditorItem } from './EditorHighlight'
+import { usePrice } from '@/components/CurrencyProvider'
 
 interface NavLink {
   label: string
@@ -65,6 +66,7 @@ function buildHref(subdomain: string, href: string): string {
 }
 
 export default function StoreHeader({ store, theme, subdomain, isEditor = false, onEdit }: StoreHeaderProps) {
+  const price = usePrice()
   const notify = onEdit ?? (() => {})
   const { customer, logout } = useAuth()
 
@@ -338,7 +340,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-zinc-800 truncate">{product.title}</p>
                         <p className="text-xs font-bold mt-0.5" style={{ color: primaryColor }}>
-                          ${(product.price / 100).toFixed(2)}
+                          {price(product.price)}
                         </p>
                       </div>
                     </Link>

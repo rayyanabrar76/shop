@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Plus, Pencil } from 'lucide-react'
 import AddToCartButton from './add-to-cart-button'
 import { EditorItem } from './EditorHighlight'
+import { usePrice } from '@/components/CurrencyProvider'
 
 interface Product {
   id: string
@@ -120,6 +121,7 @@ const HIGHLIGHT: React.CSSProperties = {
 export default function ProductGrid({
   products, theme, subdomain, themeStyle, isEditor = false, onEdit, activeProductField,
 }: ProductGridProps) {
+  const price = usePrice()
   const router = useRouter()
   const { primaryColor, borderRadius, buttonStyle, headingFont, featuredLabel, font } = themeStyle
   const fontFamily = font === 'serif' ? 'serif' : font === 'mono' ? 'monospace' : font ? font : undefined
@@ -233,7 +235,7 @@ export default function ProductGrid({
                   <div className="flex items-center justify-between mt-2">
                     <div style={priceHighlight}>
                       <EditorItem section="products" field="product-price" label="Price" isEditor={isEditor} onEdit={notify}>
-                        <span style={priceStyle}>${(p.price / 100).toFixed(2)}</span>
+                        <span style={priceStyle}>{price(p.price)}</span>
                       </EditorItem>
                     </div>
                     <div style={cartHighlight} onClick={e => e.stopPropagation()}>
@@ -305,7 +307,7 @@ export default function ProductGrid({
                   <div style={priceHighlight}>
                     <EditorItem section="products" field="product-price" label="Price" isEditor={isEditor} onEdit={notify}>
                       <span style={{ ...priceStyle, paddingTop: priceStyle.paddingTop ?? 0 }}>
-                        ${(p.price / 100).toFixed(2)}
+                        {price(p.price)}
                       </span>
                     </EditorItem>
                   </div>

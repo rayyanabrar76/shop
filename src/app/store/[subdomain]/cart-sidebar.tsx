@@ -3,6 +3,7 @@
 import { useCart } from './cart'
 import { X, ShoppingBag, Plus, Minus, ArrowRight, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { usePrice } from '@/components/CurrencyProvider'
 
 interface CartSidebarProps {
   themeStyle?: {
@@ -14,6 +15,7 @@ interface CartSidebarProps {
 }
 
 export default function CartSidebar({ themeStyle, subdomain }: CartSidebarProps) {
+  const price = usePrice()
   const { items, total, remove, add, clear, isOpen, setIsOpen } = useCart()
   const router = useRouter()
 
@@ -125,7 +127,7 @@ export default function CartSidebar({ themeStyle, subdomain }: CartSidebarProps)
                         <Plus className="w-3 h-3" />
                       </button>
                     </div>
-                    <p className="text-sm font-black text-zinc-900">${((item.price * item.quantity) / 100).toFixed(2)}</p>
+                    <p className="text-sm font-black text-zinc-900">{price(item.price * item.quantity)}</p>
                   </div>
                 </div>
               </div>
@@ -139,7 +141,7 @@ export default function CartSidebar({ themeStyle, subdomain }: CartSidebarProps)
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-zinc-400">Subtotal</span>
-                  <span className="text-xs font-semibold text-zinc-700">${(total / 100).toFixed(2)}</span>
+                  <span className="text-xs font-semibold text-zinc-700">{price(total)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-zinc-400">Shipping</span>
@@ -148,7 +150,7 @@ export default function CartSidebar({ themeStyle, subdomain }: CartSidebarProps)
                 <div className="h-px bg-zinc-100" />
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-bold text-zinc-900">Total</span>
-                  <span className="text-xl font-black text-zinc-900">${(total / 100).toFixed(2)}</span>
+                  <span className="text-xl font-black text-zinc-900">{price(total)}</span>
                 </div>
               </div>
               <button

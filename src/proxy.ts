@@ -5,7 +5,6 @@ const isApiRoute = createRouteMatcher(['/api/(.*)'])
 
 const isPublicRoute = createRouteMatcher([
   '/',
-  '/pricing(.*)',
   '/terms(.*)',
   '/privacy(.*)',
   '/sign-in(.*)',

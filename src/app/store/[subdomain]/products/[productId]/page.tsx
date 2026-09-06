@@ -7,6 +7,7 @@ import CartSidebar from '../../cart-sidebar'
 import ProductDetailClient from './ProductDetailClient'
 import { ArrowLeft, Package } from 'lucide-react'
 import DarkModeSync from '../../DarkModeSync'
+import { formatPrice } from '@/lib/currency'
 
 export default async function StoreProductPage({
   params,
@@ -120,7 +121,7 @@ export default async function StoreProductPage({
                     )}
                   </div>
                   <p className="text-sm font-semibold group-hover:underline line-clamp-1">{p.title}</p>
-                  <p className="text-sm font-bold mt-0.5">${(p.price / 100).toFixed(2)}</p>
+                  <p className="text-sm font-bold mt-0.5">{formatPrice(p.price, store.currency)}</p>
                 </Link>
               ))}
             </div>

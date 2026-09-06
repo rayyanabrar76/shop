@@ -88,7 +88,39 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
 
 export const TRIAL_DAYS = 14
 
+/**
+ * ShopFlow is free while it finds its first users, so there is nowhere to pay
+ * and nothing may be gated behind a plan. The plan definitions above and the
+ * subscription columns on Store are intentionally left in place — turning
+ * billing back on means flipping this flag and restoring the /pricing and
+ * /settings/billing routes, with no data migration.
+ */
+export const BILLING_ENABLED = false
+
+/** What every store gets while billing is switched off: everything, no fees. */
+const UNLIMITED: PlanDefinition = {
+  id: 'PRO',
+  name: 'Free',
+  description: 'Everything unlocked while ShopFlow is free.',
+  monthlyPrice: 0,
+  yearlyPrice: 0,
+  stripePriceIdMonthlyEnv: '',
+  stripePriceIdYearlyEnv: '',
+  takeRatePercent: 0,
+  codFlatFeeCents: 0,
+  limits: {
+    maxProducts: -1,
+    maxStorageMB: -1,
+    customDomain: true,
+    removeBranding: true,
+    customCodeAllowed: true,
+    maxActiveDiscounts: -1,
+    codAllowed: true,
+  },
+}
+
 export function getPlan(plan: Plan | PlanId): PlanDefinition {
+  if (!BILLING_ENABLED) return UNLIMITED
   return PLANS[plan as PlanId] ?? PLANS.FREE
 }
 
@@ -98,6 +130,8 @@ export function getActivePlan(store: {
   trialEndsAt: Date | null
   currentPeriodEnd: Date | null
 }): PlanDefinition {
+  if (!BILLING_ENABLED) return UNLIMITED
+
   const planDef = getPlan(store.plan)
   if (planDef.id === 'FREE') return planDef
 

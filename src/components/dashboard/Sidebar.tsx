@@ -49,7 +49,6 @@ function getStoreNav(storeId: string) {
     { label: "Customization", href: `/dashboard/stores/${storeId}/theme`,             icon: Palette },
     { label: "Discounts",     href: `/dashboard/stores/${storeId}/discounts`,         icon: Truck },
     { label: "Payments",      href: `/dashboard/stores/${storeId}/settings/payments`, icon: CreditCard },
-    { label: "Billing",       href: `/dashboard/stores/${storeId}/settings/billing`,  icon: Sparkles },
     { label: "Settings",      href: `/dashboard/stores/${storeId}/settings`,          icon: Settings },
   ];
 }
@@ -64,9 +63,8 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
   const navItems = activeStore ? getStoreNav(activeStore.id) : [];
 
   const isNavActive = (href: string, exact?: boolean, label?: string) => {
-    if (label === "Settings") return pathname === href || (pathname.startsWith(href) && !pathname.includes("/settings/payments") && !pathname.includes("/settings/billing"));
+    if (label === "Settings") return pathname === href || (pathname.startsWith(href) && !pathname.includes("/settings/payments"));
     if (label === "Payments") return pathname.startsWith(href);
-    if (label === "Billing") return pathname.startsWith(href);
     return exact ? pathname === href : pathname.startsWith(href);
   };
 

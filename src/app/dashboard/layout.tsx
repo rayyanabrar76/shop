@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import Sidebar from '@/components/dashboard/Sidebar'
 import { AdminThemeProvider, type AdminThemeMode } from '@/components/dashboard/AdminThemeProvider'
+import { DashboardCurrencyProvider } from '@/components/CurrencyProvider'
 
 export default async function DashboardLayout({
   children,
@@ -25,6 +26,8 @@ export default async function DashboardLayout({
     orderBy: { createdAt: 'desc' },
   })
 
+  const currencies = Object.fromEntries(stores.map(s => [s.id, s.currency]))
+
   return (
     <AdminThemeProvider initialMode={(dbUser.adminTheme as AdminThemeMode) ?? 'system'}>
       <div className="min-h-screen bg-white dark:bg-zinc-950">
@@ -36,7 +39,7 @@ export default async function DashboardLayout({
             email={email}
             imageUrl={user?.imageUrl ?? ''}
           />
-          <main className="flex-1 ml-60">{children}</main>
+          <main className="flex-1 ml-60"><DashboardCurrencyProvider currencies={currencies}>{children}</DashboardCurrencyProvider></main>
         </div>
       </div>
     </AdminThemeProvider>

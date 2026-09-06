@@ -7,6 +7,8 @@ import {
   HiArrowLeft, HiCheck, HiX, HiUpload,
   HiExclamation, HiTag, HiChevronDown, HiEye,
 } from 'react-icons/hi'
+import { useDashboardPrice, useDashboardCurrency } from '@/components/CurrencyProvider'
+import { currencySymbol, currencyDecimals } from '@/lib/currency'
 
 interface Category {
   id: string
@@ -18,6 +20,8 @@ const inputCls = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-700 
 const labelCls = 'text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1.5 block'
 
 export default function CreateProductPage() {
+  const price_ = useDashboardPrice()
+  const storeCurrency = useDashboardCurrency()
   const router = useRouter()
   const params = useParams()
   const storeId = params.storeId as string
@@ -231,11 +235,11 @@ export default function CreateProductPage() {
                 <div>
                   <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5 block">Price</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 text-sm">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 text-sm">{currencySymbol(storeCurrency)}</span>
                     <input
                       type="number"
                       min="0"
-                      step="0.01"
+                      step={currencyDecimals(storeCurrency) === 0 ? "1" : "0.01"}
                       value={price}
                       onChange={e => {
                         const val = e.target.value
@@ -350,7 +354,7 @@ export default function CreateProductPage() {
                     {title || <span className="text-zinc-300 dark:text-zinc-600 font-normal">Product title...</span>}
                   </p>
                   <p className="font-black text-sm" style={{ color: price ? '#09090b' : '#d4d4d8' }}>
-                    {price ? `$${parseFloat(price || '0').toFixed(2)}` : '$0.00'}
+                    {price_(Math.round(parseFloat(price || '0') * 100))}
                   </p>
                   <div
                     className="w-full py-2 text-center text-[11px] font-bold text-white"

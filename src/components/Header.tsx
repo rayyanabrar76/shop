@@ -48,9 +48,6 @@ export default function Header() {
           <Link href="/#features" className="text-[13px] font-semibold text-zinc-600 hover:text-zinc-900 transition-colors">
             Features
           </Link>
-          <Link href="/pricing" className="text-[13px] font-semibold text-zinc-600 hover:text-zinc-900 transition-colors">
-            Pricing
-          </Link>
           <Link href="/privacy" className="text-[13px] font-semibold text-zinc-600 hover:text-zinc-900 transition-colors">
             Privacy
           </Link>

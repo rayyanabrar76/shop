@@ -18,5 +18,8 @@ export default async function SettingsPage({
 
   if (!store) notFound()
 
-  return <SettingsClient store={store} />
+  // Currency is locked after the first order — see the PATCH handler for why.
+  const orderCount = await prisma.order.count({ where: { storeId } })
+
+  return <SettingsClient store={store} orderCount={orderCount} />
 }

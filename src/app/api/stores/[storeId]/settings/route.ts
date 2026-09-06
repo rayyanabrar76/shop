@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { validateSubdomain } from '@/lib/subdomain'
+import { isSupportedCurrency } from '@/lib/currency'
 
 // GET /api/stores/[storeId]/settings
 export async function GET(
@@ -16,11 +17,11 @@ export async function GET(
     const { storeId } = await params
     const store = await prisma.store.findFirst({
       where: { id: storeId, owner: { clerkId } },
-      select: { name: true, subdomain: true },
+      select: { name: true, subdomain: true, currency: true },
     })
     if (!store) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    return NextResponse.json({ name: store.name, subdomain: store.subdomain })
+    return NextResponse.json({ name: store.name, subdomain: store.subdomain, currency: store.currency })
   } catch (err) {
     console.error('[settings:get]', err)
     return NextResponse.json({ error: 'Failed' }, { status: 500 })
@@ -37,7 +38,7 @@ export async function PATCH(
     if (!clerkId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { storeId } = await params          // ← await params
-    const { name, subdomain } = await req.json()
+    const { name, subdomain, currency } = await req.json()
 
     // Verify ownership
     const store = await prisma.store.findFirst({
@@ -64,6 +65,26 @@ export async function PATCH(
       }
     }
 
+    // Currency is locked once the store has taken an order. Prices are stored
+    // as plain integers with no currency attached, so switching afterwards
+    // would silently reinterpret every historical order total rather than
+    // convert it — a $10 sale would read as ¥10.
+    const nextCurrency =
+      typeof currency === 'string' ? currency.trim().toUpperCase() : ''
+
+    if (nextCurrency && nextCurrency !== store.currency) {
+      if (!isSupportedCurrency(nextCurrency)) {
+        return NextResponse.json({ error: 'Unsupported currency.' }, { status: 400 })
+      }
+      const orderCount = await prisma.order.count({ where: { storeId } })
+      if (orderCount > 0) {
+        return NextResponse.json(
+          { error: 'Currency cannot be changed once the store has orders.' },
+          { status: 409 },
+        )
+      }
+    }
+
     const previousSubdomain = store.subdomain
 
     const updated = await prisma.store.update({
@@ -71,13 +92,14 @@ export async function PATCH(
       data: {
         ...(name?.trim()   && { name: name.trim() }),
         ...(nextSubdomain  && { subdomain: nextSubdomain }),
+        ...(nextCurrency   && { currency: nextCurrency }),
       },
-      select: { name: true, subdomain: true },
+      select: { name: true, subdomain: true, currency: true },
     })
 
     if (previousSubdomain !== updated.subdomain) revalidatePath(`/store/${previousSubdomain}`)
     revalidatePath(`/store/${updated.subdomain}`)
-    return NextResponse.json({ ok: true, name: updated.name, subdomain: updated.subdomain })
+    return NextResponse.json({ ok: true, name: updated.name, subdomain: updated.subdomain, currency: updated.currency })
   } catch (err) {
     console.error('[settings:patch]', err)
     return NextResponse.json({ error: 'Failed to save' }, { status: 500 })

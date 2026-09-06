@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   HiPlus, HiDotsHorizontal, HiEye, HiCube,
   HiPhotograph, HiTrash, HiX, HiExclamation, HiPencil,
 } from 'react-icons/hi'
+import { useDashboardPrice } from '@/components/CurrencyProvider'
 
 interface Product {
   id: string
@@ -19,31 +21,68 @@ interface Product {
   store: { subdomain: string }
 }
 
+const MENU_WIDTH = 176 // matches w-44
+
 function RowMenu({ product, storeId, onDelete }: { product: Product; storeId: string; onDelete: (p: Product) => void }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // The table scrolls horizontally, and a container with overflow-x: auto also
+  // clips vertically (CSS promotes the other axis from visible to auto). An
+  // absolutely-positioned menu therefore got cut off and forced the table to
+  // scroll, so it is rendered into a portal and positioned against the button.
+  function toggle() {
+    if (open) { setOpen(false); return }
+    const r = btnRef.current?.getBoundingClientRect()
+    if (r) {
+      const below = window.innerHeight - r.bottom
+      const flipUp = below < 140 && r.top > below
+      setCoords({
+        top: flipUp ? r.top - 6 - 96 : r.bottom + 6,
+        left: Math.max(8, Math.min(r.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8)),
+      })
+    }
+    setOpen(true)
+  }
 
   useEffect(() => {
     if (!open) return
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    function onPointerDown(e: MouseEvent) {
+      const t = e.target as Node
+      if (btnRef.current?.contains(t) || menuRef.current?.contains(t)) return
+      setOpen(false)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    function close() { setOpen(false) }
+    document.addEventListener('mousedown', onPointerDown)
+    // Fixed coordinates go stale the moment anything scrolls underneath.
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
   }, [open])
 
   return (
-    <div ref={ref} className="relative">
+    <>
       <button
-        onClick={() => setOpen(v => !v)}
+        ref={btnRef}
+        onClick={toggle}
         className="p-2 text-zinc-400 dark:text-zinc-500 hover:text-black dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all"
         title="More options"
       >
         <HiDotsHorizontal className="w-4 h-4" />
       </button>
 
-      {open && (
-        <div className="absolute right-0 top-full mt-1.5 w-44 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl z-30 overflow-hidden py-1 shadow-lg">
+      {open && coords && createPortal(
+        <div
+          ref={menuRef}
+          style={{ position: 'fixed', top: coords.top, left: coords.left, width: MENU_WIDTH }}
+          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl z-50 overflow-hidden py-1 shadow-lg"
+        >
           <Link
             href={`/dashboard/stores/${storeId}/products/${product.id}`}
             onClick={() => setOpen(false)}
@@ -60,13 +99,15 @@ function RowMenu({ product, storeId, onDelete }: { product: Product; storeId: st
             <HiTrash className="w-3.5 h-3.5 text-red-500" />
             Delete product
           </button>
-        </div>
+        </div>,
+        document.body,
       )}
-    </div>
+    </>
   )
 }
 
 export default function ProductsClient({ storeId, products: initial }: { storeId: string; subdomain: string; products: Product[] }) {
+  const price = useDashboardPrice()
   const router = useRouter()
   const [products, setProducts] = useState<Product[]>(initial)
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
@@ -144,7 +185,7 @@ export default function ProductsClient({ storeId, products: initial }: { storeId
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                    ${(p.price / 100).toFixed(2)}
+                    {price(p.price)}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-1">
@@ -207,7 +248,7 @@ export default function ProductsClient({ storeId, products: initial }: { storeId
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 truncate">{deleteTarget.title}</p>
-                <p className="text-xs text-zinc-400 dark:text-zinc-500">${(deleteTarget.price / 100).toFixed(2)} · {deleteTarget.inventory} in stock</p>
+                <p className="text-xs text-zinc-400 dark:text-zinc-500">{price(deleteTarget.price)} · {deleteTarget.inventory} in stock</p>
               </div>
             </div>
             {deleteError && <p className="text-xs text-red-500 font-medium">{deleteError}</p>}

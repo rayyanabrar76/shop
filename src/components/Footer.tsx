@@ -9,7 +9,6 @@ export default function Footer() {
             Shopflow<span className="text-violet-600">.</span>
           </Link>
           <div className="flex gap-8 text-sm font-medium text-gray-500">
-            <Link href="/pricing" className="hover:text-gray-900 transition">Pricing</Link>
             <Link href="/terms" className="hover:text-gray-900 transition">Terms</Link>
             <Link href="/privacy" className="hover:text-gray-900 transition">Privacy</Link>
             <a href="mailto:hello@shopflow.app" className="hover:text-gray-900 transition">Contact</a>

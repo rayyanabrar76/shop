@@ -23,10 +23,10 @@ export default function TermsPage() {
       <p>You retain ownership of all content you upload, including products, images, text, and customer data (&ldquo;Your Content&rdquo;). You grant {COMPANY} a worldwide, non-exclusive, royalty-free license to host, store, reproduce, display, and distribute Your Content solely as needed to operate the Service.</p>
       <p>You represent that you have all necessary rights to Your Content and that it does not infringe any third-party rights or violate any law.</p>
 
-      <h2 className="text-xl font-bold mt-8">3. Subscription Plans &amp; Fees</h2>
-      <p>{COMPANY} is offered on the plans listed at our pricing page. Paid plans are billed monthly or annually in advance. Plans may include a free trial; you will not be charged during the trial period unless otherwise stated.</p>
-      <p>In addition to the subscription fee, {COMPANY} charges a per-transaction take rate on payments processed through Stripe Connect (the rate depends on your plan). These fees are deducted automatically from each transaction.</p>
-      <p>Fees are non-refundable except as required by law. You can cancel your subscription at any time from the billing portal; your access continues through the end of the current billing period. We may change prices upon 30 days&rsquo; notice.</p>
+      <h2 className="text-xl font-bold mt-8">3. Pricing</h2>
+      <p>{COMPANY} is currently free to use. There is no subscription fee, and we charge no per-transaction take rate on payments processed through Stripe Connect.</p>
+      <p>Note that Stripe charges its own processing fees on each transaction; those are set by Stripe and are not collected by us.</p>
+      <p>We may introduce paid plans in the future. If we do, we will give you at least 30 days&rsquo; notice before any charges begin, and you will never be billed without agreeing to a plan first.</p>
 
       <h2 className="text-xl font-bold mt-8">4. Acceptable Use</h2>
       <p>You agree not to use the Service to:</p>

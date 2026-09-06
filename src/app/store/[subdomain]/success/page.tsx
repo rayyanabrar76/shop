@@ -6,6 +6,7 @@ import StoreHeader from '../StoreHeader'
 import StoreFooter from '../StoreFooter'
 import CartSidebar from '../cart-sidebar'
 import DarkModeSync from '../DarkModeSync'
+import { formatPrice } from '@/lib/currency'
 
 export default async function SuccessPage({
   params,
@@ -101,7 +102,7 @@ export default async function SuccessPage({
               </div>
               <p className="text-sm text-zinc-500">
                 Your order is confirmed. Please have{' '}
-                <strong>${((order?.total ?? 0) / 100).toFixed(2)}</strong> ready when your delivery arrives.
+                <strong>{formatPrice(order?.total ?? 0, store?.currency)}</strong> ready when your delivery arrives.
               </p>
             </div>
           )}
@@ -115,7 +116,7 @@ export default async function SuccessPage({
               </div>
               <p className="text-sm text-zinc-500">
                 Your card payment of{' '}
-                <strong>${((order?.total ?? 0) / 100).toFixed(2)}</strong> was successful.
+                <strong>{formatPrice(order?.total ?? 0, store?.currency)}</strong> was successful.
                 Your order is being processed.
               </p>
             </div>
@@ -138,12 +139,12 @@ export default async function SuccessPage({
                     <p className="text-sm font-semibold truncate">{item.product?.title}</p>
                     <p className="text-xs text-zinc-400">×{item.quantity}</p>
                   </div>
-                  <p className="text-sm font-bold">${((item.price * item.quantity) / 100).toFixed(2)}</p>
+                  <p className="text-sm font-bold">{formatPrice(item.price * item.quantity, store?.currency)}</p>
                 </div>
               ))}
               <div className="pt-3 border-t border-zinc-100 flex justify-between items-center">
                 <span className="text-sm text-zinc-500">Total</span>
-                <span className="text-lg font-black">${(order.total / 100).toFixed(2)}</span>
+                <span className="text-lg font-black">{formatPrice(order.total, store?.currency)}</span>
               </div>
             </div>
           )}

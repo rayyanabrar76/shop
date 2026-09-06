@@ -21,6 +21,7 @@ model Store {
   ownerId        String
   name           String
   subdomain      String   @unique
+  currency       String   @default("USD")
   customDomain   String?  @unique
   domainVerified Boolean  @default(false)
   createdAt      DateTime @default(now())

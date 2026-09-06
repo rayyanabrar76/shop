@@ -4,6 +4,7 @@ import { getStripe } from '@/lib/stripe'
 import { sendOrderConfirmation, sendNewOrderAlert } from '@/lib/email'
 import { getActivePlan } from '@/lib/plans'
 import { guard } from '@/lib/rate-limit'
+import { toStripeAmount } from '@/lib/currency'
 
 export async function POST(
   req: NextRequest,
@@ -159,6 +160,7 @@ export async function POST(
         city: customerCity ?? '',
         country: customerCountry,
         paymentMethod,
+        currency: store.currency,
       }).catch(() => {})
 
       // Send new order alert to store owner
@@ -171,6 +173,7 @@ export async function POST(
           customerEmail,
           total,
           itemCount: items.length,
+          currency: store.currency,
         }).catch(() => {})
       }
     }
@@ -182,16 +185,19 @@ export async function POST(
       const productIds = items.map((i: { productId: string }) => i.productId)
       const products = await prisma.product.findMany({ where: { id: { in: productIds } } })
 
+      // Charge in the store's own currency rather than assuming USD.
+      const storeCurrency = store.currency
+
       const lineItems: any[] = items.map((item: any) => {
         const product = products.find(p => p.id === item.productId)
         return {
           price_data: {
-            currency: 'usd',
+            currency: storeCurrency.toLowerCase(),
             product_data: {
               name: product?.title ?? 'Product',
               ...(product?.imageUrl && { images: [product.imageUrl] }),
             },
-            unit_amount: item.price,
+            unit_amount: toStripeAmount(item.price, storeCurrency),
           },
           quantity: item.quantity,
         }
@@ -200,9 +206,9 @@ export async function POST(
       if (shippingAmount > 0) {
         lineItems.push({
           price_data: {
-            currency: 'usd',
+            currency: storeCurrency.toLowerCase(),
             product_data: { name: shippingMethod ?? 'Shipping' },
-            unit_amount: shippingAmount,
+            unit_amount: toStripeAmount(shippingAmount, storeCurrency),
           },
           quantity: 1,
         })
@@ -220,11 +226,11 @@ export async function POST(
         cancel_url: `${req.headers.get('origin')}/store/${store.subdomain}/checkout`,
         metadata: { orderId: order.id, storeId: store.id, planId: store.plan },
         ...(discountAmount > 0 && {
-          discounts: [{ coupon: (await stripe.coupons.create({ amount_off: discountAmount, currency: 'usd', duration: 'once', name: appliedDiscountCode ?? 'Discount' })).id }],
+          discounts: [{ coupon: (await stripe.coupons.create({ amount_off: toStripeAmount(discountAmount, storeCurrency), currency: storeCurrency.toLowerCase(), duration: 'once', name: appliedDiscountCode ?? 'Discount' })).id }],
         }),
         payment_intent_data: {
           transfer_data: { destination: payment.stripeAccountId },
-          application_fee_amount: platformFee,
+          application_fee_amount: toStripeAmount(platformFee, storeCurrency),
           metadata: { orderId: order.id, storeId: store.id },
         },
       })

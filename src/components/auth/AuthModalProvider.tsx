@@ -13,7 +13,7 @@ interface AuthModalContextValue {
 }
 
 // Default falls back to the full-page /sign-in route when no provider is
-// mounted (e.g. the Header on legal/pricing pages), so consumers never crash.
+// mounted (e.g. the Header on legal pages), so consumers never crash.
 const AuthModalContext = createContext<AuthModalContextValue>({
   openAuth: (mode?: Mode, redirectUrl?: string) => {
     if (typeof window !== 'undefined') {

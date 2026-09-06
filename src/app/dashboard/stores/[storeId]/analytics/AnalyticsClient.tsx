@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, TrendingUp, ShoppingBag, Users, DollarSign, BarChart2, Package } from 'lucide-react'
+import { useDashboardPrice } from '@/components/CurrencyProvider'
 
 interface Props {
   store: { id: string; name: string }
@@ -13,10 +14,6 @@ interface Props {
   revenueChart: { date: string; revenue: number }[]
   customerChart: { date: string; count: number }[]
   topProducts: { id: string; title: string; unitsSold: number; revenue: number }[]
-}
-
-function fmt(cents: number) {
-  return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function fmtDate(iso: string) {
@@ -61,6 +58,7 @@ function BarChart({ data, valueKey, color = '#6c47ff' }: { data: Record<string, 
 }
 
 export default function AnalyticsClient({ store, stats, revenueChart, customerChart, topProducts }: Props) {
+  const fmt = useDashboardPrice()
   const [activeChart, setActiveChart] = useState<'revenue' | 'customers'>('revenue')
 
   const statCards = [

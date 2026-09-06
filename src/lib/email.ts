@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { formatPrice } from '@/lib/currency'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM = process.env.RESEND_FROM_EMAIL ?? 'onboarding@resend.dev'
@@ -9,10 +10,11 @@ function base(content: string) {
 
 export async function sendOrderConfirmation({
   to, storeName, orderId, items, discountAmount, shippingAmount, taxAmount, total,
-  customerName, address, city, country, paymentMethod,
+  customerName, address, city, country, paymentMethod, currency,
 }: {
   to: string
   storeName: string
+  currency?: string
   orderId: string
   items: { title: string; quantity: number; price: number }[]
   subtotal: number
@@ -27,13 +29,13 @@ export async function sendOrderConfirmation({
   paymentMethod: string
 }) {
   const itemRows = items.map(i =>
-    `<tr><td>${i.title} <span style="color:#a1a1aa">×${i.quantity}</span></td><td style="text-align:right">$${((i.price * i.quantity) / 100).toFixed(2)}</td></tr>`
+    `<tr><td>${i.title} <span style="color:#a1a1aa">×${i.quantity}</span></td><td style="text-align:right">${formatPrice(i.price * i.quantity, currency)}</td></tr>`
   ).join('')
 
   const extras = [
-    discountAmount && discountAmount > 0 ? `<tr><td style="color:#10b981">Discount</td><td style="text-align:right;color:#10b981">-$${(discountAmount / 100).toFixed(2)}</td></tr>` : '',
-    shippingAmount !== undefined ? `<tr><td>Shipping</td><td style="text-align:right">${shippingAmount === 0 ? 'Free' : `$${(shippingAmount / 100).toFixed(2)}`}</td></tr>` : '',
-    taxAmount && taxAmount > 0 ? `<tr><td>Tax</td><td style="text-align:right">$${(taxAmount / 100).toFixed(2)}</td></tr>` : '',
+    discountAmount && discountAmount > 0 ? `<tr><td style="color:#10b981">Discount</td><td style="text-align:right;color:#10b981">-${formatPrice(discountAmount, currency)}</td></tr>` : '',
+    shippingAmount !== undefined ? `<tr><td>Shipping</td><td style="text-align:right">${shippingAmount === 0 ? 'Free' : `${formatPrice(shippingAmount, currency)}`}</td></tr>` : '',
+    taxAmount && taxAmount > 0 ? `<tr><td>Tax</td><td style="text-align:right">${formatPrice(taxAmount, currency)}</td></tr>` : '',
   ].join('')
 
   const html = base(`
@@ -46,7 +48,7 @@ export async function sendOrderConfirmation({
       <tbody>
         ${itemRows}
         ${extras}
-        <tr><td class="total">Total</td><td class="total" style="text-align:right">$${(total / 100).toFixed(2)}</td></tr>
+        <tr><td class="total">Total</td><td class="total" style="text-align:right">${formatPrice(total, currency)}</td></tr>
       </tbody>
     </table>
     <hr class="divider">
@@ -65,10 +67,11 @@ export async function sendOrderConfirmation({
 }
 
 export async function sendNewOrderAlert({
-  to, storeName, orderId, customerName, customerEmail, total, itemCount,
+  to, storeName, orderId, customerName, customerEmail, total, itemCount, currency,
 }: {
   to: string
   storeName: string
+  currency?: string
   orderId: string
   customerName: string
   customerEmail: string
@@ -84,7 +87,7 @@ export async function sendNewOrderAlert({
         <tr><td class="label">Order ID</td><td>#${orderId.slice(-8).toUpperCase()}</td></tr>
         <tr><td class="label">Customer</td><td>${customerName} (${customerEmail})</td></tr>
         <tr><td class="label">Items</td><td>${itemCount} item${itemCount !== 1 ? 's' : ''}</td></tr>
-        <tr><td class="label">Total</td><td class="total">$${(total / 100).toFixed(2)}</td></tr>
+        <tr><td class="label">Total</td><td class="total">${formatPrice(total, currency)}</td></tr>
       </tbody>
     </table>
   `)
@@ -92,7 +95,7 @@ export async function sendNewOrderAlert({
   await resend.emails.send({
     from: FROM,
     to,
-    subject: `New order $${(total / 100).toFixed(2)} – ${storeName}`,
+    subject: `New order ${formatPrice(total, currency)} – ${storeName}`,
     html,
   })
 }

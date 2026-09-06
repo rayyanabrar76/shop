@@ -9,6 +9,7 @@ import StoreFooter from '../../StoreFooter'
 import CartSidebar from '../../cart-sidebar'
 import Link from 'next/link'
 import { ArrowLeft, Package } from 'lucide-react'
+import { formatPrice } from '@/lib/currency'
 
 export default async function OrdersPage({
   params,
@@ -133,7 +134,7 @@ export default async function OrdersPage({
                     <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${statusColors[order.status] ?? 'bg-zinc-100 text-zinc-600'}`}>
                       {order.status}
                     </span>
-                    <span className="text-sm font-black">${(order.total / 100).toFixed(2)}</span>
+                    <span className="text-sm font-black">{formatPrice(order.total, store.currency)}</span>
                   </div>
                 </div>
 
@@ -152,9 +153,9 @@ export default async function OrdersPage({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{item.product.title}</p>
-                        <p className="text-xs text-zinc-400">Qty: {item.quantity} × ${(item.price / 100).toFixed(2)}</p>
+                        <p className="text-xs text-zinc-400">Qty: {item.quantity} × {formatPrice(item.price, store.currency)}</p>
                       </div>
-                      <p className="text-sm font-bold shrink-0">${((item.price * item.quantity) / 100).toFixed(2)}</p>
+                      <p className="text-sm font-bold shrink-0">{formatPrice(item.price * item.quantity, store.currency)}</p>
                     </div>
                   ))}
                 </div>

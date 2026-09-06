@@ -16,23 +16,26 @@ import {
 import { useAdminTheme, type AdminThemeMode } from '@/components/dashboard/AdminThemeProvider'
 import { APP_URL } from '@/lib/config'
 import { normalizeSubdomainInput, slugifySubdomain, validateSubdomain } from '@/lib/subdomain'
+import { CURRENCIES, formatPrice } from '@/lib/currency'
 
 interface StoreData {
   id: string
   name: string
   subdomain: string
+  currency: string
   customDomain: string | null
   domainVerified: boolean
   createdAt: Date
   theme: { primaryColor: string } | null
 }
 
-export default function SettingsClient({ store }: { store: StoreData }) {
+export default function SettingsClient({ store, orderCount = 0 }: { store: StoreData; orderCount?: number }) {
   const router = useRouter()
   const { mode: adminThemeMode, setMode: setAdminThemeMode } = useAdminTheme()
 
   const [name, setName] = useState(store.name)
   const [subdomain, setSubdomain] = useState(store.subdomain)
+  const [currency, setCurrency] = useState(store.currency)
   const [activeSection, setActiveSection] = useState<'general' | 'appearance' | 'domain' | 'danger'>('general')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -64,7 +67,7 @@ export default function SettingsClient({ store }: { store: StoreData }) {
       const res = await fetch(`/api/stores/${store.id}/settings`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, subdomain }),
+        body: JSON.stringify({ name, subdomain, currency }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Failed to save')
@@ -198,6 +201,28 @@ export default function SettingsClient({ store }: { store: StoreData }) {
                     className="w-full border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1 dark:focus:ring-offset-zinc-900 focus:ring-black/10 dark:focus:ring-white/10 transition-shadow bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
                     value={name} onChange={e => setName(e.target.value)}
                   />
+                </Field>
+                <Field
+                  label="Store Currency"
+                  hint={
+                    orderCount > 0
+                      ? 'Locked — this store has orders. Existing prices are stored as plain numbers, so switching now would relabel them rather than convert them.'
+                      : 'Used for every price on your storefront and for the actual charge at checkout.'
+                  }
+                >
+                  <select
+                    className="w-full border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1 dark:focus:ring-offset-zinc-900 focus:ring-black/10 dark:focus:ring-white/10 transition-shadow bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 disabled:bg-zinc-50 dark:disabled:bg-zinc-800/50 disabled:text-zinc-400 dark:disabled:text-zinc-500 disabled:cursor-not-allowed"
+                    value={currency}
+                    disabled={orderCount > 0}
+                    onChange={e => setCurrency(e.target.value)}
+                  >
+                    {CURRENCIES.map(c => (
+                      <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1.5">
+                    Prices will display as {formatPrice(129900, currency)}
+                  </p>
                 </Field>
                 <Field label="Store ID" hint="Read-only. Used in API calls.">
                   <div className="flex gap-2">

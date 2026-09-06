@@ -6,6 +6,7 @@ import {
   HiArrowLeft, HiShoppingBag, HiCheckCircle,
   HiClock, HiXCircle, HiRefresh, HiCheck,
 } from 'react-icons/hi'
+import { useDashboardPrice } from '@/components/CurrencyProvider'
 
 interface OrderItem {
   id: string
@@ -48,6 +49,7 @@ export default function OrdersClient({ storeId, orders: initial, stats }: {
   orders: Order[]
   stats: { total: number; paid: number; pending: number; revenue: number }
 }) {
+  const price = useDashboardPrice()
   const [orders, setOrders] = useState<Order[]>(initial)
   const [markingPaid, setMarkingPaid] = useState<string | null>(null)
 
@@ -90,7 +92,7 @@ export default function OrdersClient({ storeId, orders: initial, stats }: {
             { label: 'Total Orders', value: stats.total,                                  color: '#6c47ff' },
             { label: 'Paid',         value: stats.paid,                                   color: '#10b981' },
             { label: 'Pending',      value: stats.pending,                                color: '#f59e0b' },
-            { label: 'Revenue',      value: `$${(stats.revenue / 100).toFixed(2)}`,       color: '#3b82f6' },
+            { label: 'Revenue',      value: price(stats.revenue),       color: '#3b82f6' },
           ].map(stat => (
             <div key={stat.label} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 px-5 py-4">
               <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1">{stat.label}</p>
@@ -136,7 +138,7 @@ export default function OrdersClient({ storeId, orders: initial, stats }: {
                     </p>
                   </div>
                   <div className="col-span-1">
-                    <span className="text-sm font-bold text-zinc-900 dark:text-zinc-50">${(order.total / 100).toFixed(2)}</span>
+                    <span className="text-sm font-bold text-zinc-900 dark:text-zinc-50">{price(order.total)}</span>
                   </div>
                   <div className="col-span-2">
                     <StatusBadge status={order.status} />

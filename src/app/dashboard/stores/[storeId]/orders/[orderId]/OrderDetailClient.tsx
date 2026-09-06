@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Package, MapPin, Mail, Phone, CheckCircle2, Clock, XCircle } from 'lucide-react'
+import { useDashboardPrice } from '@/components/CurrencyProvider'
 
 interface Item {
   id: string
@@ -41,11 +42,8 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; icon: React.Comp
   REFUNDED:  { bg: 'bg-violet-50 dark:bg-violet-950/30',   text: 'text-violet-700 dark:text-violet-400',   icon: XCircle },
 }
 
-function fmtMoney(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`
-}
-
 export default function OrderDetailClient({ order, storeId }: { order: Order; storeId: string }) {
+  const fmtMoney = useDashboardPrice()
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')

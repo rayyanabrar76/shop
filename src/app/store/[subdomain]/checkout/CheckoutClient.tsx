@@ -9,6 +9,7 @@ import {
   HiCreditCard, HiExclamation, HiShoppingCart, HiTag, HiX,
 } from 'react-icons/hi'
 import DarkModeSync from '../DarkModeSync'
+import { usePrice } from '@/components/CurrencyProvider'
 
 interface PaymentConfig {
   codEnabled: boolean
@@ -30,6 +31,7 @@ const inputCls = 'w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-sm o
 const labelCls = 'text-xs font-semibold text-zinc-600 mb-1.5 block'
 
 export default function CheckoutClient({ params }: { params: { subdomain: string } }) {
+  const price = usePrice()
   const { subdomain } = params
   const router = useRouter()
   const { items, clear } = useCart()
@@ -232,11 +234,11 @@ export default function CheckoutClient({ params }: { params: { subdomain: string
                         <p className="text-sm font-semibold text-zinc-800">{rate.name}</p>
                         {rate.estimatedDays && <p className="text-xs text-zinc-400 mt-0.5">{rate.estimatedDays}</p>}
                         {rate.minOrder > 0 && subtotal < rate.minOrder && (
-                          <p className="text-xs text-zinc-400 mt-0.5">Free shipping over ${(rate.minOrder / 100).toFixed(2)}</p>
+                          <p className="text-xs text-zinc-400 mt-0.5">Free shipping over {price(rate.minOrder)}</p>
                         )}
                       </div>
                       <p className="text-sm font-bold text-zinc-800 shrink-0">
-                        {effectivePrice === 0 ? 'Free' : `$${(effectivePrice / 100).toFixed(2)}`}
+                        {effectivePrice === 0 ? 'Free' : price(effectivePrice)}
                       </p>
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${selectedRateId === rate.id ? 'border-zinc-900 bg-zinc-900' : 'border-zinc-200'}`}>
                         {selectedRateId === rate.id && <HiCheck className="w-3 h-3 text-white" />}
@@ -288,7 +290,7 @@ export default function CheckoutClient({ params }: { params: { subdomain: string
                       <p className="text-xs font-semibold text-zinc-800 truncate">{item.title}</p>
                       <p className="text-[10px] text-zinc-400">×{item.quantity}</p>
                     </div>
-                    <p className="text-xs font-bold text-zinc-800 shrink-0">${((item.price * item.quantity) / 100).toFixed(2)}</p>
+                    <p className="text-xs font-bold text-zinc-800 shrink-0">{price(item.price * item.quantity)}</p>
                   </div>
                 ))}
               </div>
@@ -299,7 +301,7 @@ export default function CheckoutClient({ params }: { params: { subdomain: string
                   <div className="flex items-center gap-2">
                     <HiTag className="w-3.5 h-3.5 text-emerald-600" />
                     <span className="text-xs font-bold text-emerald-700">{discountCode}</span>
-                    <span className="text-xs text-emerald-600">-${(discountAmount / 100).toFixed(2)}</span>
+                    <span className="text-xs text-emerald-600">-{price(discountAmount)}</span>
                   </div>
                   <button onClick={removeDiscount} className="text-emerald-400 hover:text-emerald-600 transition-colors">
                     <HiX className="w-3.5 h-3.5" />
@@ -331,29 +333,29 @@ export default function CheckoutClient({ params }: { params: { subdomain: string
               <div className="border-t border-zinc-100 pt-3 space-y-2">
                 <div className="flex items-center justify-between text-xs text-zinc-500">
                   <span>Subtotal</span>
-                  <span>${(subtotal / 100).toFixed(2)}</span>
+                  <span>{price(subtotal)}</span>
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex items-center justify-between text-xs text-emerald-600">
                     <span>Discount</span>
-                    <span>-${(discountAmount / 100).toFixed(2)}</span>
+                    <span>-{price(discountAmount)}</span>
                   </div>
                 )}
                 {selectedRate && (
                   <div className="flex items-center justify-between text-xs text-zinc-500">
                     <span>Shipping</span>
-                    <span>{shippingAmount === 0 ? 'Free' : `$${(shippingAmount / 100).toFixed(2)}`}</span>
+                    <span>{shippingAmount === 0 ? 'Free' : price(shippingAmount)}</span>
                   </div>
                 )}
                 {taxAmount > 0 && (
                   <div className="flex items-center justify-between text-xs text-zinc-500">
                     <span>{payment?.taxName ?? 'Tax'}</span>
-                    <span>${(taxAmount / 100).toFixed(2)}</span>
+                    <span>{price(taxAmount)}</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between pt-2 border-t border-zinc-100">
                   <span className="text-sm font-semibold text-zinc-600">Total</span>
-                  <span className="text-lg font-black">${(total / 100).toFixed(2)}</span>
+                  <span className="text-lg font-black">{price(total)}</span>
                 </div>
               </div>
 

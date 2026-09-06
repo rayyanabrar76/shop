@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import AddToCartButton from '../../add-to-cart-button'
 import { Package, Tag, ChevronLeft, ChevronRight } from 'lucide-react'
+import { usePrice } from '@/components/CurrencyProvider'
 
 interface VariantOption {
   id: string
@@ -39,6 +40,7 @@ interface ProductDetailClientProps {
 }
 
 export default function ProductDetailClient({ product, theme }: ProductDetailClientProps) {
+  const price = usePrice()
   const { primary, radius, buttonStyle } = theme
 
   const [activeImage, setActiveImage] = useState(0)
@@ -134,7 +136,7 @@ export default function ProductDetailClient({ product, theme }: ProductDetailCli
         <h1 className="text-3xl md:text-4xl font-bold leading-tight tracking-tight">{product.title}</h1>
 
         <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-black">${(effectivePrice / 100).toFixed(2)}</span>
+          <span className="text-3xl font-black">{price(effectivePrice)}</span>
           {outOfStock && <span className="text-sm font-semibold text-red-500">Out of stock</span>}
         </div>
 
@@ -164,7 +166,7 @@ export default function ProductDetailClient({ product, theme }: ProductDetailCli
                     {option.label}
                     {option.priceOverride !== null && option.priceOverride !== product.price && (
                       <span className="ml-1 text-[10px] opacity-70">
-                        {option.priceOverride > product.price ? '+' : ''}${((option.priceOverride - product.price) / 100).toFixed(0)}
+                        {option.priceOverride > product.price ? '+' : ''}{price(option.priceOverride - product.price)}
                       </span>
                     )}
                   </button>

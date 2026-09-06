@@ -7,6 +7,7 @@ import { verifyCustomerToken, COOKIE_NAME } from '@/lib/store-auth'
 import { prisma } from '@/lib/prisma'
 import { sanitizeCustomCss, sanitizeCustomHead } from '@/lib/sanitize'
 import OwnerPreviewBar from './OwnerPreviewBar'
+import { CurrencyProvider } from '@/components/CurrencyProvider'
 
 export async function generateMetadata({
   params,
@@ -69,6 +70,7 @@ export default async function StoreLayout({
     select: {
       id: true,
       ownerId: true,
+      currency: true,
       theme: { select: { customCss: true, customHead: true, darkMode: true, showDarkToggle: true, backgroundColor: true, textColor: true, footerColor: true, productGridBg: true } },
     },
   })
@@ -179,6 +181,7 @@ export default async function StoreLayout({
 
   return (
     <AuthProvider initialCustomer={initialCustomer}>
+      <CurrencyProvider currency={store?.currency}>
       <CartProvider>
         {/* Blocking script — executes before first paint, sets data-dark on <html> with zero flash */}
         <script dangerouslySetInnerHTML={{ __html: DARK_INIT_SCRIPT }} />
@@ -190,6 +193,7 @@ export default async function StoreLayout({
         </div>
         {isOwner && store && <OwnerPreviewBar storeId={store.id} />}
       </CartProvider>
+      </CurrencyProvider>
     </AuthProvider>
   )
 }
