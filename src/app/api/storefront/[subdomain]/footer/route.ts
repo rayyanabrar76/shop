@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { isStarterPage } from '@/lib/default-pages'
 
 /**
  * GET /api/storefront/[subdomain]/footer -> { categories, pages }
@@ -30,14 +31,21 @@ export async function GET(
       }),
       prisma.storePage.findMany({
         where: { storeId: store.id },
-        select: { name: true, slug: true },
+        select: { name: true, slug: true, content: true },
         orderBy: { createdAt: 'asc' },
-        take: 8,
+        take: 12,
       }),
     ])
 
+    // A shopper clicking "Refund Policy" and finding writing prompts is worse
+    // than no link, so a policy appears only once it has been written.
+    const written = pages
+      .filter(p => !isStarterPage(p.slug, p.content))
+      .slice(0, 8)
+      .map(p => ({ name: p.name, slug: p.slug }))
+
     return NextResponse.json(
-      { categories, pages },
+      { categories, pages: written },
       { headers: { 'Cache-Control': 'public, max-age=0, s-maxage=300' } },
     )
   } catch (err) {
