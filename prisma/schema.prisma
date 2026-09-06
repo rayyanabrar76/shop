@@ -51,6 +51,8 @@ model Store {
   storeCustomers  StoreCustomer[]
   discountCodes   DiscountCode[]
   shippingRates   ShippingRate[]
+  aiSuggestions   AiSuggestion[]
+  subscribers     NewsletterSubscriber[]
 }
 
 enum Plan {
@@ -76,20 +78,47 @@ model StorePayment {
 model StoreTheme {
   id              String  @id @default(cuid())
   storeId         String  @unique
-  primaryColor    String  @default("#6c47ff")
+  primaryColor    String  @default("#0a0a0a")
   backgroundColor String  @default("#ffffff")
-  footerColor     String  @default("#f4f4f5")
+  footerColor     String  @default("#ffffff")
   accentColor     String  @default("#000000")
-  textColor       String  @default("#09090b")
+  textColor       String  @default("#0a0a0a")
   font            String  @default("sans")
-  headingFont     String  @default("sans")
+  headingFont     String  @default("serif")
   baseFontSize    Int     @default(16)
   bannerText      String  @default("Welcome to our store")
   showBanner      Boolean @default(true)
   logoUrl         String?
   logoWidth       Int     @default(120)
+  logoHeight      Int     @default(48)  // caps header height for tall logos
+  headerLayout    String  @default("left")  // left | centered
+  footerLogoUrl    String  @default("")   // blank = reuse the header logo
+  footerLogoWidth  Int     @default(130)
+  footerLogoHeight Int     @default(56)
+
+  // Header layout + appearance
+  menuPosition      String  @default("auto")      // auto | left | center | right
+  headerWidth       String  @default("page")      // page | full
+  headerHeight      String  @default("standard")  // compact | standard | tall
+  headerSticky      Boolean @default(true)
+  headerBorderWidth Int     @default(1)
+  headerBgColor     String  @default("")          // blank = translucent white
+  headerTextColor   String  @default("")          // blank = inherit
+  utilityStyle      String  @default("icons")     // icons | text
+
+  // Transparent header (home page only): the bar sits over the hero instead of
+  // above it, and swaps to an inverse logo for contrast.
+  headerTransparent     Boolean @default(false)
+  headerInverseLogoUrl  String  @default("")
+  headerTransparentText String  @default("#ffffff")
+
+  // Add-to-cart button colours. Blank falls back to the grid button colour,
+  // which itself falls back to the primary colour.
+  cartBtnBgColor   String @default("")
+  cartBtnTextColor String @default("")
+  cartBtnDisplay   String @default("always")  // always | hover | icon | hidden
   layout          String  @default("grid")
-  borderRadius    String  @default("0.75rem")
+  borderRadius    String  @default("0px")
   buttonStyle     String  @default("solid")
   cardShadow      String  @default("none")
   dividerStyle    String  @default("none")
@@ -130,6 +159,29 @@ model StoreTheme {
   customCss              String  @default("")
   customHead             String  @default("")
   footerText      String?
+
+  // ── Search engines & the browser tab ──────────────────────────────────
+  // seoTitle is the whole <title> for the home page, not a suffix, so a shop
+  // can rank on a phrase rather than just its own name. Blank = store name.
+  seoTitle       String @default("")
+  seoDescription String @default("")
+  // A square mark for the tab. The header logo is usually wide and turns to
+  // mush at 32px, so it is only the fallback.
+  faviconUrl     String @default("")
+
+  // Order of the reorderable home page sections, as comma-separated keys:
+  // "hero", "products", and "custom:<id>". Blank means the default order.
+  // Anything missing from the list is appended, so a newly added section
+  // still shows up without having to rewrite this.
+  sectionOrder   String @default("")
+
+  // ── Footer ────────────────────────────────────────────────────────────
+  footerNewsletter        Boolean @default(true)
+  footerNewsletterHeading String  @default("")
+  footerNewsletterText    String  @default("")
+  // Blank uses the store's own pages; these are for shops that keep their
+  // policies somewhere else entirely.
+  footerShowLinks         Boolean @default(true)
   instagramHandle String?
   twitterHandle   String?
   facebookUrl     String?
@@ -174,6 +226,9 @@ model CustomSection {
   buttonColor   String?
   buttonFont    String?
   showButton    Boolean @default(false)
+  // Shop-by-category: comma-separated Category ids. Blank shows every category.
+  categoryIds   String  @default("")
+  showCount     Boolean @default(false)
   bgColor       String?
   position    Int      @default(0)
   visible     Boolean  @default(true)
@@ -223,6 +278,11 @@ model Product {
   status      String   @default("DRAFT")
   category    String?
   sku         String?
+  // Search keywords, used for on-site search and SEO keywords. Postgres text[].
+  tags        String[] @default([])
+  // URL slug, e.g. /products/classic-glazed. Nullable so existing rows stay
+  // valid until backfilled; lookups fall back to the id for old links.
+  slug        String?
   createdAt   DateTime @default(now())
   storeId     String
 
@@ -230,13 +290,17 @@ model Product {
   orderItems OrderItem[]
   images     ProductImage[]
   variants   ProductVariant[]
+
+  @@unique([storeId, slug])
 }
 
 model Category {
-  id        String   @id @default(cuid())
-  storeId   String
-  name      String
-  slug      String
+  id          String   @id @default(cuid())
+  storeId     String
+  name        String
+  slug        String
+  description String?
+  imageUrl    String?
   visible   Boolean  @default(true)
   createdAt DateTime @default(now())
   store     Store    @relation(fields: [storeId], references: [id])
@@ -401,4 +465,40 @@ enum OrderStatus {
   PAID
   CANCELLED
   REFUNDED
+}
+
+/// A cached "what should I add next" suggestion.
+///
+/// Working it out means sending the whole catalogue to a model and waiting a
+/// few seconds, which is far too slow to repeat every time a form opens. The
+/// fingerprint is a cheap summary of the catalogue: while it matches, the
+/// stored answer is still valid and no model call is needed.
+model AiSuggestion {
+  id          String   @id @default(cuid())
+  storeId     String
+  kind        String   // "category" | "product"
+  fingerprint String
+  payload     Json
+  createdAt   DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, kind])
+}
+
+/// Someone who gave their email in the storefront footer.
+///
+/// Separate from Customer: signing up to hear from a shop is not the same as
+/// having bought from it, and conflating the two would put people who never
+/// ordered into the customer list.
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  storeId   String
+  email     String
+  createdAt DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, email])
+  @@index([storeId, createdAt])
 }
