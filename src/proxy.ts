@@ -15,6 +15,12 @@ const isPublicRoute = createRouteMatcher([
   '/api/storefront/(.*)',
   '/api/auth/(.*)',
   '/api/webhooks/(.*)',
+  // Shoppers are not Clerk users — they are the store's own customers, or
+  // nobody at all. Requiring a dashboard login here meant every real customer
+  // got a 401 at the last step, which is why no order had ever been placed.
+  // Safe to open only because the route prices the cart from the database
+  // rather than from the request, and is rate limited.
+  '/api/stores/(.*)/checkout',
 ])
 
 // Compared against a hostname with its port stripped, so strip it here too —

@@ -32,6 +32,38 @@ export async function POST(
     if (!store) return NextResponse.json({ error: 'Store not found' }, { status: 404 })
 
     const payment = store.payment
+
+    // Prices come from the database, never from the request. The client used
+    // to send a price per line and the total was built from it, so anyone
+    // posting here directly could buy anything for whatever they liked — and
+    // the stored order would look entirely legitimate afterwards.
+    const requested = (items as { productId?: unknown; quantity?: unknown }[]).map(i => ({
+      productId: typeof i.productId === 'string' ? i.productId : '',
+      quantity: Math.max(1, Math.min(999, Math.floor(Number(i.quantity) || 0))),
+    }))
+    if (requested.some(i => !i.productId || i.quantity < 1)) {
+      return NextResponse.json({ error: 'Invalid cart' }, { status: 400 })
+    }
+
+    // Scoped to this store: an id from another shop must not be purchasable
+    // here, at that shop's price.
+    const catalogue = await prisma.product.findMany({
+      where: { id: { in: requested.map(i => i.productId) }, storeId, status: 'active' },
+      select: { id: true, title: true, price: true, imageUrl: true },
+    })
+
+    if (catalogue.length !== new Set(requested.map(i => i.productId)).size) {
+      return NextResponse.json(
+        { error: 'One of those products is no longer available.' },
+        { status: 400 },
+      )
+    }
+
+    // The priced cart. Everything downstream uses this, not the request body.
+    const priced = requested.map(i => {
+      const product = catalogue.find(p => p.id === i.productId)!
+      return { productId: product.id, quantity: i.quantity, price: product.price, product }
+    })
     const planDef = getActivePlan(store)
 
     if (paymentMethod === 'cod') {
@@ -46,9 +78,7 @@ export async function POST(
       return NextResponse.json({ error: 'Card payment not available for this store' }, { status: 400 })
     }
 
-    const subtotal = items.reduce(
-      (sum: number, item: { price: number; quantity: number }) => sum + item.price * item.quantity, 0
-    )
+    const subtotal = priced.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
     // Validate discount code
     let discountAmount = 0
@@ -92,7 +122,7 @@ export async function POST(
     let order
     try {
       order = await prisma.$transaction(async (tx) => {
-        for (const item of items as { productId: string; quantity: number; price: number }[]) {
+        for (const item of priced) {
           const updated = await tx.product.updateMany({
             where: { id: item.productId, inventory: { gte: item.quantity } },
             data: { inventory: { decrement: item.quantity } },
@@ -116,7 +146,7 @@ export async function POST(
             shippingMethod,
             taxAmount,
             items: {
-              create: items.map((item: { productId: string; quantity: number; price: number }) => ({
+              create: priced.map(item => ({
                 productId: item.productId, quantity: item.quantity, price: item.price,
               })),
             },
@@ -182,20 +212,17 @@ export async function POST(
     if (paymentMethod === 'stripe' && payment?.stripeAccountId) {
       const stripe = getStripe()
 
-      const productIds = items.map((i: { productId: string }) => i.productId)
-      const products = await prisma.product.findMany({ where: { id: { in: productIds } } })
-
       // Charge in the store's own currency rather than assuming USD.
       const storeCurrency = store.currency
 
-      const lineItems: any[] = items.map((item: any) => {
-        const product = products.find(p => p.id === item.productId)
+      const lineItems: any[] = priced.map(item => {
+        const product = item.product
         return {
           price_data: {
             currency: storeCurrency.toLowerCase(),
             product_data: {
-              name: product?.title ?? 'Product',
-              ...(product?.imageUrl && { images: [product.imageUrl] }),
+              name: product.title,
+              ...(product.imageUrl && { images: [product.imageUrl] }),
             },
             unit_amount: toStripeAmount(item.price, storeCurrency),
           },
