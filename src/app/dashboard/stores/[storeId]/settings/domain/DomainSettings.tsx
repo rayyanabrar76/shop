@@ -166,7 +166,7 @@ export default function DomainSettings({
           <div className="space-y-3">
             {/* CNAME record */}
             <div className="rounded-xl bg-zinc-50 border border-zinc-200 overflow-hidden">
-              <div className="grid grid-cols-3 px-3 py-2 bg-zinc-100 border-b border-zinc-200">
+              <div className="grid grid-cols-3 min-w-[420px] px-3 py-2 bg-zinc-100 border-b border-zinc-200">
                 <span className="text-[10px] font-bold text-zinc-500 uppercase">Type</span>
                 <span className="text-[10px] font-bold text-zinc-500 uppercase">Name</span>
                 <span className="text-[10px] font-bold text-zinc-500 uppercase">Value</span>

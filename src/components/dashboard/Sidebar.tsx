@@ -24,6 +24,8 @@ import {
   CreditCard,
   Truck,
   Sparkles,
+  Menu,
+  X,
 } from "lucide-react";
 
 type StoreItem = {
@@ -92,9 +94,50 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
 
   const initials = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
 
+  // Below md the sidebar is a drawer. It would otherwise take 240px of a 390px
+  // screen and push the page it is navigating clean off the side.
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Tapping a link should reveal the page it went to, not leave the drawer
+  // covering it.
+  useEffect(() => { setDrawerOpen(false); }, [pathname]);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setDrawerOpen(false); };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [drawerOpen]);
+
   return (
+    <>
+    {/* Opens the drawer. Fixed so it stays reachable as the page scrolls. */}
+    <button
+      onClick={() => setDrawerOpen(true)}
+      aria-label="Open menu"
+      className="md:hidden fixed left-3 top-3 z-50 p-2.5 rounded-xl shadow-lg"
+      style={{ background: "var(--admin-bg)", border: "1px solid var(--admin-border)" }}
+    >
+      <Menu className="w-4 h-4" style={{ color: "var(--admin-text)" }} />
+    </button>
+
+    {drawerOpen && (
+      <div
+        className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
+        onClick={() => setDrawerOpen(false)}
+        aria-hidden
+      />
+    )}
+
     <aside
-      className="fixed left-0 top-0 bottom-0 w-60 flex flex-col z-40 select-none"
+      className={`fixed left-0 top-0 bottom-0 w-60 flex flex-col z-50 select-none transition-transform duration-200 md:z-40 md:translate-x-0 ${
+        drawerOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
       style={{
         background: "var(--admin-bg)",
         borderRight: "1px solid var(--admin-border)",
@@ -109,11 +152,18 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
           <Store className="w-3.5 h-3.5 text-white" />
         </div>
         <span
-          className="font-semibold text-[15px] tracking-tight"
+          className="font-semibold text-[15px] tracking-tight flex-1"
           style={{ color: "var(--admin-text)" }}
         >
           ShopFlow
         </span>
+        <button
+          onClick={() => setDrawerOpen(false)}
+          aria-label="Close menu"
+          className="md:hidden p-1.5 -mr-1 rounded-lg"
+        >
+          <X className="w-4 h-4" style={{ color: "var(--admin-text-3)" }} />
+        </button>
       </div>
 
       {/* ── Store Switcher ── */}
@@ -321,6 +371,7 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
         </div>
       </div>
     </aside>
+    </>
   );
 }
 

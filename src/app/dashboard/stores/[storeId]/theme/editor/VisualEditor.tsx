@@ -10,6 +10,7 @@ import {
   CheckCircle2, Eye, ChevronDown,
   Home, Globe, Plus, Check,
   ShoppingBag, CreditCard, CheckSquare, LogIn, UserCircle, PackageCheck,
+  PanelLeft, X,
 } from 'lucide-react'
 import { ThemeState } from './types'
 import SectionsList from './sections/SectionsList'
@@ -160,6 +161,9 @@ export default function VisualEditor({
   const [addPageOrigin, setAddPageOrigin] = useState<'picker' | 'footer'>('picker')
   // null = closed. { productId: null } opens the create form, an id opens edit.
   const [productModal, setProductModal] = useState<{ productId: string | null } | null>(null)
+  // Below lg the panel overlays the preview instead of sitting beside it: at
+  // 288px wide it left barely a hundred pixels of phone screen for the store.
+  const [panelOpen, setPanelOpen] = useState(false)
   const [customSectionFocus, setCustomSectionFocus] = useState<{ id: string; ts: number } | null>(null)
   const [pageContentNav, setPageContentNav] = useState<{ section: string; ts: number } | null>(null)
 
@@ -598,6 +602,13 @@ function handlePageContentChange(content: unknown) {
           </div>
         </div>
         <div className="flex items-center gap-2 justify-end">
+          <button
+            onClick={() => setPanelOpen(v => !v)}
+            aria-label={panelOpen ? 'Hide settings' : 'Show settings'}
+            className="lg:hidden p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+          >
+            {panelOpen ? <X className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+          </button>
           <button onClick={undo} disabled={history.length === 0} className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-30">
             <Undo2 className="w-4 h-4" />
           </button>
@@ -611,8 +622,19 @@ function handlePageContentChange(content: unknown) {
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        <aside className="w-72 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col shrink-0">
+      <div className="flex flex-1 overflow-hidden relative">
+        {panelOpen && (
+          <div
+            className="lg:hidden absolute inset-0 z-30 bg-black/40"
+            onClick={() => setPanelOpen(false)}
+            aria-hidden
+          />
+        )}
+        <aside
+          className={`w-72 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col shrink-0 transition-transform duration-200 max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 lg:translate-x-0 ${
+            panelOpen ? 'translate-x-0' : 'max-lg:-translate-x-full'
+          }`}
+        >
 
           {/* ── Page picker ── */}
           <div ref={pickerRef} className="px-3 pt-3 pb-2.5 border-b border-zinc-100 dark:border-zinc-800 shrink-0 relative">

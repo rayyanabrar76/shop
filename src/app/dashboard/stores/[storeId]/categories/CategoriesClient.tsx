@@ -115,7 +115,7 @@ export default function CategoriesClient({
   const uncategorised = allProducts.length - totalAssigned
 
   return (
-    <div className="p-10 max-w-5xl mx-auto">
+    <div className="p-5 pt-16 md:p-10 md:pt-10 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">

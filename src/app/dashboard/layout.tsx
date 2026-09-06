@@ -39,7 +39,7 @@ export default async function DashboardLayout({
             email={email}
             imageUrl={user?.imageUrl ?? ''}
           />
-          <main className="flex-1 ml-60"><DashboardCurrencyProvider currencies={currencies}>{children}</DashboardCurrencyProvider></main>
+          <main className="flex-1 md:ml-60 min-w-0"><DashboardCurrencyProvider currencies={currencies}>{children}</DashboardCurrencyProvider></main>
         </div>
       </div>
     </AdminThemeProvider>

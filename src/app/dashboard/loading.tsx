@@ -2,7 +2,7 @@ import { Sk } from '@/components/ui/Skeleton'
 
 export default function DashboardLoading() {
   return (
-    <div className="p-10">
+    <div className="p-5 pt-16 md:p-10 md:pt-10">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <Sk className="h-7 w-36" />

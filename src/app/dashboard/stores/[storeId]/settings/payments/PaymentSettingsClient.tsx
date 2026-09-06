@@ -122,7 +122,7 @@ export default function PaymentSettingsClient({
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <div className="p-8 max-w-3xl mx-auto">
+      <div className="p-5 pt-16 md:p-8 md:pt-8 max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">

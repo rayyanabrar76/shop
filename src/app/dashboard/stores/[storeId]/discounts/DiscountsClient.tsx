@@ -70,7 +70,7 @@ export default function DiscountsClient({ storeId, discounts: initial, shippingR
   }
 
   return (
-    <div className="p-8 max-w-3xl mx-auto space-y-8">
+    <div className="p-5 pt-16 md:p-8 md:pt-8 max-w-3xl mx-auto space-y-8">
       <div>
         <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Discounts & Shipping</h1>
         <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Manage discount codes and shipping rates for your store</p>

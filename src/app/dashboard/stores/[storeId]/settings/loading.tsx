@@ -17,7 +17,7 @@ function SettingsSection({ rows = 3, label = true }: { rows?: number; label?: bo
 
 export default function SettingsLoading() {
   return (
-    <div className="p-10 max-w-2xl mx-auto space-y-6">
+    <div className="p-5 pt-16 md:p-10 md:pt-10 max-w-2xl mx-auto space-y-6">
       <div className="space-y-2 mb-2">
         <Sk className="h-7 w-28" />
         <Sk className="h-4 w-56" />

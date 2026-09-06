@@ -27,7 +27,7 @@ export default async function OrderDetailPage({
   if (!order) notFound()
 
   return (
-    <div className="p-10 max-w-5xl">
+    <div className="p-5 pt-16 md:p-10 md:pt-10 max-w-5xl">
       <Link
         href={`/dashboard/stores/${storeId}/orders`}
         className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50 mb-4"

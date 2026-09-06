@@ -136,7 +136,7 @@ export default function ProductsClient({ storeId, products: initial, categories 
   }
 
   return (
-    <div className="p-10 max-w-7xl mx-auto">
+    <div className="p-5 pt-16 md:p-10 md:pt-10 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
