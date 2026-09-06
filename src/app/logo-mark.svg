@@ -1,0 +1,26 @@
+<!--
+  The same awning as icon.svg, drawn in white on nothing.
+
+  For placing on a dark surface where a filled disc would look like a sticker —
+  a dark header, a footer, marketing. It is deliberately NOT the favicon: with
+  no ground of its own, white-on-transparent vanishes on a light browser tab,
+  which is Chrome's default.
+
+  The canopy is hollowed with a mask rather than a dark shape on top, so the
+  opening is genuinely transparent and whatever sits behind shows through.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <mask id="canopy-hollow">
+    <rect width="512" height="512" fill="#ffffff"/>
+    <path fill="#000000" d="M158 336 L158 306 A98 66 0 0 1 354 306 L354 336 Z"/>
+  </mask>
+
+  <circle cx="256" cy="256" r="228" fill="none" stroke="#ffffff" stroke-width="12"/>
+
+  <path fill="#ffffff" mask="url(#canopy-hollow)"
+        d="M120 356 L120 300 A136 96 0 0 1 392 300 L392 356
+           A34 34 0 0 1 324 356 A34 34 0 0 1 256 356
+           A34 34 0 0 1 188 356 A34 34 0 0 1 120 356 Z"/>
+
+  <rect x="156" y="168" width="200" height="48" rx="24" fill="#ffffff"/>
+</svg>
