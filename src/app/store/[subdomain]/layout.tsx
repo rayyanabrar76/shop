@@ -8,6 +8,9 @@ import { prisma } from '@/lib/prisma'
 import { sanitizeCustomCss, sanitizeCustomHead } from '@/lib/sanitize'
 import OwnerPreviewBar from './OwnerPreviewBar'
 import { CurrencyProvider } from '@/components/CurrencyProvider'
+import { StoreBaseProvider } from '@/components/StoreBaseProvider'
+import { getStoreBase } from '@/lib/store-base'
+import { storeUrl } from '@/lib/config'
 
 export async function generateMetadata({
   params,
@@ -15,28 +18,49 @@ export async function generateMetadata({
   const { subdomain } = await params
   const store = await prisma.store.findUnique({
     where: { subdomain },
-    select: { name: true, theme: { select: { logoUrl: true, footerText: true } } },
+    select: {
+      name: true,
+      theme: { select: { logoUrl: true, footerText: true, seoTitle: true, seoDescription: true, faviconUrl: true } },
+    },
   })
   if (!store) return { title: 'Store not found' }
 
+  // The merchant's own title wins; otherwise the shop name. Only the home page
+  // uses it in full — inner pages keep "<page> — <shop>" so a result still
+  // says which shop it is.
+  const homeTitle = store.theme?.seoTitle?.trim() || store.name
   const description =
-    store.theme?.footerText?.slice(0, 160) ??
+    store.theme?.seoDescription?.trim() ||
+    store.theme?.footerText?.trim()?.slice(0, 160) ||
     `Shop ${store.name} online. Discover products and place orders securely.`
 
+  // A square favicon if one was set; the header logo is the fallback and is
+  // usually too wide to read at 16px.
+  const icon = store.theme?.faviconUrl?.trim() || store.theme?.logoUrl
+  const ogImage = store.theme?.logoUrl || store.theme?.faviconUrl?.trim()
+
+  const canonical = storeUrl(subdomain)
+
   return {
-    title: { default: store.name, template: `%s — ${store.name}` },
+    // Absolute base so relative canonicals and OG images resolve correctly.
+    metadataBase: new URL(canonical),
+    title: { default: homeTitle, template: `%s — ${store.name}` },
     description,
-    icons: store.theme?.logoUrl ? { icon: store.theme.logoUrl } : undefined,
+    alternates: { canonical },
+    icons: icon ? { icon } : undefined,
     openGraph: {
-      title: store.name,
+      title: homeTitle,
       description,
+      url: canonical,
+      siteName: store.name,
       type: 'website',
-      images: store.theme?.logoUrl ? [{ url: store.theme.logoUrl }] : undefined,
+      images: ogImage ? [{ url: ogImage }] : undefined,
     },
     twitter: {
-      card: 'summary',
-      title: store.name,
+      card: ogImage ? 'summary_large_image' : 'summary',
+      title: homeTitle,
       description,
+      images: ogImage ? [ogImage] : undefined,
     },
     robots: { index: true, follow: true },
   }
@@ -71,7 +95,7 @@ export default async function StoreLayout({
       id: true,
       ownerId: true,
       currency: true,
-      theme: { select: { customCss: true, customHead: true, darkMode: true, showDarkToggle: true, backgroundColor: true, textColor: true, footerColor: true, productGridBg: true } },
+      theme: { select: { customCss: true, customHead: true, darkMode: true, showDarkToggle: true, backgroundColor: true, textColor: true, footerColor: true, productGridBg: true, borderRadius: true } },
     },
   })
   const customCss       = sanitizeCustomCss(store?.theme?.customCss ?? '')
@@ -82,7 +106,7 @@ export default async function StoreLayout({
   // Use hardcoded light defaults so the blocking script sets correct vars when customer prefers light.
   const lightBg         = darkMode ? '#ffffff' : (store?.theme?.backgroundColor ?? '#ffffff')
   const lightText       = darkMode ? '#09090b' : (store?.theme?.textColor       ?? '#09090b')
-  const lightFooter     = darkMode ? '#f4f4f5' : (store?.theme?.footerColor     ?? '#f4f4f5')
+  const lightFooter     = darkMode ? '#ffffff' : (store?.theme?.footerColor     ?? '#ffffff')
   const lightPgBg       = darkMode ? '#ffffff' : (store?.theme?.productGridBg   ?? '#ffffff')
 
   // Runs synchronously before first paint — sets data-dark on <html> AND CSS vars for bg/text.
@@ -116,6 +140,22 @@ export default async function StoreLayout({
       el.style.setProperty('--store-card-border','#f1f1f1');
     }
   }catch(e){}}())`
+
+  // Storefront chrome (header, cart, panels, inputs) used fixed Tailwind
+  // rounding, so a store set to square corners still had rounded buttons
+  // everywhere outside the product grid. Map the box-ish utilities onto the
+  // theme radius. rounded-full is deliberately excluded — dots, avatars and
+  // pills are meant to stay circular at any curvature.
+  const themeRadius = store?.theme?.borderRadius ?? '0.75rem'
+  const RADIUS_CSS = `
+    #store-preview-root .rounded-sm,
+    #store-preview-root .rounded,
+    #store-preview-root .rounded-md,
+    #store-preview-root .rounded-lg,
+    #store-preview-root .rounded-xl,
+    #store-preview-root .rounded-2xl,
+    #store-preview-root .rounded-3xl { border-radius: ${themeRadius} !important; }
+  `
 
   const DARK_MODE_CSS = `
     [data-dark] .bg-white { background-color: #18181b !important; }
@@ -179,8 +219,11 @@ export default async function StoreLayout({
     }
   }
 
+  const storeBase = await getStoreBase(subdomain)
+
   return (
     <AuthProvider initialCustomer={initialCustomer}>
+      <StoreBaseProvider base={storeBase}>
       <CurrencyProvider currency={store?.currency}>
       <CartProvider>
         {/* Blocking script — executes before first paint, sets data-dark on <html> with zero flash */}
@@ -188,12 +231,14 @@ export default async function StoreLayout({
         {customCss  && <style dangerouslySetInnerHTML={{ __html: customCss }} />}
         {customHead && <div dangerouslySetInnerHTML={{ __html: customHead }} />}
         <style dangerouslySetInnerHTML={{ __html: DARK_MODE_CSS }} />
+        <style dangerouslySetInnerHTML={{ __html: RADIUS_CSS }} />
         <div id="store-preview-root" className="min-h-screen">
           {children}
         </div>
-        {isOwner && store && <OwnerPreviewBar storeId={store.id} />}
+        {store && <OwnerPreviewBar storeId={store.id} isOwner={isOwner} />}
       </CartProvider>
       </CurrencyProvider>
+      </StoreBaseProvider>
     </AuthProvider>
   )
 }

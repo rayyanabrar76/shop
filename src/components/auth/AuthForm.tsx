@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useSignIn, useSignUp } from '@clerk/nextjs'
+import { useEffect, useState } from 'react'
+import { useAuth, useSignIn, useSignUp } from '@clerk/nextjs'
 import { ArrowRight, Eye, EyeOff, Loader2, Mail, ChevronLeft, CheckCircle2 } from 'lucide-react'
 import { FcGoogle } from 'react-icons/fc'
 import { FaLinkedinIn } from 'react-icons/fa'
@@ -23,6 +22,12 @@ function MicrosoftIcon({ className }: { className?: string }) {
   )
 }
 
+/** Clerk rejects a sign-in attempt when a session is already active. */
+function isAlreadySignedIn(err: unknown): boolean {
+  const e = err as { errors?: { code?: string }[] }
+  return e?.errors?.some(x => x.code === 'session_exists') ?? false
+}
+
 function clerkError(err: unknown): string {
   const e = err as { errors?: { longMessage?: string; message?: string }[] }
   return e?.errors?.[0]?.longMessage ?? e?.errors?.[0]?.message ?? 'Something went wrong. Please try again.'
@@ -37,7 +42,7 @@ export default function AuthForm({
   redirectUrl?: string
   onClose?: () => void
 }) {
-  const router = useRouter()
+  const { isSignedIn, isLoaded: authLoaded } = useAuth()
   const { isLoaded: signInLoaded, signIn, setActive: setActiveSignIn } = useSignIn()
   const { isLoaded: signUpLoaded, signUp, setActive: setActiveSignUp } = useSignUp()
 
@@ -53,11 +58,34 @@ export default function AuthForm({
 
   const ready = signInLoaded && signUpLoaded
 
-  function finish(session: string | null) {
-    if (mode === 'sign-up') setActiveSignUp?.({ session })
-    else setActiveSignIn?.({ session })
+  // The page is server-rendered, so a session established in another tab (or
+  // just after this HTML was produced) leaves the form on screen even though
+  // Clerk already has one. Submitting then fails with "You're already signed
+  // in", so send them on instead.
+  useEffect(() => {
+    if (authLoaded && isSignedIn) window.location.assign(redirectUrl)
+  }, [authLoaded, isSignedIn, redirectUrl])
+
+  /**
+   * setActive is what writes the session cookie, and it is async. Navigating
+   * without awaiting it raced the middleware: the request for the destination
+   * went out before the cookie existed, so the middleware saw a signed-out user
+   * and bounced straight back to /sign-in.
+   *
+   * The navigation is a full page load rather than router.push so the server
+   * definitely renders with the new cookie — it happens once, right after
+   * sign-in, where a reload costs nothing.
+   */
+  async function finish(session: string | null) {
+    try {
+      if (mode === 'sign-up') await setActiveSignUp?.({ session })
+      else await setActiveSignIn?.({ session })
+    } catch (err) {
+      setError(clerkError(err))
+      return
+    }
     onClose?.()
-    router.push(redirectUrl)
+    window.location.assign(redirectUrl)
   }
 
   async function handleOAuth(strategy: OAuthStrategy) {
@@ -85,7 +113,7 @@ export default function AuthForm({
       // ── Sign in ──────────────────────────────────────────────
       if (mode === 'sign-in' && step === 'credentials') {
         const res = await signIn!.create({ identifier: email, password })
-        if (res.status === 'complete') finish(res.createdSessionId)
+        if (res.status === 'complete') return await finish(res.createdSessionId)
         else setError('Additional verification is required to sign in.')
       }
 
@@ -99,7 +127,7 @@ export default function AuthForm({
       // ── Sign up: verify email code ───────────────────────────
       else if (mode === 'sign-up' && step === 'verify-email') {
         const res = await signUp!.attemptEmailAddressVerification({ code })
-        if (res.status === 'complete') finish(res.createdSessionId)
+        if (res.status === 'complete') return await finish(res.createdSessionId)
         else setError('That code was not correct. Please try again.')
       }
 
@@ -116,10 +144,14 @@ export default function AuthForm({
           code,
           password,
         })
-        if (res.status === 'complete') finish(res.createdSessionId)
+        if (res.status === 'complete') return await finish(res.createdSessionId)
         else setError('That code was not correct. Please try again.')
       }
     } catch (err) {
+      if (isAlreadySignedIn(err)) {
+        window.location.assign(redirectUrl)
+        return
+      }
       setError(clerkError(err))
     } finally {
       setLoading(false)
@@ -150,6 +182,24 @@ export default function AuthForm({
     : mode === 'sign-in'
     ? 'Welcome back! Please sign in to continue.'
     : 'Start building your store in minutes.'
+
+  // Clerk resolves the session on the client, a beat after this HTML arrives.
+  // Rendering the form in that window meant a signed-in owner saw a sign-in
+  // page flash before being redirected. Hold a quiet placeholder until we know
+  // which it is — and keep holding it while the redirect runs.
+  if (!authLoaded || isSignedIn) {
+    return (
+      <div className="flex min-h-[420px] flex-col items-center justify-center gap-3">
+        <span className="text-2xl font-black tracking-tighter text-[#212121]">
+          Shopflow<span className="text-[#b5b5ad]">.</span>
+        </span>
+        <Loader2 className="h-5 w-5 animate-spin text-[#8a8a82]" />
+        <p className="text-[13px] text-[#8a8a82]">
+          {isSignedIn ? 'Taking you there…' : 'Just a moment…'}
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="w-full">

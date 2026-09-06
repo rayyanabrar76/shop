@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { APP_URL } from '@/lib/config'
 import Link from 'next/link'
 import { Monitor, Tablet, Smartphone, Pencil, ExternalLink } from 'lucide-react'
 
@@ -12,7 +13,7 @@ const DEVICES = [
   { id: 'mobile'  as const, icon: Smartphone, label: 'Mobile',  width: 390  },
 ]
 
-export default function OwnerPreviewBar({ storeId }: { storeId: string }) {
+export default function OwnerPreviewBar({ storeId, isOwner = false }: { storeId: string; isOwner?: boolean }) {
   const [device, setDevice]           = useState<DeviceMode>('desktop')
   const [visible, setVisible]         = useState(false)
   const [previewUrl, setPreviewUrl]   = useState('')
@@ -25,8 +26,27 @@ export default function OwnerPreviewBar({ storeId }: { storeId: string }) {
     const isIframe  = window.self !== window.top
     const isCustomer = params.has('customerView')
 
-    // Only show bar on real page load by the owner — not inside an iframe or customer view tab
-    if (!isIframe && !isCustomer) {
+    // On a subdomain the Clerk session cookie is not sent (it is host-only for
+    // the root domain), so the server cannot tell the owner apart. The
+    // dashboard therefore appends ?owner=1; we remember it for the tab and
+    // strip it from the URL so the address bar stays clean.
+    let owner = isOwner
+    try {
+      if (params.has('owner')) {
+        sessionStorage.setItem('sf-owner-preview', '1')
+        owner = true
+        const clean = new URL(window.location.href)
+        clean.searchParams.delete('owner')
+        window.history.replaceState({}, '', clean.toString())
+      } else if (sessionStorage.getItem('sf-owner-preview') === '1') {
+        owner = true
+      }
+    } catch {
+      // Private mode or blocked storage — fall back to the server's answer.
+    }
+
+    // Never inside the editor iframe, and never in the customer-view tab.
+    if (owner && !isIframe && !isCustomer) {
       setVisible(true)
     }
 
@@ -41,7 +61,7 @@ export default function OwnerPreviewBar({ storeId }: { storeId: string }) {
     cUrl.searchParams.delete('preview')
     cUrl.searchParams.set('customerView', '1')
     setCustomerUrl(cUrl.toString())
-  }, [])
+  }, [isOwner])
 
   if (!visible) return null
 
@@ -102,7 +122,7 @@ export default function OwnerPreviewBar({ storeId }: { storeId: string }) {
         <div className="w-px h-4 bg-zinc-700 mx-1" />
 
         <Link
-          href={`/dashboard/stores/${storeId}/theme/editor`}
+          href={`${APP_URL}/dashboard/stores/${storeId}/theme/editor`}
           className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 hover:text-white transition-colors px-1"
         >
           <Pencil className="w-3 h-3" />

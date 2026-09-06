@@ -1,5 +1,7 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
 import AuthForm from '@/components/auth/AuthForm'
 
 export default async function SignInPage({
@@ -9,8 +11,15 @@ export default async function SignInPage({
 }) {
   const { mode, redirect_url } = await searchParams
   const initialMode = mode === 'sign-up' ? 'sign-up' : 'sign-in'
-  // Only allow same-app relative paths as post-auth redirect targets
-  const redirectUrl = redirect_url?.startsWith('/') ? redirect_url : '/dashboard'
+  // Only allow same-app relative paths as post-auth redirect targets.
+  // Reject protocol-relative "//evil.com", which also starts with "/".
+  const safeRedirect =
+    redirect_url?.startsWith('/') && !redirect_url.startsWith('//') ? redirect_url : null
+  const redirectUrl = safeRedirect ?? '/dashboard'
+
+  // Someone already signed in has no business on the sign-in form.
+  const { userId } = await auth()
+  if (userId) redirect(redirectUrl)
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-[#fdfdfc] p-4">
       {/* Subtle grid backdrop */}
@@ -22,7 +31,7 @@ export default async function SignInPage({
         }}
       />
 
-      <div className="relative z-10 w-full max-w-[400px] rounded-[26px] border border-[#e8e8e3] bg-[#fdfdfc] p-7 shadow-[0_24px_70px_-15px_rgba(0,0,0,0.18)]">
+      <div className="relative z-10 w-full max-w-100 rounded-[26px] border border-[#e8e8e3] bg-[#fdfdfc] p-7 shadow-[0_24px_70px_-15px_rgba(0,0,0,0.18)]">
         <Suspense fallback={null}>
           <AuthForm initialMode={initialMode} redirectUrl={redirectUrl} />
         </Suspense>
