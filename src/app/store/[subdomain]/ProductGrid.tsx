@@ -27,6 +27,7 @@ interface ThemeStyle {
   cardShadow?: string
   productImageRadius?: string
   featuredLabel?: string
+  featuredLabelLevel?: string
   productTitleWidth?: string
   productTitleAlign?: string
   productTitlePreset?: string
@@ -60,6 +61,7 @@ interface ProductGridProps {
   products: Product[]
   theme: {
     layout?: string | null
+    carouselOnMobile?: boolean | null
     headingFont?: string | null
     borderRadius?: string | null
     primaryColor?: string | null
@@ -140,6 +142,24 @@ const HIGHLIGHT: React.CSSProperties = {
   borderRadius: '3px',
 }
 
+/**
+ * Blank keeps the original small-caps label, so every existing store looks
+ * exactly as it did; the numbered presets are the usual heading ladder.
+ */
+const HEADING_TAGS: Record<string, string> = {
+  '': 'h2', h1: 'h1', h2: 'h2', h3: 'h3', h4: 'h4', h5: 'h5', h6: 'h6',
+}
+
+const HEADING_PRESETS: Record<string, string> = {
+  '':   'text-base font-bold uppercase tracking-widest',
+  h1:   'text-4xl font-black tracking-tight',
+  h2:   'text-3xl font-bold tracking-tight',
+  h3:   'text-2xl font-bold tracking-tight',
+  h4:   'text-xl font-semibold',
+  h5:   'text-lg font-semibold',
+  h6:   'text-sm font-semibold uppercase tracking-widest',
+}
+
 export default function ProductGrid({
   products, theme, subdomain, themeStyle, isEditor = false, onEdit, activeProductField,
 }: ProductGridProps) {
@@ -147,9 +167,30 @@ export default function ProductGrid({
   const price = usePrice()
   const router = useRouter()
   const { primaryColor, borderRadius, buttonStyle, headingFont, featuredLabel, font } = themeStyle
+
+  /**
+   * Heading level is both the tag and the size, so a merchant choosing
+   * "Heading 1" gets an <h1> as well as h1 type — picking a size that quietly
+   * left an <h2> in the markup would look right and read wrong to Google and
+   * to a screen reader.
+   */
+  const headingLevel = themeStyle.featuredLabelLevel ?? ''
+  const HeadingTag = (HEADING_TAGS[headingLevel] ?? 'h2') as 'h1'
   const fontFamily = font === 'serif' ? 'serif' : font === 'mono' ? 'monospace' : font ? font : undefined
   const cardShadow = themeStyle.cardShadow ?? theme?.cardShadow ?? 'none'
-  const isList = theme?.layout === 'list'
+  /**
+   * Grid, Carousel or Editorial. "list" was a fourth option — a phone layout
+   * shown on desktop, where it left two thirds of the screen empty — and any
+   * store still holding it falls through to the grid.
+   */
+  const layout: 'grid' | 'carousel' | 'editorial' =
+    theme?.layout === 'carousel' ? 'carousel'
+    : theme?.layout === 'editorial' ? 'editorial'
+    : 'grid'
+  const isEditorial = layout === 'editorial'
+  // Independent of the desktop layout: a grid can swipe on a phone without
+  // becoming a carousel on a monitor.
+  const swipeOnMobile = theme?.carouselOnMobile === true
   const shadowStyle = getCardShadow(cardShadow, primaryColor)
   // Card covers can opt out of the global curvature — squared-off images read
   // very differently from the buttons, which usually still want rounding.
@@ -225,80 +266,37 @@ export default function ProductGrid({
       <div className="mb-7 flex items-center gap-2">
         <div className="h-4 w-1 rounded-full" style={{ backgroundColor: primaryColor }} />
         <EditorItem section="products" field="featured-label" label="Section heading" isEditor={isEditor} onEdit={notify}>
-          <h2
-            className="text-base font-bold uppercase tracking-widest"
+          <HeadingTag
+            className={HEADING_PRESETS[headingLevel] ?? HEADING_PRESETS['']}
             style={{ fontFamily: headingFont === 'serif' ? 'serif' : 'inherit' }}
           >
             {featuredLabel || 'Featured Products'}
-          </h2>
+          </HeadingTag>
         </EditorItem>
       </div>
 
       {(products.length > 0 || isEditor) ? (
         <div
           className={
-            isList
-              ? 'flex flex-col gap-3 max-w-lg'
+            layout === 'carousel'
+              // Card widths live on the container via [&>*] so the card markup
+              // stays identical across all three layouts.
+              ? 'flex gap-5 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 [&>*]:snap-start [&>*]:shrink-0 [&>*]:w-[72%] sm:[&>*]:w-[45%] lg:[&>*]:w-[23%]'
+              : isEditorial
+              // One product a screen, with room to breathe between them. The
+              // column is capped: card images are square, so at full container
+              // width a single product stood 1300px tall and you scrolled past
+              // one donut at a time.
+              ? 'flex flex-col gap-16 sm:gap-24 mx-auto w-full max-w-2xl'
+              : swipeOnMobile
+              // Swipes below sm, then reverts to a true grid: overflow-visible
+              // and w-auto have to be undone explicitly, or the cards keep the
+              // fixed width the scroller gave them.
+              ? 'flex gap-5 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 [&>*]:snap-start [&>*]:shrink-0 [&>*]:w-[72%] sm:grid sm:grid-cols-3 lg:grid-cols-4 sm:gap-x-6 sm:gap-y-10 sm:overflow-visible sm:[&>*]:w-auto'
               : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-9 sm:gap-x-6 sm:gap-y-10'
           }
         >
           {products.map((p) => (
-            isList ? (
-              /* ── LIST layout ── */
-              <EditorItem key={p.id} section="products" field="layout" label="Card layout" isEditor={isEditor} onEdit={notify} block>
-              <div
-                className="relative flex gap-4 border bg-white p-3 transition-shadow cursor-pointer"
-                style={{ borderRadius, ...shadowStyle, borderColor: 'var(--store-card-border, #e4e4e7)', ...(fontFamily ? { fontFamily } : {}) }}
-                onClick={() => navigateTo(p.slug || p.id)}
-              >
-                {isEditor && (
-                  <button
-                    onClick={e => { e.stopPropagation(); window.parent.postMessage({ type: 'edit-product', productId: p.id }, '*') }}
-                    className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2 py-1 rounded-lg bg-zinc-900 text-white text-[10px] font-bold hover:bg-zinc-700 transition-colors"
-                  >
-                    <Pencil className="w-2.5 h-2.5" /> Edit
-                  </button>
-                )}
-                <div className="w-20 h-20 shrink-0 bg-zinc-100 overflow-hidden" style={{ borderRadius: imageRadius }}>
-                  {p.imageUrl ? (
-                    <img src={p.imageUrl} alt={p.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-zinc-300 text-xs">—</div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                  <div>
-                    <div style={titleHighlight}>
-                      <EditorItem section="products" field="product-title" label="Product Title" isEditor={isEditor} onEdit={notify} block>
-                        <CardTitleLink isEditor={isEditor} href={`${storeBase}/products/${p.slug || p.id}`} style={titleStyle}>
-                          {p.title}
-                        </CardTitleLink>
-                      </EditorItem>
-                    </div>
-                    {p.description && <p className="text-xs text-zinc-400 line-clamp-1 mt-0.5">{p.description}</p>}
-                  </div>
-                  <div className="flex items-center justify-between mt-2">
-                    <div style={priceHighlight}>
-                      <EditorItem section="products" field="product-price" label="Price" isEditor={isEditor} onEdit={notify}>
-                        <span style={priceStyle}>{price(p.price)}</span>
-                      </EditorItem>
-                    </div>
-                    <div style={cartHighlight} onClick={e => e.stopPropagation()}>
-                      <EditorItem section="products" field="add-to-cart-btn" label="Cart Button" isEditor={isEditor} onEdit={notify} block>
-                        <AddToCartButton
-                          product={{ id: p.id, title: p.title, price: p.price, imageUrl: p.imageUrl }}
-                          label={themeStyle.cartBtnLabel}
-                          showIcon={themeStyle.cartBtnShowIcon}
-                          isEditor={isEditor}
-                          style={cartBtnStyle}
-                        />
-                      </EditorItem>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              </EditorItem>
-            ) : (
               /* ── GRID layout ── */
               <EditorItem key={p.id} section="products" field="layout" label="Card layout" isEditor={isEditor} onEdit={notify} block>
               <div
@@ -407,20 +405,31 @@ export default function ProductGrid({
                   )}
                 </div>
 
-                <div className="pt-3.5 flex flex-col gap-1.5 flex-1">
+                <div
+                  className={
+                    isEditorial
+                      ? 'pt-5 flex items-baseline justify-between gap-8'
+                      : 'pt-3.5 flex flex-col gap-1.5 flex-1'
+                  }
+                >
+                  <div className={isEditorial ? 'min-w-0' : 'contents'}>
                   {p.category && (
                     <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-400 leading-none">
                       {p.category}
                     </span>
                   )}
-                  <div style={{ ...titleHighlight, minHeight: '2.9em' }}>
+                  {/* The reserved two lines keep grid cards aligned whatever
+                      their titles do. Editorial has one product a row, so there
+                      is nothing to align it with. */}
+                  <div style={{ ...titleHighlight, ...(isEditorial ? {} : { minHeight: '2.9em' }) }}>
                     <EditorItem section="products" field="product-title" label="Product Title" isEditor={isEditor} onEdit={notify} block>
                       <CardTitleLink isEditor={isEditor} href={`${storeBase}/products/${p.slug || p.id}`} style={titleStyle}>
                         {p.title}
                       </CardTitleLink>
                     </EditorItem>
                   </div>
-                  <div style={priceHighlight}>
+                  </div>
+                  <div style={priceHighlight} className={isEditorial ? 'shrink-0' : undefined}>
                     <EditorItem section="products" field="product-price" label="Price" isEditor={isEditor} onEdit={notify}>
                       <span style={{ ...priceStyle, paddingTop: priceStyle.paddingTop ?? 0 }}>
                         {price(p.price)}
@@ -430,21 +439,10 @@ export default function ProductGrid({
                 </div>
               </div>
               </EditorItem>
-            )
           ))}
 
           {/* Add Product card — only visible in editor */}
           {isEditor && (
-            isList ? (
-              <button
-                onClick={() => window.parent.postMessage({ type: 'add-product' }, '*')}
-                className="flex gap-4 border-2 border-dashed border-zinc-300 bg-white p-3 items-center justify-center transition-colors hover:border-zinc-400 hover:bg-zinc-50 cursor-pointer"
-                style={{ borderRadius }}
-              >
-                <Plus className="w-5 h-5 text-zinc-400" />
-                <span className="text-xs font-semibold text-zinc-400">Add Product</span>
-              </button>
-            ) : (
               <button
                 onClick={() => window.parent.postMessage({ type: 'add-product' }, '*')}
                 className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-zinc-300 bg-white transition-colors hover:border-zinc-400 hover:bg-zinc-50 cursor-pointer"
@@ -453,7 +451,6 @@ export default function ProductGrid({
                 <Plus className="w-6 h-6 text-zinc-400" />
                 <span className="text-xs font-semibold text-zinc-400">Add Product</span>
               </button>
-            )
           )}
         </div>
       ) : (
