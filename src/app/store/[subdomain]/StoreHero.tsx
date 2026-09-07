@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { EditorItem } from './EditorHighlight'
+import { sanitizeRichText } from '@/lib/sanitize'
 
 export interface HeroSlide {
   id: string
@@ -137,16 +138,19 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
             </h2>
           </EditorItem>
           <EditorItem section="hero" field="hero-subheading" meta={{ slideIndex: current }} label="Subheading" isEditor={isEditor} onEdit={notify}>
-            <p
-              className="text-sm md:text-lg max-w-md leading-relaxed"
+            {/* Rendered as HTML so the toolbar's bold, links and lists show
+                as formatting. Everything passes through sanitizeRichText: the
+                toolbar can only make safe markup, but a paste from Word or a
+                browser extension can put anything into the field. */}
+            <div
+              className="text-sm md:text-lg max-w-md leading-relaxed [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
               style={{
                 color: hasMedia ? 'rgba(255,255,255,0.9)' : 'inherit',
                 opacity: hasMedia ? 1 : 0.6,
                 textShadow: hasMedia ? '0 1px 8px rgba(0,0,0,0.4)' : 'none',
               }}
-            >
-              {slide.subheading}
-            </p>
+              dangerouslySetInnerHTML={{ __html: sanitizeRichText(slide.subheading) }}
+            />
           </EditorItem>
           <div className="flex items-center gap-3 mt-2">
             <EditorItem section="hero" field="hero-cta" meta={{ slideIndex: current }} label="CTA Button" isEditor={isEditor} onEdit={notify}>

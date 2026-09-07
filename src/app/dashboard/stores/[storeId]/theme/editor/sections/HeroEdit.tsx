@@ -4,6 +4,7 @@ import { useRef, type DragEvent } from 'react'
 import SectionHeader from './SectionHeader'
 import MediaPicker from '@/components/MediaPicker'
 import { ThemeState, inputCls } from '../types'
+import { RichTextField } from '../controls'
 import { GripVertical, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import UrlPicker from '@/components/UrlPicker'
 import AiFieldLabel, { type AiFieldKind } from '@/components/ai/AiFieldLabel'
@@ -141,9 +142,12 @@ function SlideCard({ storeId, subdomain, slide, index, total, isOpen, onToggle, 
     fieldId: string
     aiKind: AiFieldKind
     aiHint: string
+    /** Formatting toolbar. Only for copy long enough to need one — a toolbar
+        over a button label is clutter. */
+    rich?: boolean
   }[] = [
     { key: 'heading',    label: 'Heading',      placeholder: 'Big bold headline', fieldId: 'hero-heading',    aiKind: 'heading',    aiHint: 'the big headline on the home page hero slide' },
-    { key: 'subheading', label: 'Subheading',   placeholder: 'Supporting line',   fieldId: 'hero-subheading', aiKind: 'subheading', aiHint: 'the supporting line under the hero headline' },
+    { key: 'subheading', label: 'Subheading',   placeholder: 'Supporting line',   fieldId: 'hero-subheading', aiKind: 'subheading', aiHint: 'the supporting line under the hero headline', rich: true },
     { key: 'ctaLabel',   label: 'Button Label', placeholder: 'Shop Now',          fieldId: 'hero-cta',        aiKind: 'button',     aiHint: 'the call-to-action button on the hero slide' },
   ]
 
@@ -180,12 +184,21 @@ function SlideCard({ storeId, subdomain, slide, index, total, isOpen, onToggle, 
                 className="mb-0"
                 labelClassName="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider"
               />
-              <input
-                className={inputCls}
-                value={(slide[f.key] as string) ?? ''}
-                placeholder={f.placeholder}
-                onChange={e => onUpdate(slide.id, f.key, e.target.value)}
-              />
+              {f.rich ? (
+                <RichTextField
+                  label=""
+                  value={(slide[f.key] as string) ?? ''}
+                  onChange={html => onUpdate(slide.id, f.key, html)}
+                  rows={3}
+                />
+              ) : (
+                <input
+                  className={inputCls}
+                  value={(slide[f.key] as string) ?? ''}
+                  placeholder={f.placeholder}
+                  onChange={e => onUpdate(slide.id, f.key, e.target.value)}
+                />
+              )}
             </div>
           ))}
 
