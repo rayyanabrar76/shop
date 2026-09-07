@@ -77,6 +77,7 @@ interface ThemeState {
   productGridTextColor?: string
   productGridFont?: string
   featuredLabel?: string
+  featuredLabelLevel?: string
   shopAllLabel?: string
   productTitleWidth?: string
   productTitleMaxWidth?: string

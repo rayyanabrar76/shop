@@ -129,6 +129,7 @@ model StoreTheme {
   showSearch      Boolean @default(true)
   shopAllLabel    String  @default("Shop All Products")
   featuredLabel   String  @default("Featured Products")
+  featuredLabelLevel String @default("")  // blank keeps the original small-caps label
   productGridBg          String  @default("#ffffff")
   productImageRadius     String  @default("")  // blank = follow global borderRadius
   productGridButtonColor String  @default("")

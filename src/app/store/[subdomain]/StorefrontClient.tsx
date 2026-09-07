@@ -57,6 +57,7 @@ interface ThemeStyle {
   dividerStyle: string
   shopAllLabel: string
   featuredLabel: string
+  featuredLabelLevel?: string
   productGridBg: string
   productImageRadius?: string
   productGridButtonColor: string
@@ -267,6 +268,7 @@ export default function StorefrontClient({
     cardShadow: theme.cardShadow,
     productImageRadius: theme.productImageRadius,
     featuredLabel: theme.featuredLabel || 'Featured Products',
+    featuredLabelLevel: theme.featuredLabelLevel,
     productTitleWidth:         theme.productTitleWidth,
     productTitleMaxWidth:      theme.productTitleMaxWidth,
     productTitleAlign:         theme.productTitleAlign,
