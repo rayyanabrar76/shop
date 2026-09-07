@@ -115,16 +115,24 @@ export default function AdminSearch({ storeId }: { storeId: string }) {
         <span className="text-[13px] truncate" style={{ color: 'var(--admin-text-3)' }}>Search</span>
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-[120] flex items-start justify-center p-3 sm:p-8">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={() => setOpen(false)} aria-hidden />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Search"
-            className="relative w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
-            style={{ background: 'var(--admin-bg)', border: '1px solid var(--admin-border)' }}
-          >
+      <div
+        className={`fixed inset-0 z-[120] flex items-start justify-center p-3 sm:p-8 transition-opacity duration-200 ${
+          open ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        aria-hidden={!open}
+      >
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={() => setOpen(false)} aria-hidden />
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Search"
+          // Drops in from slightly above rather than fading on the spot: the
+          // movement is what tells you where it came from.
+          className={`relative w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl transition-[opacity,transform] duration-200 ease-out ${
+            open ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-[0.98]'
+          }`}
+          style={{ background: 'var(--admin-bg)', border: '1px solid var(--admin-border)' }}
+        >
             <div className="flex items-center gap-2 px-3 py-2.5" style={{ borderBottom: '1px solid var(--admin-border)' }}>
               <Search className="w-4 h-4 shrink-0" style={{ color: 'var(--admin-text-3)' }} />
               <input
@@ -175,10 +183,9 @@ export default function AdminSearch({ storeId }: { storeId: string }) {
                   )
                 })
               )}
-            </div>
           </div>
         </div>
-      )}
+      </div>
     </>
   )
 }

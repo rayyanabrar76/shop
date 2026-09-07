@@ -26,7 +26,6 @@ import {
   Truck,
   Sparkles,
   Menu,
-  X,
 } from "lucide-react";
 
 type StoreItem = {
@@ -289,13 +288,6 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
         >
           ShopFlow
         </span>
-        <button
-          onClick={() => setDrawerOpen(false)}
-          aria-label="Close menu"
-          className="md:hidden p-1.5 -mr-1 rounded-lg"
-        >
-          <X className="w-4 h-4" style={{ color: "var(--admin-text-3)" }} />
-        </button>
       </div>
 
       {/* ── Store Switcher ── */}

@@ -35,19 +35,27 @@ export default async function StoreDashboardPage({
   const showOnboarding = remaining > 0 && store._count.orders === 0
 
   return (
-    <div className="p-5 pt-16 md:p-10 md:pt-10 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">{store.name}</h1>
-          <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1">Manage your store inventory, orders, and appearance.</p>
+    <div className="p-4 pt-5 md:p-10 max-w-7xl mx-auto">
+      <div className="flex items-start justify-between gap-3 mb-6 md:mb-8">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 truncate">{store.name}</h1>
+          {/* The subtitle explains the page to someone seeing it for the first
+              time and is dead weight on a phone, where the nav is a tap away. */}
+          <p className="hidden md:block text-zinc-500 dark:text-zinc-400 text-sm mt-1">
+            Manage your store inventory, orders, and appearance.
+          </p>
         </div>
         <Link
           target="_blank"
-          className="flex items-center gap-2 rounded-xl bg-black dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-all shadow-sm w-fit"
+          aria-label="View storefront"
+          // Hidden on mobile: the admin header above already carries an
+          // eye, and that header is itself md:hidden, so on desktop this
+          // is the one that shows.
+          className="hidden md:flex shrink-0 items-center gap-2 rounded-xl bg-black dark:bg-white px-3 md:px-4 py-2.5 text-sm font-semibold text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-all shadow-sm w-fit"
           href={storeUrl(store.subdomain, '?owner=1')}
         >
           <Eye className="w-4 h-4" />
-          View storefront
+          <span className="hidden md:inline">View storefront</span>
         </Link>
       </div>
 
@@ -94,10 +102,13 @@ export default async function StoreDashboardPage({
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <StatCard title="Total Products" value={store._count.products} icon={<Package className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />} />
-        <StatCard title="Total Orders"   value={store._count.orders}   icon={<ShoppingCart className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />} />
-        <StatCard title="Active Theme"   value="Modern"                icon={<Palette className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />} />
+      {/* Three stacked cards pushed everything else off a phone screen, so
+          below md they swipe instead — 78% wide, which leaves the edge of the
+          next one showing as the cue that there is more. */}
+      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 [&>*]:snap-start [&>*]:shrink-0 [&>*]:w-[78%] mb-6 md:mb-10 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:[&>*]:w-auto">
+        <StatCard title="Total Products" value={store._count.products} icon={<Package className="w-4 h-4 md:w-5 md:h-5 text-zinc-500 dark:text-zinc-400" />} />
+        <StatCard title="Total Orders"   value={store._count.orders}   icon={<ShoppingCart className="w-4 h-4 md:w-5 md:h-5 text-zinc-500 dark:text-zinc-400" />} />
+        <StatCard title="Active Theme"   value="Modern"                icon={<Palette className="w-4 h-4 md:w-5 md:h-5 text-zinc-500 dark:text-zinc-400" />} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -111,25 +122,25 @@ export default async function StoreDashboardPage({
 
 function StatCard({ title, value, icon }: { title: string; value: string | number; icon: React.ReactNode }) {
   return (
-    <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <div className="p-2 bg-zinc-50 dark:bg-zinc-800 rounded-lg">{icon}</div>
+    <div className="bg-white dark:bg-zinc-900 p-4 md:p-6 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
+      <div className="flex items-center justify-between mb-3 md:mb-4">
+        <div className="p-1.5 md:p-2 bg-zinc-50 dark:bg-zinc-800 rounded-lg">{icon}</div>
       </div>
-      <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">{title}</p>
-      <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mt-1">{value}</h3>
+      <p className="text-[13px] md:text-sm font-medium text-zinc-500 dark:text-zinc-400">{title}</p>
+      <h3 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-50 mt-1">{value}</h3>
     </div>
   )
 }
 
 function DashboardLink({ href, title, description }: { href: string; title: string; description: string }) {
   return (
-    <Link href={href} className="group p-5 rounded-2xl border border-zinc-200 dark:border-zinc-700 hover:border-black dark:hover:border-zinc-400 transition-all bg-white dark:bg-zinc-900 flex flex-col justify-between">
+    <Link href={href} className="group p-4 md:p-5 rounded-2xl border border-zinc-200 dark:border-zinc-700 hover:border-black dark:hover:border-zinc-400 transition-all bg-white dark:bg-zinc-900 flex flex-col justify-between">
       <div>
         <div className="flex items-center justify-between">
-          <h4 className="font-bold text-zinc-900 dark:text-zinc-50">{title}</h4>
+          <h4 className="text-[15px] md:text-base font-bold text-zinc-900 dark:text-zinc-50">{title}</h4>
           <ArrowUpRight className="w-4 h-4 text-zinc-300 dark:text-zinc-600 group-hover:text-black dark:group-hover:text-zinc-300 transition-colors" />
         </div>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{description}</p>
+        <p className="text-[13px] md:text-sm text-zinc-500 dark:text-zinc-400 mt-1">{description}</p>
       </div>
     </Link>
   )
