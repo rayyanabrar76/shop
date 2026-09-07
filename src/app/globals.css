@@ -161,3 +161,99 @@ body {
 .drawer-slide-in {
   animation: drawer-slide-in 0.25s ease-out;
 }
+/* Cart line items settle in as the drawer opens. `backwards` matters: each row
+   is given a staggered animation-delay, and without it the un-delayed rows
+   would flash at full opacity before their turn came. */
+@keyframes cart-item-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.cart-item-in {
+  animation: cart-item-in 0.3s cubic-bezier(0.32, 0.72, 0, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-item-in { animation: none; }
+}
+
+/* ── Removing a cart line ────────────────────────────────────
+   The lid swings open to the left, the product is lobbed in over the top of
+   it, and the lid drops shut behind it. */
+
+/* Hinged at the RIGHT of the rim, which is what makes the LEFT end lift.
+   Hinging it on the left does the opposite — the right end rises and the lid
+   appears to open away to the right. */
+.trash-lid {
+  transform-origin: 20.5px 6px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+/* The open lid travels above the 24x24 viewBox. Without this it is simply
+   cropped away and the icon looks like it lost its lid. Set on the <svg> as an
+   attribute too, since that is what the SVG spec actually honours. */
+.trash-icon {
+  overflow: visible;
+}
+.trash-btn:hover .trash-lid,
+.trash-btn:focus-visible .trash-lid {
+  transform: rotate(38deg);
+}
+
+/* While a product is in the air the lid is driven by this animation rather
+   than the hover transition above, so it holds open for the whole flight and
+   shuts only once the product is inside. */
+.trash-icon[data-open="true"] .trash-lid {
+  animation: trash-lid-toss 0.8s ease-out forwards;
+}
+@keyframes trash-lid-toss {
+  0%   { transform: rotate(38deg); }
+  60%  { transform: rotate(46deg); }  /* opens wider as the product drops in */
+  74%  { transform: rotate(5deg); }   /* slams shut behind it */
+  84%  { transform: rotate(12deg); }  /* one rebound */
+  100% { transform: rotate(0deg); }
+}
+
+/* A lob, not a slide. Height comes from translateY — up hard, hang at the top,
+   then drop. Horizontal travel comes from scaling towards transform-origin,
+   which is the row's top-right corner, exactly where the bin sits; that way
+   the product converges on it without measuring anything per row.
+   Linear on purpose: the arc is in the keyframe spacing, and easing the whole
+   thing on top of that flattens the throw. */
+@keyframes cart-toss-to-bin {
+  0%   { transform: translateY(0)    scale(1)    rotate(0deg);   opacity: 1; }
+  14%  { transform: translateY(-30%) scale(0.86) rotate(-7deg);  opacity: 1; }
+  30%  { transform: translateY(-48%) scale(0.68) rotate(-12deg); opacity: 1; }
+  44%  { transform: translateY(-45%) scale(0.55) rotate(-13deg); opacity: 1; }
+  62%  { transform: translateY(-28%) scale(0.36) rotate(-9deg);  opacity: 1; }
+  80%  { transform: translateY(-9%)  scale(0.17) rotate(-4deg);  opacity: 1; }
+  92%  { transform: translateY(0)    scale(0.07) rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(3%)   scale(0.02) rotate(2deg);   opacity: 0; }
+}
+.cart-toss-to-bin {
+  transform-origin: 100% 0%;
+  animation: cart-toss-to-bin 0.56s linear forwards;
+}
+
+/* The row must NOT clip while the product is airborne, or the arc is sliced
+   off at the card's edge. Raised too, so it passes over its neighbours. */
+.cart-row-flying {
+  overflow: visible;
+  z-index: 30;
+}
+
+/* Only once the product has landed does the row start clipping, so the gap can
+   close. Splitting these two is the whole reason the throw is visible. */
+@keyframes cart-row-collapse {
+  from { max-height: 240px; opacity: 1; }
+  to   { max-height: 0;     opacity: 0; }
+}
+.cart-row-collapse {
+  overflow: hidden;
+  animation: cart-row-collapse 0.24s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trash-lid { transition: none; }
+  .trash-icon[data-open="true"] .trash-lid,
+  .cart-toss-to-bin,
+  .cart-row-collapse { animation: none; }
+}

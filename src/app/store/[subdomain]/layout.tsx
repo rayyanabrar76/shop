@@ -225,7 +225,7 @@ export default async function StoreLayout({
     <AuthProvider initialCustomer={initialCustomer}>
       <StoreBaseProvider base={storeBase}>
       <CurrencyProvider currency={store?.currency}>
-      <CartProvider>
+      <CartProvider storeKey={subdomain}>
         {/* Blocking script — executes before first paint, sets data-dark on <html> with zero flash */}
         <script dangerouslySetInnerHTML={{ __html: DARK_INIT_SCRIPT }} />
         {customCss  && <style dangerouslySetInnerHTML={{ __html: customCss }} />}
