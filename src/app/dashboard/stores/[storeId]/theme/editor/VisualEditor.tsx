@@ -47,14 +47,9 @@ type DeviceMode = 'desktop' | 'tablet' | 'mobile'
 type Tab = 'sections' | 'theme'
 type SectionView = 'list' | 'banner' | 'header' | 'hero' | 'products' | 'footer' | 'custom' | 'code' | 'seo' | 'product-title' | 'product-price' | 'product-cart' | 'nav-menu' | 'category-filter'
 
-/**
- * How far the preview pulls back while a section is being dragged.
- *
- * The frame is also made taller by the reciprocal, which is the part that
- * actually reveals more page: scaling on its own would draw the same slice
- * smaller and leave empty room around it.
- */
-const DRAG_ZOOM = 0.62
+/** Never shrink past this, however long the page is — below it nothing is
+ *  recognisable and the zoom stops helping. */
+const MIN_DRAG_ZOOM = 0.4
 
 const DEVICE_WIDTHS: Record<DeviceMode, string> = {
   desktop: '100%',
@@ -175,6 +170,62 @@ export default function VisualEditor({
   const [panelOpen, setPanelOpen] = useState(false)
   const [panelCollapsed, setPanelCollapsed] = useState(false)
   const [reordering, setReordering] = useState(false)
+  /** Scale that fits the whole page in view, worked out when a drag begins. */
+  const [dragZoom, setDragZoom] = useState(0.62)
+  const [dragPageHeight, setDragPageHeight] = useState<number | null>(null)
+  /**
+   * Whether the whole band fitted on screen at a usable zoom.
+   *
+   * When it did, the page must not scroll — everything is already visible and
+   * moving it would slide the target out from under the cursor. When it did
+   * not, the opposite is true: sections below the fold are unreachable unless
+   * the preview follows the drag down to them.
+   */
+  const dragFitsRef = useRef(true)
+
+  /**
+   * Fit the template band, not the whole document.
+   *
+   * Only the reorderable sections matter while dragging — the header, footer
+   * and anything else fixed above or below them are not going anywhere. Fitting
+   * the entire page meant that a store with a few custom sections zoomed out
+   * until nothing was legible, which defeats the point of zooming out at all.
+   *
+   * Floored at MIN_DRAG_ZOOM: past that the sections stop being recognisable,
+   * and a band that still does not fit is better scrolled than squinted at.
+   */
+  useEffect(() => {
+    if (!reordering) return
+    const frame = iframeRef.current
+    const box = frame?.parentElement
+    try {
+      const doc = frame?.contentDocument
+      const win = frame?.contentWindow
+      if (!doc || !win || !box) return
+
+      const sections = Array.from(
+        doc.querySelectorAll('[id^="section-hero"], [id^="section-products"], [id^="section-custom-"]'),
+      ) as HTMLElement[]
+      if (sections.length === 0) return
+
+      const tops = sections.map(el => el.offsetTop)
+      const bottoms = sections.map(el => el.offsetTop + el.offsetHeight)
+      const bandTop = Math.min(...tops)
+      const bandHeight = Math.max(...bottoms) - bandTop
+      const boxHeight = box.clientHeight
+      if (bandHeight <= 0 || boxHeight <= 0) return
+
+      const ideal = boxHeight / bandHeight
+      dragFitsRef.current = ideal >= MIN_DRAG_ZOOM
+      setDragPageHeight(doc.documentElement.scrollHeight)
+      setDragZoom(Math.max(MIN_DRAG_ZOOM, Math.min(1, ideal)))
+      // Once, as the drag begins: bring the band into view and then leave the
+      // page alone, so the target does not slide out from under the cursor.
+      win.scrollTo({ top: Math.max(0, bandTop - 8), behavior: 'auto' })
+    } catch {
+      // Refused for any reason: the fixed fallback zoom still applies.
+    }
+  }, [reordering])
   /**
    * The preview follows a drag: as a row passes over a position, the page
    * scrolls to the section that sits there and outlines it, so the drop lands
@@ -215,6 +266,21 @@ export default function VisualEditor({
         : key
       : null
     iframeRef.current?.contentWindow?.postMessage({ type: 'section:drag', section }, '*')
+
+    if (!section || dragFitsRef.current) return
+    try {
+      const doc = iframeRef.current?.contentDocument
+      const win = iframeRef.current?.contentWindow
+      const el = doc?.getElementById(`section-${section}`)
+      if (el && win) {
+        // Centre it in what is visible, rather than scrollIntoView, which
+        // scrolls this dashboard as well as the frame inside it.
+        const target = el.offsetTop - (win.innerHeight - el.offsetHeight) / 2
+        win.scrollTo({ top: Math.max(0, target), behavior: 'smooth' })
+      }
+    } catch {
+      // Cross-origin refusal: the outline still moves, the page just will not.
+    }
   }
 
   function togglePanel() {
@@ -941,12 +1007,13 @@ function handlePageContentChange(content: unknown) {
             }`}
             style={{
               width: DEVICE_WIDTHS[device],
-              height: reordering ? `${100 / DRAG_ZOOM}%` : '100%',
-              transform: reordering ? `scale(${DRAG_ZOOM})` : undefined,
-              // Top, not centre: the frame is taller than its container while
-              // zoomed out, and a centred transform pushed the top of the page
-              // off screen — the part you most need when choosing where a
-              // section goes.
+              // The frame is given the page's full height and then scaled to
+              // fit, which is what puts every section on screen at once.
+              height: reordering && dragPageHeight ? `${dragPageHeight}px` : '100%',
+              transform: reordering ? `scale(${dragZoom})` : undefined,
+              // Top, not centre: while zoomed out the frame is taller than its
+              // container, and a centred transform pushes the top of the page
+              // off screen — the part you most need when aiming a drop.
               transformOrigin: 'top center',
               transition: 'transform 0.3s ease-out, height 0.3s ease-out',
               maxWidth: '100%',

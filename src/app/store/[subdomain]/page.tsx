@@ -117,6 +117,10 @@ export default async function StorefrontPage({
     productGridTextColor:   t?.productGridTextColor   ?? '',
     productGridFont:        t?.productGridFont        ?? '',
     customCss:              t?.customCss              ?? '',
+    // Without this the live store always renders the default order: the
+    // editor posts the whole theme to its preview, so a reorder looked saved
+    // there while the real page never received it.
+    sectionOrder:           t?.sectionOrder           ?? '',
     customHead:             t?.customHead             ?? '',
     navLinks:               (t?.navLinks as any)      ?? null,
     navFontSize:            t?.navFontSize            ?? 14,

@@ -132,6 +132,8 @@ export default function StorefrontClient({
   const [theme, setTheme] = useState<ThemeStyle>(initialTheme)
   const [storeName, setStoreName] = useState(store.name)
   const [isEditor, setIsEditor] = useState(false)
+  /** The section being dragged in the editor, outlined while it moves. */
+  const [dragSection, setDragSection] = useState<string | null>(null)
   const [customSections, setCustomSections] = useState<CustomSectionData[]>(initialCustomSections)
   const [liveCategories, setLiveCategories] = useState<StoreCategory[]>(categories)
   const [heroSlides, setHeroSlides] = useState<HeroSlide[] | undefined>(
@@ -178,26 +180,12 @@ export default function StorefrontClient({
         setStoreName(event.data.name)
       }
       if (event.data?.type === 'section:drag') {
-        // Clear any previous outline first: the cursor moves between sections
-        // during one drag, and two outlined sections at once would say the
-        // drop could land in either place.
-        document
-          .querySelectorAll('[data-dragging]')
-          .forEach(n => n.removeAttribute('data-dragging'))
-
-        const key = event.data.section
-        if (key) {
-          const el = document.getElementById(`section-${key}`)
-          if (el) {
-            // An attribute, not a class. The live reorder posts a theme update
-            // on the same gesture, React re-renders these sections, and
-            // re-rendering rewrites className — so a class added here was being
-            // wiped a frame later. React leaves attributes it does not manage
-            // alone.
-            el.setAttribute('data-dragging', '')
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          }
-        }
+        const key: string | null = event.data.section ?? null
+        setDragSection(key)
+        // Deliberately no scrolling. The editor zooms the preview out far
+        // enough to hold the whole template while a drag is in flight, so the
+        // page should stay still and only the sections move — scrolling as
+        // well would move the target out from under the cursor.
       }
       if (event.data?.type === 'section:highlight' && event.data.section) {
         const el = document.getElementById(`section-${event.data.section}`)
@@ -345,7 +333,7 @@ export default function StorefrontClient({
             75%  { box-shadow: 0 0 0 4px rgba(59,130,246,0.6); }
             100% { box-shadow: 0 0 0 0px rgba(59,130,246,0); }
           }
-          [data-dragging] {
+          .preview-dragging {
             outline: 2px solid rgb(59, 130, 246);
             outline-offset: -2px;
             border-radius: 2px;
@@ -372,7 +360,7 @@ export default function StorefrontClient({
         if (key === 'hero') {
           return (
             <div key={key}>
-              <EditorSection id="section-hero" label="Hero" section="hero" isEditor={isEditor} onEdit={notifyParent}>
+              <EditorSection id="section-hero" label="Hero" section="hero" isEditor={isEditor} onEdit={notifyParent} className={dragSection === 'hero' ? 'preview-dragging' : ''}>
                 <StoreHero
                   theme={themeObj}
                   storeName={storeName}
@@ -392,7 +380,7 @@ export default function StorefrontClient({
           return (
             <div key={key}>
               <SectionDivider style={theme.dividerStyle} primaryColor={theme.primaryColor} />
-              <EditorSection id="section-products" label="Product Grid" section="products" isEditor={isEditor} onEdit={notifyParent}>
+              <EditorSection id="section-products" label="Product Grid" section="products" isEditor={isEditor} onEdit={notifyParent} className={dragSection === 'products' ? 'preview-dragging' : ''}>
                 <div data-pg="1" style={{ backgroundColor: 'var(--store-pg-bg)' }}>
                   <ProductGrid products={products} theme={themeObj} subdomain={subdomain} themeStyle={themeStyle} isEditor={isEditor} onEdit={notifyParent} activeProductField={activeProductField} />
                   <div className="flex justify-center pb-8 -mt-2">
@@ -425,7 +413,7 @@ export default function StorefrontClient({
 
         return (
           <div key={key}>
-            <EditorSection id={`section-custom-${section.id}`} label="Custom Section" section="custom" isEditor={isEditor} onEdit={notifyParent}>
+            <EditorSection id={`section-custom-${section.id}`} label="Custom Section" section="custom" isEditor={isEditor} onEdit={notifyParent} className={dragSection === `custom-${section.id}` ? 'preview-dragging' : ''}>
               <div>
                 <SectionDivider style={theme.dividerStyle} primaryColor={theme.primaryColor} />
                 <CustomSection section={section} themeStyle={themeStyle} categories={liveCategories} subdomain={subdomain} isEditor={isEditor} onEdit={notifyParent} />
