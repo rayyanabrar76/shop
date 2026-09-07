@@ -274,7 +274,7 @@ export default function CartSidebar({ themeStyle, subdomain }: CartSidebarProps)
                       <button
                         onClick={() => removeItemCompletely(item.cartKey)}
                         aria-label={`Remove ${item.title}`}
-                        className="trash-btn absolute right-0 top-4 z-10 p-1.5 text-zinc-300 transition-colors group-hover:text-zinc-400 hover:!text-red-500"
+                        className="trash-btn absolute right-0 top-4 z-10 p-1.5 text-zinc-300 transition-colors group-hover:text-zinc-400 hover:text-red-500!"
                       >
                         <TrashIcon />
                       </button>
