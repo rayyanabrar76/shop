@@ -1045,7 +1045,13 @@ function handlePageContentChange(content: unknown) {
           storeId={storeId}
           productId={productModal.productId}
           onClose={() => setProductModal(null)}
-          onSaved={refreshPreview}
+          onSaved={() => {
+            // Saving is the end of the task, so the modal gets out of the way
+            // rather than leaving the merchant to find the close button and
+            // wonder whether it went through.
+            refreshPreview()
+            setProductModal(null)
+          }}
         />
       )}
 

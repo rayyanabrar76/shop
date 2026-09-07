@@ -8,9 +8,9 @@ import {
   HiArrowLeft, HiCheck, HiTag,
   HiChevronDown, HiEye, HiPlus, HiTrash, HiX,
 } from 'react-icons/hi'
-import { HiSparkles, HiPhoto } from 'react-icons/hi2'
+import { HiPhoto } from 'react-icons/hi2'
 import MediaPicker from '@/components/MediaPicker'
-import AiWriteModal from '@/components/ai/AiWriteModal'
+import AiFieldLabel from '@/components/ai/AiFieldLabel'
 import AiImageModal from '@/components/ai/AiImageModal'
 import TagsInput from '@/components/TagsInput'
 import CategoryFormModal from '@/components/CategoryFormModal'
@@ -139,7 +139,6 @@ export default function ProductEditClient({ storeId, product, categories, embedd
   const [tags, setTags] = useState<string[]>(product.tags ?? [])
   const [imageUrl, setImageUrl] = useState(product.imageUrl ?? '')
 
-  const [writeOpen, setWriteOpen] = useState(false)
   const [imageAiOpen, setImageAiOpen] = useState(false)
   const [categoryModal, setCategoryModal] = useState(false)
   // Local copy so a category created from the modal shows up without a reload.
@@ -304,22 +303,33 @@ export default function ProductEditClient({ storeId, product, categories, embedd
 
             {/* Title + Description */}
             <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <p className={labelCls + ' mb-0'}>Details</p>
-                <button
-                  onClick={() => setWriteOpen(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
-                >
-                  <HiSparkles className="w-3.5 h-3.5" /> Rewrite with AI
-                </button>
-              </div>
-              <div>
-                <label className={labelCls}>Product Title <span className="text-red-400">*</span></label>
+              <p className={labelCls}>Details</p>
+
+              {/* group/ai has to sit on the field, not on the row above it:
+                  the button reveals on group-hover/ai, so with the group any
+                  higher it appeared while the pointer was nowhere near the
+                  input it writes. */}
+              <div className="group/ai">
+                <AiFieldLabel
+                  label="Product Title *"
+                  storeId={storeId}
+                  kind="heading"
+                  current={title}
+                  hint="the name of a product in this shop"
+                  onWrite={setTitle}
+                />
                 <input value={title} onChange={e => setTitle(e.target.value)}
                   className={`${inputCls} ${title.trim() === '' ? 'border-red-200 dark:border-red-900' : ''}`} />
               </div>
-              <div>
-                <label className={labelCls}>Description</label>
+              <div className="group/ai">
+                <AiFieldLabel
+                  label="Description"
+                  storeId={storeId}
+                  kind="paragraph"
+                  current={description}
+                  hint={`the description of the product "${title || 'this product'}"`}
+                  onWrite={setDescription}
+                />
                 <textarea rows={5} value={description} onChange={e => setDescription(e.target.value)} className={`${inputCls} resize-none`} />
               </div>
               <div>
@@ -553,18 +563,6 @@ export default function ProductEditClient({ storeId, product, categories, embedd
         />
       )}
 
-      <AiWriteModal
-        open={writeOpen}
-        onClose={() => setWriteOpen(false)}
-        storeId={storeId}
-        existingTitle={title}
-        onImage={url => { if (imageUrl && imageUrl !== url) setExtraImages(imgs => imgs.includes(imageUrl) ? imgs : [...imgs, imageUrl]); setImageUrl(url) }}
-        onApply={(copy, pick) => {
-          if (pick.title) setTitle(copy.title)
-          if (pick.description) setDescription(copy.description)
-          if (pick.tags) setTags(copy.tags)
-        }}
-      />
 
       <AiImageModal
         open={imageAiOpen}

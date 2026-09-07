@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { ImageIcon, Plus, Tag, X } from 'lucide-react'
-import { HiSparkles, HiPhoto } from 'react-icons/hi2'
+import { HiPhoto } from 'react-icons/hi2'
 import ProductPickerModal from '@/components/ProductPickerModal'
 import MediaPicker from '@/components/MediaPicker'
-import AiCategoryModal from '@/components/ai/AiCategoryModal'
+import AiFieldLabel from '@/components/ai/AiFieldLabel'
 import AiImageModal from '@/components/ai/AiImageModal'
 import { useCategoryForm, type CreatedCategory, type EditableCategory } from '@/components/use-category-form'
 import { useModalEscape } from '@/components/useModalEscape'
@@ -36,7 +36,6 @@ export default function CategoryFormModal({
   // at /categories/new. Only the layout differs between the two.
   const f = useCategoryForm(storeId, onCreated, category)
   const [picking, setPicking] = useState(false)
-  const [aiOpen, setAiOpen] = useState(false)
   const [imageAiOpen, setImageAiOpen] = useState(false)
 
   useModalEscape(() => { if (!f.saving) onClose() })
@@ -71,13 +70,6 @@ export default function CategoryFormModal({
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={() => setAiOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
-            >
-              <HiSparkles className="w-3.5 h-3.5" /> Write with AI
-            </button>
             <button
               onClick={onClose}
               className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 transition-colors"
@@ -129,8 +121,15 @@ export default function CategoryFormModal({
               </p>
             </div>
 
-            <div>
-              <label className={labelCls}>Title</label>
+            <div className="group/ai">
+              <AiFieldLabel
+                label="Title"
+                storeId={storeId}
+                kind="heading"
+                current={f.name}
+                hint="the name of a product category in this shop"
+                onWrite={f.setName}
+              />
               <input
                 autoFocus
                 value={f.name}
@@ -143,8 +142,15 @@ export default function CategoryFormModal({
               )}
             </div>
 
-            <div>
-              <label className={labelCls}>Description</label>
+            <div className="group/ai">
+              <AiFieldLabel
+                label="Description"
+                storeId={storeId}
+                kind="paragraph"
+                current={f.description}
+                hint={`a short line about the "${f.name || 'this'}" category`}
+                onWrite={f.setDescription}
+              />
               <textarea
                 value={f.description}
                 onChange={e => f.setDescription(e.target.value)}
@@ -229,18 +235,6 @@ export default function CategoryFormModal({
         onApply={url => f.setImageUrl(url)}
       />
 
-      <AiCategoryModal
-        open={aiOpen}
-        onClose={() => setAiOpen(false)}
-        storeId={storeId}
-        products={f.products}
-        onImage={url => f.setImageUrl(url)}
-        onApply={(result, pick) => {
-          if (pick.title) f.setName(result.title)
-          if (pick.description) f.setDescription(result.description)
-          if (pick.products) f.setProductIds(result.productIds)
-        }}
-      />
 
       {picking && (
         <ProductPickerModal
