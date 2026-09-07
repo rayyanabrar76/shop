@@ -762,13 +762,13 @@ function handlePageContentChange(content: unknown) {
       </div>
 
       <div className="flex flex-1 overflow-hidden relative bg-zinc-800">
-        {panelOpen && (
-          <div
-            className="lg:hidden absolute inset-0 z-30 bg-black/40"
-            onClick={() => setPanelOpen(false)}
-            aria-hidden
-          />
-        )}
+        <div
+          className={`lg:hidden absolute inset-0 z-30 bg-black/40 transition-opacity duration-300 ${
+            panelOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+          onClick={() => setPanelOpen(false)}
+          aria-hidden
+        />
         <aside
           // The transform is confined to max-lg, where it actually drives the
           // drawer. A transform of any kind — `translate-x-0` included — makes
@@ -783,7 +783,7 @@ function handlePageContentChange(content: unknown) {
           //
           // Below lg it is still a drawer flush to the edge, where a rounded
           // floating panel would just waste the little width a phone has.
-          className={`w-72 bg-white dark:bg-zinc-900 flex flex-col shrink-0 transition-[transform,width,opacity,margin] duration-300 ease-out max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:border-r max-lg:border-zinc-200 dark:max-lg:border-zinc-800 lg:transform-none lg:mt-0 lg:mb-1.5 lg:ml-1.5 lg:mr-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-zinc-200/80 dark:lg:border-zinc-800 lg:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] ${panelCollapsed ? 'lg:w-0 lg:ml-0 lg:mb-0 lg:border-0 lg:opacity-0 lg:pointer-events-none' : ''} ${
+          className={`w-72 bg-white dark:bg-zinc-900 flex flex-col shrink-0 max-lg:transition-transform max-lg:duration-300 max-lg:ease-[cubic-bezier(0.32,0.72,0,1)] max-lg:will-change-transform lg:transition-[width,opacity,margin] lg:duration-300 lg:ease-out max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:border-r max-lg:border-zinc-200 dark:max-lg:border-zinc-800 lg:transform-none lg:mt-0 lg:mb-1.5 lg:ml-1.5 lg:mr-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-zinc-200/80 dark:lg:border-zinc-800 lg:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] ${panelCollapsed ? 'lg:w-0 lg:ml-0 lg:mb-0 lg:border-0 lg:opacity-0 lg:pointer-events-none' : ''} ${
             panelOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'
           }`}
         >
