@@ -22,8 +22,51 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
   )
 }
 
-const inactiveBtnCls = 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-600 dark:text-zinc-300'
-const activeBtnCls = 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
+/**
+ * Deliberately two. There were four — "Always" and "On Hover" both dropped a
+ * full-width button under every card, which buries the photography, and
+ * "On Hover" leant on something phones do not have. Each extra option is
+ * another layout to keep looking right in dark mode, on mobile, and in
+ * whatever colour a merchant picks, and this one was not earning that.
+ */
+const DISPLAY_OPTIONS = [
+  { value: 'icon',   label: 'Quick add', hint: 'Chip on the product image' },
+  { value: 'hidden', label: 'Hidden',    hint: 'Card links to the product' },
+] as const
+
+/**
+ * A miniature of the product card for each choice.
+ *
+ * The four options differ only in where the buy control sits, which a sentence
+ * of hint text describes poorly — "Chip on the image" versus "Fades in over the
+ * card" reads as the same thing until you have seen both. Twelve pixels of
+ * diagram settles it at a glance.
+ */
+function Preview({ kind, active }: { kind: string; active: boolean }) {
+  const ink = active ? 'bg-zinc-900 dark:bg-zinc-100' : 'bg-zinc-300 dark:bg-zinc-600'
+  const paper = active ? 'bg-zinc-200 dark:bg-zinc-700' : 'bg-zinc-100 dark:bg-zinc-800'
+
+  return (
+    <div className="w-full rounded-md bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-1.5">
+      <div className={`relative w-full h-7 rounded ${paper}`}>
+        {kind === 'icon' && (
+          <span className={`absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full ${ink}`} />
+        )}
+        {kind === 'hover' && (
+          <span className={`absolute inset-x-2 bottom-1 h-2 rounded-sm ${ink} opacity-50`} />
+        )}
+      </div>
+      {/* The title line is always there; only the button below it changes. */}
+      <div className={`mt-1 h-1 w-2/3 rounded-sm ${paper}`} />
+      {kind === 'always' ? (
+        <div className={`mt-1 h-2 w-full rounded-sm ${ink}`} />
+      ) : (
+        <div className="mt-1 h-2 w-full" />
+      )}
+    </div>
+  )
+}
+
 
 export default function ProductCartButtonEdit({ theme, updateTheme, onBack, storeId }: ProductCartButtonEditProps) {
   function padChange(field: keyof ThemeState) {
@@ -40,25 +83,38 @@ export default function ProductCartButtonEdit({ theme, updateTheme, onBack, stor
         <div data-field="cart-btn-display">
           <label className={labelCls}>Show Button</label>
           <div className="grid grid-cols-2 gap-2">
-            {[
-              { value: 'always', label: 'Always',    hint: 'Button always visible' },
-              { value: 'hover',  label: 'On Hover',  hint: 'Fades in over the card' },
-              { value: 'icon',   label: 'Cart Icon', hint: 'Chip on the image' },
-              { value: 'hidden', label: 'Hidden',    hint: 'Card links to the product' },
-            ].map(opt => {
-              const active = (theme.cartBtnDisplay ?? 'always') === opt.value
+            {DISPLAY_OPTIONS.map(opt => {
+              // Legacy "always"/"hover" resolve to the chip on the storefront,
+              // so the panel shows the same thing rather than leaving neither
+              // card selected.
+              const current = theme.cartBtnDisplay === 'hidden' ? 'hidden' : 'icon'
+              const active = current === opt.value
               return (
                 <button
                   key={opt.value}
                   onClick={() => updateTheme({ cartBtnDisplay: opt.value })}
-                  className={`flex flex-col items-start gap-0.5 px-3 py-2 rounded-xl border text-left transition-all ${
+                  aria-pressed={active}
+                  className={`group relative flex flex-col gap-2 p-2.5 rounded-xl border text-left transition-all ${
                     active
-                      ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
-                      : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800'
+                      ? 'border-zinc-900 dark:border-zinc-100 bg-zinc-50 dark:bg-zinc-800 shadow-[0_1px_2px_rgba(9,9,11,0.05)]'
+                      : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-600'
                   }`}
                 >
-                  <span className="text-[11px] font-bold">{opt.label}</span>
-                  <span className={`text-[9px] ${active ? 'opacity-70' : 'opacity-50'}`}>{opt.hint}</span>
+                  <Preview kind={opt.value} active={active} />
+                  <div>
+                    <span
+                      className={`block text-[11px] font-bold leading-none ${
+                        active
+                          ? 'text-zinc-900 dark:text-zinc-50'
+                          : 'text-zinc-700 dark:text-zinc-300'
+                      }`}
+                    >
+                      {opt.label}
+                    </span>
+                    <span className="mt-1 block text-[9px] leading-tight text-zinc-400 dark:text-zinc-500">
+                      {opt.hint}
+                    </span>
+                  </div>
                 </button>
               )
             })}
@@ -155,23 +211,10 @@ export default function ProductCartButtonEdit({ theme, updateTheme, onBack, stor
           />
         </div>
 
-        {/* Width */}
-        <div>
-          <label className={labelCls}>Width</label>
-          <div className="grid grid-cols-2 gap-2">
-            {(['fit', 'fill'] as const).map(v => (
-              <button
-                key={v}
-                onClick={() => updateTheme({ cartBtnWidth: v })}
-                className={`py-2 rounded-xl border text-xs font-bold capitalize transition-all ${
-                  (theme.cartBtnWidth || 'fill') === v ? activeBtnCls : inactiveBtnCls
-                }`}
-              >
-                {v}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Width used to sit here. It only ever applied to the full-width
+            button under the card, which no longer exists — the setting stayed
+            in the panel doing nothing, which is worse than not offering it.
+            The column is kept on the model so old rows still load. */}
 
         {/* Font size */}
         <div>

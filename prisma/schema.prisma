@@ -119,7 +119,7 @@ model StoreTheme {
   // which itself falls back to the primary colour.
   cartBtnBgColor   String @default("")
   cartBtnTextColor String @default("")
-  cartBtnDisplay   String @default("always")  // always | hover | icon | hidden
+  cartBtnDisplay   String @default("icon")  // icon | hidden ("always"/"hover" are legacy and render as icon)
   layout          String  @default("grid")
   borderRadius    String  @default("0px")
   buttonStyle     String  @default("solid")

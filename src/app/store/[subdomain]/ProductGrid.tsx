@@ -156,7 +156,17 @@ export default function ProductGrid({
   const imageRadius = themeStyle.productImageRadius || borderRadius
   // always = button always shown (default), hover = fades in on hover,
   // icon = no button, a cart chip on the image instead, hidden = neither.
-  const cartDisplay = (themeStyle.cartBtnDisplay ?? 'always') as 'always' | 'hover' | 'icon' | 'hidden'
+  /**
+   * Two modes, not four.
+   *
+   * "always" and "hover" both put a full-width button under every card, which
+   * turns a grid of photographs into a wall of slabs — and "hover" additionally
+   * relies on an affordance that does not exist on a phone. The chip does their
+   * job without either problem, so both now resolve to it. Stores still holding
+   * the old values keep working and simply get the chip.
+   */
+  const cartDisplay: 'icon' | 'hidden' =
+    themeStyle.cartBtnDisplay === 'hidden' ? 'hidden' : 'icon'
   const notify = onEdit ?? (() => {})
 
   function navigateTo(handle: string) {
@@ -340,23 +350,56 @@ export default function ProductGrid({
                       where there is no hover, it stays put. */}
                   {cartDisplay === 'icon' && (
                     <div
-                      className="absolute bottom-3 right-3 z-10 transition-all duration-300 ease-out md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0"
+                      className="absolute bottom-3 right-3 z-10 transition-[opacity,transform] duration-[260ms] ease-[cubic-bezier(.22,1,.36,1)] md:opacity-0 md:translate-y-1.5 md:group-hover:opacity-100 md:group-hover:translate-y-0"
                       style={cartHighlight}
                       onClick={e => e.stopPropagation()}
                     >
                       <EditorItem section="products" field="add-to-cart-btn" label="Cart Button" isEditor={isEditor} onEdit={notify}>
                         <AddToCartButton
                           product={{ id: p.id, title: p.title, price: p.price, imageUrl: p.imageUrl }}
-                          label=""
+                          label="Add"
                           showIcon
                           iconOnly
+                          expandOnHover
+                          icon={<BagPlus />}
                           isEditor={isEditor}
                           style={{
-                            backgroundColor: cartBg,
-                            color: cartFg,
-                            border: 'none',
-                            borderRadius: imageRadius === '0px' ? '0px' : '9999px',
-                            padding: '10px',
+                            // Deliberately not the theme's cart colour. A solid
+                            // brand-coloured square sat on the photograph like
+                            // a sticker; a light pill reads as chrome floating
+                            // over the image, which is what it is.
+                            backgroundColor: '#ffffff',
+                            color: '#18181b',
+                            // A hairline of the button's own ink keeps the chip
+                            // legible where it lands on a pale part of a photo
+                            // — a white chip on a white plate has no edge.
+                            border: '1px solid #e3e3e6',
+                            // Always a pill, even on a square theme: the shape
+                            // is what lets it grow sideways into a label
+                            // without looking like a box being stretched.
+                            borderRadius: '9999px',
+                            // Square rather than padded: padding alone let the
+                            // icon's own metrics decide the size, so the chip
+                            // came out slightly off-square and small.
+                            // Height, min-width and padding are one sum: the
+                            // disc is only round while minWidth equals height,
+                            // and height is the icon plus its padding either
+                            // side. Change one and the circle turns into an
+                            // egg — which is exactly what happened at 36.
+                            height: 42,
+                            minWidth: 42,
+                            // 21px icon + 2 x 9.5px padding + 2 x 1px border
+                            // = the 42px height exactly. minWidth alone will
+                            // not hold it round: content wider than minWidth
+                            // simply wins.
+                            padding: '0 9.5px',
+                            // Three layers: a tight shadow to lift it off the
+                            // photograph, a wide soft one for depth, and an
+                            // inset hairline of its own label colour so the
+                            // shape still has an edge when it lands on a dark
+                            // part of an image. shadow-lg alone read as a grey
+                            // smudge on light product photography.
+                            boxShadow: '0 1px 2px rgba(9,9,11,0.06)',
                           }}
                         />
                       </EditorItem>
@@ -384,36 +427,6 @@ export default function ProductGrid({
                       </span>
                     </EditorItem>
                   </div>
-                  {(cartDisplay === 'always' || cartDisplay === 'hover') && (
-                  <>
-                  {/* Reveals on hover so the products carry the page. It keeps
-                      its space in the layout (only opacity animates), so
-                      nothing shifts. Touch devices have no hover, and the
-                      editor needs it clickable, so both show it outright. */}
-                  <div
-                    className={`mt-auto pt-1.5 transition-all duration-300 ease-out focus-within:opacity-100 focus-within:translate-y-0 ${
-                      isEditor || cartDisplay !== 'hover'
-                        ? ''
-                        : 'md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0'
-                    }`}
-                    style={cartHighlight}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <EditorItem section="products" field="add-to-cart-btn" label="Cart Button" isEditor={isEditor} onEdit={notify} block>
-                      <AddToCartButton
-                        product={{ id: p.id, title: p.title, price: p.price, imageUrl: p.imageUrl }}
-                        label={themeStyle.cartBtnLabel}
-                        showIcon={themeStyle.cartBtnShowIcon}
-                        isEditor={isEditor}
-                        style={{
-                          ...cartBtnStyle,
-                          width: (themeStyle.cartBtnWidth || 'fill') === 'fill' ? '100%' : undefined,
-                        }}
-                      />
-                    </EditorItem>
-                  </div>
-                  </>
-                  )}
                 </div>
               </div>
               </EditorItem>
@@ -449,5 +462,32 @@ export default function ProductGrid({
         </div>
       )}
     </main>
+  )
+}
+
+/**
+ * A shopping bag with a plus — the quick-add mark, rather than the trolley
+ * that means "go to checkout". Drawn here because icon sets ship a bag and a
+ * plus separately, and overlaying two of them leaves the plus fighting the
+ * bag's outline instead of sitting in a notch cut for it.
+ */
+function BagPlus() {
+  return (
+    <svg
+      width="21"
+      height="21"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="shrink-0"
+      aria-hidden="true"
+    >
+      <path d="M9 9.4V7.2a3 3 0 0 1 6 0v2.2" />
+      <path d="M6 9.4h12v8.4a2.4 2.4 0 0 1-2.4 2.4H8.4A2.4 2.4 0 0 1 6 17.8z" />
+      <path d="M12 13.2v4.2M9.9 15.3h4.2" />
+    </svg>
   )
 }
