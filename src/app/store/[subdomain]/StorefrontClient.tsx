@@ -53,6 +53,7 @@ interface ThemeStyle {
   twitterHandle: string
   facebookUrl: string
   layout: string
+  carouselOnMobile?: boolean
   cardShadow: string
   dividerStyle: string
   shopAllLabel: string
@@ -250,6 +251,7 @@ export default function StorefrontClient({
     showDarkToggle: theme.showDarkToggle,
     productGridBg:  theme.productGridBg,
     productImageRadius: theme.productImageRadius,
+    carouselOnMobile: theme.carouselOnMobile,
   }
 
   const btnColor = theme.productGridButtonColor || theme.primaryColor

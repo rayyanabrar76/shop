@@ -281,7 +281,7 @@ export default function ProductGrid({
             layout === 'carousel'
               // Card widths live on the container via [&>*] so the card markup
               // stays identical across all three layouts.
-              ? 'flex gap-5 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 [&>*]:snap-start [&>*]:shrink-0 [&>*]:w-[72%] sm:[&>*]:w-[45%] lg:[&>*]:w-[23%]'
+              ? 'flex gap-5 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 [&>*]:snap-start [&>*]:shrink-0 [&>*]:w-[82%] sm:[&>*]:w-[45%] lg:[&>*]:w-[23%]'
               : isEditorial
               // One product a screen, with room to breathe between them. The
               // column is capped: card images are square, so at full container
@@ -292,7 +292,7 @@ export default function ProductGrid({
               // Swipes below sm, then reverts to a true grid: overflow-visible
               // and w-auto have to be undone explicitly, or the cards keep the
               // fixed width the scroller gave them.
-              ? 'flex gap-5 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 [&>*]:snap-start [&>*]:shrink-0 [&>*]:w-[72%] sm:grid sm:grid-cols-3 lg:grid-cols-4 sm:gap-x-6 sm:gap-y-10 sm:overflow-visible sm:[&>*]:w-auto'
+              ? 'flex gap-5 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 [&>*]:snap-start [&>*]:shrink-0 [&>*]:w-[82%] sm:grid sm:grid-cols-3 lg:grid-cols-4 sm:gap-x-6 sm:gap-y-10 sm:overflow-visible sm:[&>*]:w-auto'
               : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-9 sm:gap-x-6 sm:gap-y-10'
           }
         >
@@ -360,6 +360,11 @@ export default function ProductGrid({
                           iconOnly
                           expandOnHover
                           icon={<BagPlus />}
+                          // No hover on a touch screen, so the chip sits on the
+                          // photograph permanently. At the desktop size it
+                          // covers too much of a small image, so it shrinks
+                          // where it cannot get out of the way.
+                          className="h-9 min-w-9 px-2 sm:h-[42px] sm:min-w-[42px] sm:px-[9.5px]"
                           isEditor={isEditor}
                           style={{
                             // Deliberately not the theme's cart colour. A solid
@@ -384,13 +389,8 @@ export default function ProductGrid({
                             // and height is the icon plus its padding either
                             // side. Change one and the circle turns into an
                             // egg — which is exactly what happened at 36.
-                            height: 42,
-                            minWidth: 42,
-                            // 21px icon + 2 x 9.5px padding + 2 x 1px border
-                            // = the 42px height exactly. minWidth alone will
-                            // not hold it round: content wider than minWidth
-                            // simply wins.
-                            padding: '0 9.5px',
+
+
                             // Three layers: a tight shadow to lift it off the
                             // photograph, a wide soft one for depth, and an
                             // inset hairline of its own label colour so the
@@ -471,15 +471,15 @@ export default function ProductGrid({
 function BagPlus() {
   return (
     <svg
-      width="21"
-      height="21"
+      // Sized by class rather than attribute so it can follow the chip
+      // across the breakpoint.
+      className="h-[18px] w-[18px] shrink-0 sm:h-[21px] sm:w-[21px]"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.6"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="shrink-0"
       aria-hidden="true"
     >
       <path d="M9 9.4V7.2a3 3 0 0 1 6 0v2.2" />

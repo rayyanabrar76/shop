@@ -73,6 +73,7 @@ interface ThemeState {
   showDarkToggle?: boolean
   productGridBg?: string
   productImageRadius?: string
+  carouselOnMobile?: boolean
   productGridButtonColor?: string
   productGridTextColor?: string
   productGridFont?: string
@@ -222,6 +223,7 @@ export default function ProductsPageClient({
     headingFont:               theme.headingFont,
     cardShadow:                theme.cardShadow,
     productImageRadius:        theme.productImageRadius,
+    carouselOnMobile:          theme.carouselOnMobile,
     featuredLabel:             theme.featuredLabel || 'All Products',
     productTitleWidth:         theme.productTitleWidth,
     productTitleMaxWidth:      theme.productTitleMaxWidth,

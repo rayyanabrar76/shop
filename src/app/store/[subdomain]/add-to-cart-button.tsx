@@ -27,6 +27,9 @@ interface AddToCartButtonProps {
   expandOnHover?: boolean
   /** Replaces the default trolley. Used for the quick-add disc on a card. */
   icon?: React.ReactNode
+  /** Extra classes. Inline styles cannot express breakpoints, and the
+      quick-add chip needs a different size on a phone. */
+  className?: string
   isEditor?: boolean
 }
 
@@ -41,6 +44,7 @@ export default function AddToCartButton({
   iconOnly = false,
   expandOnHover = false,
   icon,
+  className = '',
   isEditor = false,
 }: AddToCartButtonProps) {
   const { add } = useCart()
@@ -129,7 +133,7 @@ export default function AddToCartButton({
       // announcing "Add" tells a screen-reader user nothing about which one
       // they are on.
       aria-label={iconOnly ? `${btnLabel} ${product.title} to cart` : undefined}
-      className={`group relative z-10 flex items-center justify-center gap-2 transition-all duration-300 ease-out active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`group relative z-10 flex items-center justify-center gap-2 transition-all duration-300 ease-out active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-60 ${className} ${
         expandOnHover
           ? 'group/add text-sm font-semibold'
           : iconOnly
