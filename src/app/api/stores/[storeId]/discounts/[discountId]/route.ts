@@ -1,19 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import { requireStoreOwner } from '@/lib/owner-auth'
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ storeId: string; discountId: string }> }
 ) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { discountId } = await params
+  const { storeId, discountId } = await params
+  const denied = await requireStoreOwner(storeId)
+  if (denied) return denied
+
   const { active } = await req.json()
-  const discount = await prisma.discountCode.update({
-    where: { id: discountId },
-    data: { active },
+
+  // Scoped by storeId for the same reason as the shipping rate below it: the
+  // id in the URL is the caller's to choose, and owning this store does not
+  // make a discount from another one theirs to switch off.
+  const { count } = await prisma.discountCode.updateMany({
+    where: { id: discountId, storeId },
+    data: { active: Boolean(active) },
   })
+  if (count === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  const discount = await prisma.discountCode.findUnique({ where: { id: discountId } })
   return NextResponse.json({ discount })
 }
 
@@ -21,9 +29,12 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ storeId: string; discountId: string }> }
 ) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { discountId } = await params
-  await prisma.discountCode.delete({ where: { id: discountId } })
+  const { storeId, discountId } = await params
+  const denied = await requireStoreOwner(storeId)
+  if (denied) return denied
+
+  const { count } = await prisma.discountCode.deleteMany({ where: { id: discountId, storeId } })
+  if (count === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
   return NextResponse.json({ ok: true })
 }

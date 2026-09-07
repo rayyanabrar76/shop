@@ -2,14 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { loadStoreEntitlements, assertDiscountLimit } from '@/lib/entitlements'
+import { requireStoreOwner } from '@/lib/owner-auth'
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ storeId: string }> }
 ) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { storeId } = await params
+  const denied = await requireStoreOwner(storeId)
+  if (denied) return denied
+
   const discounts = await prisma.discountCode.findMany({
     where: { storeId },
     orderBy: { createdAt: 'desc' },

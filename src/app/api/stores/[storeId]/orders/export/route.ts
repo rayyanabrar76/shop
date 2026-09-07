@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import { requireStoreOwner } from '@/lib/owner-auth'
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ storeId: string }> }
 ) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { storeId } = await params
+
+  // Being signed in was the only check here. This CSV carries every customer's
+  // name, email, phone and home address, so that let any account on the
+  // platform download any shop's customer list by changing the id in the URL.
+  const denied = await requireStoreOwner(storeId)
+  if (denied) return denied
 
   const orders = await prisma.order.findMany({
     where: { storeId },

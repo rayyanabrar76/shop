@@ -51,7 +51,7 @@ function getStoreNav(storeId: string) {
     { label: "Customers",     href: `/dashboard/stores/${storeId}/customers`,         icon: Users },
     { label: "Analytics",     href: `/dashboard/stores/${storeId}/analytics`,         icon: BarChart2 },
     { label: "Customization", href: `/dashboard/stores/${storeId}/theme`,             icon: Palette },
-    { label: "Discounts",     href: `/dashboard/stores/${storeId}/discounts`,         icon: Truck },
+    { label: "Discounts & Shipping", href: `/dashboard/stores/${storeId}/discounts`,  icon: Truck },
     { label: "Payments",      href: `/dashboard/stores/${storeId}/settings/payments`, icon: CreditCard },
     { label: "Settings",      href: `/dashboard/stores/${storeId}/settings`,          icon: Settings },
   ];
