@@ -16,7 +16,10 @@ export async function GET(
     where: { storeId },
     // category is needed by the category form to work out which products
     // are already filed under it — membership lives on the product.
-    select: { id: true, title: true, imageUrl: true, status: true, category: true },
+    // slug included because the storefront addresses products by it; without
+    // it the link picker silently falls back to ids and builds a URL that does
+    // not match the one the product cards link to.
+    select: { id: true, title: true, imageUrl: true, status: true, category: true, slug: true },
     orderBy: { createdAt: 'desc' },
   })
   return NextResponse.json(products)

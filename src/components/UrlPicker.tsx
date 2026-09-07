@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import {
   ChevronDown, ChevronUp, Plus, Home, Hash, CreditCard,
-  Globe, Check, ShoppingBag,
+  Globe, Check, ShoppingBag, Tag,
 } from 'lucide-react'
 import AddPageModal, { type PageResult } from './AddPageModal'
 
@@ -18,6 +18,14 @@ interface StoreProduct {
   id: string
   title: string
   status: string
+  /** The storefront addresses a product by slug and falls back to the id. */
+  slug?: string
+}
+
+interface StoreCategory {
+  id: string
+  name: string
+  slug: string
 }
 
 interface UrlPickerProps {
@@ -46,6 +54,7 @@ export default function UrlPicker({
   const [open, setOpen] = useState(false)
   const [pages, setPages] = useState<StorePage[]>([])
   const [products, setProducts] = useState<StoreProduct[]>([])
+  const [categories, setCategories] = useState<StoreCategory[]>([])
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
@@ -57,6 +66,10 @@ export default function UrlPicker({
       .then(r => r.ok ? r.json() : [])
       .then(setProducts)
       .catch(() => {})
+    fetch(`/api/stores/${storeId}/categories`)
+      .then(r => r.ok ? r.json() : [])
+      .then(rows => setCategories(Array.isArray(rows) ? rows : rows?.categories ?? []))
+      .catch(() => {})
   }, [storeId])
 
   const builtIn = BUILT_IN(subdomain)
@@ -67,7 +80,9 @@ export default function UrlPicker({
     if (bi) return bi.label
     const page = pages.find(p => `/store/${subdomain}/${p.slug}` === url)
     if (page) return page.name
-    const product = products.find(p => `/store/${subdomain}/products/${p.id}` === url)
+    const product = products.find(
+    p => `/store/${subdomain}/products/${p.slug || p.id}` === url || `/store/${subdomain}/products/${p.id}` === url,
+  )
     if (product) return product.title
     return null
   }
@@ -161,6 +176,33 @@ export default function UrlPicker({
             </>
           )}
 
+          {/* Categories */}
+          {categories.length > 0 && (
+            <>
+              <div className="border-t border-zinc-100 dark:border-zinc-800" />
+              <div className="p-2">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 px-2 py-1">Categories</p>
+                <div className="max-h-40 overflow-y-auto space-y-0.5 thin-scrollbar">
+                  {categories.map(c => {
+                    const url = `/store/${subdomain}/categories/${c.slug}`
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => select(url)}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left"
+                      >
+                        <Tag className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300 flex-1 truncate">{c.name}</span>
+                        {value === url && <Check className="w-3 h-3 text-zinc-900 shrink-0" />}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+
           {/* Products */}
           {products.length > 0 && (
             <>
@@ -169,7 +211,7 @@ export default function UrlPicker({
                 <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 px-2 py-1">Products</p>
                 <div className="max-h-40 overflow-y-auto space-y-0.5 thin-scrollbar">
                   {products.map(p => {
-                    const url = `/store/${subdomain}/products/${p.id}`
+                    const url = `/store/${subdomain}/products/${p.slug || p.id}`
                     return (
                       <button
                         key={p.id}
