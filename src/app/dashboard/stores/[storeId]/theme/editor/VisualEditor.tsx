@@ -47,6 +47,15 @@ type DeviceMode = 'desktop' | 'tablet' | 'mobile'
 type Tab = 'sections' | 'theme'
 type SectionView = 'list' | 'banner' | 'header' | 'hero' | 'products' | 'footer' | 'custom' | 'code' | 'seo' | 'product-title' | 'product-price' | 'product-cart' | 'nav-menu' | 'category-filter'
 
+/**
+ * How far the preview pulls back while a section is being dragged.
+ *
+ * The frame is also made taller by the reciprocal, which is the part that
+ * actually reveals more page: scaling on its own would draw the same slice
+ * smaller and leave empty room around it.
+ */
+const DRAG_ZOOM = 0.62
+
 const DEVICE_WIDTHS: Record<DeviceMode, string> = {
   desktop: '100%',
   tablet: '768px',
@@ -165,6 +174,7 @@ export default function VisualEditor({
   // 288px wide it left barely a hundred pixels of phone screen for the store.
   const [panelOpen, setPanelOpen] = useState(false)
   const [panelCollapsed, setPanelCollapsed] = useState(false)
+  const [reordering, setReordering] = useState(false)
   /**
    * The preview follows a drag: as a row passes over a position, the page
    * scrolls to the section that sits there and outlines it, so the drop lands
@@ -178,6 +188,23 @@ export default function VisualEditor({
    * ids differ for custom sections, so they are translated here rather than in
    * the list, which should not have to know how the store marks itself up.
    */
+  /**
+   * Show an order without adopting it.
+   *
+   * Deliberately not routed through updateTheme: a drag that is abandoned
+   * halfway must not leave the store reordered, or land in the undo history as
+   * a change the merchant never made. The preview reads theme.sectionOrder, so
+   * posting a copy of the theme with a different order is enough to rearrange
+   * the page, and passing null posts the real one back.
+   */
+  function previewOrder(keys: string[] | null) {
+    const sectionOrder = keys ? serializeSectionOrder(keys) : themeRef.current.sectionOrder
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: 'theme:update', theme: { ...themeRef.current, sectionOrder } },
+      '*',
+    )
+  }
+
   function highlightDragTarget(key: string | null) {
     if (!key) return
     const section = key.startsWith('custom:') ? `custom-${key.slice('custom:'.length)}` : key
@@ -818,6 +845,8 @@ function handlePageContentChange(content: unknown) {
                   <SectionsList
                     customSections={customSections}
                     order={resolveSectionOrder(theme.sectionOrder, customSections.filter(c => c.visible).map(c => c.id))}
+                    onDragChange={setReordering}
+                    onPreviewOrder={previewOrder}
                     onDragOverKey={highlightDragTarget}
                     onReorder={keys => updateTheme({ sectionOrder: serializeSectionOrder(keys) })}
                     onSectionClick={s => { setSectionView(s as SectionView); sendHighlightToPreview(s); triggerSidebarPulse() }}
@@ -896,9 +925,9 @@ function handlePageContentChange(content: unknown) {
         </aside>
 
         <main
-          className={`flex-1 bg-zinc-800 flex items-center justify-center overflow-auto ${
-            device === 'desktop' ? 'p-1.5' : 'p-5'
-          }`}
+          className={`flex-1 bg-zinc-800 flex justify-center overflow-hidden ${
+            reordering ? 'items-start' : 'items-center'
+          } ${device === 'desktop' ? 'p-1.5' : 'p-5'}`}
         >
           <div
             className={`relative bg-white transition-all duration-300 overflow-hidden ${
@@ -906,7 +935,14 @@ function handlePageContentChange(content: unknown) {
             }`}
             style={{
               width: DEVICE_WIDTHS[device],
-              height: '100%',
+              height: reordering ? `${100 / DRAG_ZOOM}%` : '100%',
+              transform: reordering ? `scale(${DRAG_ZOOM})` : undefined,
+              // Top, not centre: the frame is taller than its container while
+              // zoomed out, and a centred transform pushed the top of the page
+              // off screen — the part you most need when choosing where a
+              // section goes.
+              transformOrigin: 'top center',
+              transition: 'transform 0.3s ease-out, height 0.3s ease-out',
               maxWidth: '100%',
               borderRadius: device === 'desktop' ? '1rem' : '1.5rem',
             }}

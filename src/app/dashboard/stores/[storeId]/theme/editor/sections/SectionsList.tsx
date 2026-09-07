@@ -26,6 +26,13 @@ interface SectionsListProps {
   /** The row the cursor is currently over during a drag, so the preview can
       scroll to that position. Null when no drag is in progress. */
   onDragOverKey?: (key: string | null) => void
+  /** Whether a drag is in flight, so the preview can pull back to show the
+      whole page while it happens. */
+  onDragChange?: (dragging: boolean) => void
+  /** The order the page would take if the drag ended here. Sent as the cursor
+      moves so the preview can rearrange before the drop, and with null when
+      the drag ends so an abandoned drag puts the page back. */
+  onPreviewOrder?: (keys: string[] | null) => void
 }
 
 /**
@@ -46,16 +53,23 @@ export default function SectionsList({
   order,
   onReorder,
   onDragOverKey,
+  onDragChange,
+  onPreviewOrder,
 }: SectionsListProps) {
   const [dragKey, setDragKey] = useState<string | null>(null)
   const [overKey, setOverKey] = useState<string | null>(null)
 
+  /** Where the list would end up if the drag finished on `target`. */
+  function orderWithDropAt(target: string, moving: string) {
+    const next = order.filter(k => k !== moving)
+    const at = next.indexOf(target)
+    next.splice(at < 0 ? next.length : at, 0, moving)
+    return next
+  }
+
   function handleDrop(target: string) {
     if (!dragKey || dragKey === target) { setDragKey(null); setOverKey(null); return }
-    const next = order.filter(k => k !== dragKey)
-    const at = next.indexOf(target)
-    next.splice(at < 0 ? next.length : at, 0, dragKey)
-    onReorder(next)
+    onReorder(orderWithDropAt(target, dragKey))
     setDragKey(null)
     setOverKey(null)
   }
@@ -94,14 +108,17 @@ export default function SectionsList({
               draggable
               dragging={dragKey === key}
               dropTarget={overKey === key && dragKey !== key}
-              onDragStart={() => { setDragKey(key); onDragOverKey?.(key) }}
-              onDragEnd={() => { setDragKey(null); setOverKey(null); onDragOverKey?.(null) }}
+              onDragStart={() => { setDragKey(key); onDragChange?.(true); onDragOverKey?.(key) }}
+              onDragEnd={() => { setDragKey(null); setOverKey(null); onDragChange?.(false); onDragOverKey?.(null); onPreviewOrder?.(null) }}
               onDragOver={() => {
                 // dragover fires continuously while the cursor sits still, so
-                // only tell the preview when the row under it actually changes
-                // — otherwise it restarts its smooth scroll every few
+                // the preview is only told when the row under it actually
+                // changes — otherwise its smooth scroll restarts every few
                 // milliseconds and never arrives anywhere.
-                if (overKey !== key) onDragOverKey?.(key)
+                if (overKey !== key) {
+                  onDragOverKey?.(key)
+                  if (dragKey && dragKey !== key) onPreviewOrder?.(orderWithDropAt(key, dragKey))
+                }
                 setOverKey(key)
               }}
               onDrop={() => handleDrop(key)}
