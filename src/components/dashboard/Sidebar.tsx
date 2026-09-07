@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { SignOutButton } from "@clerk/nextjs";
 import { storeUrl } from "@/lib/config";
+import AdminSearch from "./AdminSearch";
 import {
   LayoutDashboard,
   Package,
@@ -61,6 +62,30 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
   const pathname = usePathname();
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
+
+  // The account menu on the mobile header. Dismissable without navigating, for
+  // the same reason as the store switcher below it.
+  useEffect(() => {
+    if (!accountOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (accountRef.current && !accountRef.current.contains(e.target as Node))
+        setAccountOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setAccountOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [accountOpen]);
+
+  // Route changes come from tapping something in one of these menus.
+  useEffect(() => {
+    setAccountOpen(false);
+  }, [pathname]);
 
   // Switching stores is the only job this menu has now that the store picker
   // page is gone, so it has to be dismissable without navigating.
@@ -116,26 +141,133 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
 
   return (
     <>
-    {/* Opens the drawer. Fixed so it stays reachable as the page scrolls. */}
-    <button
-      onClick={() => setDrawerOpen(true)}
-      aria-label="Open menu"
-      className="md:hidden fixed left-3 top-3 z-50 p-2.5 rounded-xl shadow-lg"
-      style={{ background: "var(--admin-bg)", border: "1px solid var(--admin-border)" }}
+    {/* A real header on small screens, rather than a lone floating button.
+        It carries the three things wanted from any page: the menu, a way to
+        see the shop, and the account. */}
+    <header
+      className="md:hidden fixed inset-x-0 top-0 z-50 h-14 flex items-center gap-1 px-2"
+      style={{ background: "var(--admin-bg)", borderBottom: "1px solid var(--admin-border)" }}
     >
-      <Menu className="w-4 h-4" style={{ color: "var(--admin-text)" }} />
-    </button>
+      <button
+        onClick={() => setDrawerOpen(true)}
+        aria-label="Open menu"
+        className="p-2.5 rounded-xl shrink-0"
+      >
+        <Menu className="w-4 h-4" style={{ color: "var(--admin-text)" }} />
+      </button>
 
-    {drawerOpen && (
-      <div
-        className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
-        onClick={() => setDrawerOpen(false)}
-        aria-hidden
-      />
-    )}
+      {activeStore ? (
+        <AdminSearch storeId={activeStore.id} />
+      ) : (
+        <p className="flex-1 min-w-0 truncate text-[13px] font-semibold" style={{ color: "var(--admin-text)" }}>
+          ShopFlow
+        </p>
+      )}
+
+      {activeStore && (
+        <a
+          href={storeUrl(activeStore.subdomain)}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="View storefront"
+          title="View storefront"
+          className="p-2.5 rounded-xl shrink-0"
+        >
+          <Eye className="w-4 h-4" style={{ color: "var(--admin-text-3)" }} />
+        </a>
+      )}
+
+      <div ref={accountRef} className="relative shrink-0">
+        <button
+          onClick={() => setAccountOpen((v) => !v)}
+          aria-label="Account"
+          aria-expanded={accountOpen}
+          className="p-1.5 rounded-xl"
+        >
+          {imageUrl ? (
+            <img src={imageUrl} alt="" className="w-7 h-7 rounded-lg object-cover" />
+          ) : (
+            <span className="w-7 h-7 rounded-lg bg-black text-white text-[11px] font-bold flex items-center justify-center">
+              {initials || "?"}
+            </span>
+          )}
+        </button>
+
+        {accountOpen && (
+          <div
+            className="absolute right-0 top-full mt-1.5 w-64 rounded-xl overflow-hidden shadow-xl"
+            style={{ background: "var(--admin-bg)", border: "1px solid var(--admin-border)" }}
+          >
+            {stores.length > 0 && (
+              <div className="p-1.5">
+                {stores.map((store) => (
+                  <Link
+                    key={store.id}
+                    href={`/dashboard/stores/${store.id}`}
+                    className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-left"
+                    style={{
+                      background: store.id === activeStore?.id ? "var(--admin-bg-muted)" : "",
+                    }}
+                  >
+                    <span className="w-6 h-6 rounded-md bg-black text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                      {store.name?.[0]?.toUpperCase()}
+                    </span>
+                    <span
+                      className="flex-1 min-w-0 truncate text-[13px]"
+                      style={{ color: "var(--admin-text)" }}
+                    >
+                      {store.name}
+                    </span>
+                  </Link>
+                ))}
+                <Link
+                  href="/dashboard/stores/new"
+                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-left"
+                >
+                  <Plus className="w-4 h-4 shrink-0" style={{ color: "var(--admin-text-3)" }} />
+                  <span className="text-[13px]" style={{ color: "var(--admin-text)" }}>
+                    Create store
+                  </span>
+                </Link>
+              </div>
+            )}
+
+            <div style={{ borderTop: "1px solid var(--admin-border)" }} className="p-1.5">
+              <div className="px-2 py-1.5">
+                <p
+                  className="text-[13px] font-semibold truncate"
+                  style={{ color: "var(--admin-text)" }}
+                >
+                  {firstName} {lastName}
+                </p>
+                <p className="text-[11px] truncate" style={{ color: "var(--admin-text-3)" }}>
+                  {email}
+                </p>
+              </div>
+              <SignOutButton>
+                <button className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-left">
+                  <LogOut className="w-4 h-4 shrink-0" style={{ color: "var(--admin-text-3)" }} />
+                  <span className="text-[13px]" style={{ color: "var(--admin-text)" }}>
+                    Log out
+                  </span>
+                </button>
+              </SignOutButton>
+            </div>
+          </div>
+        )}
+      </div>
+    </header>
+
+    <div
+      className={`md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 ${
+        drawerOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}
+      onClick={() => setDrawerOpen(false)}
+      aria-hidden
+    />
 
     <aside
-      className={`fixed left-0 top-0 bottom-0 w-60 flex flex-col z-50 select-none transition-transform duration-200 md:z-40 md:translate-x-0 ${
+      className={`fixed left-0 top-0 bottom-0 w-60 flex flex-col z-50 select-none transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform md:z-40 md:translate-x-0 md:transition-none ${
         drawerOpen ? "translate-x-0" : "-translate-x-full"
       }`}
       style={{
@@ -183,7 +315,7 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
             </button>
           </Link>
         ) : (
-          <div className="relative" ref={switcherRef}>
+          <div className="relative hidden md:block" ref={switcherRef}>
             <button
               onClick={() => setSwitcherOpen((v) => !v)}
               className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-left"
@@ -333,9 +465,9 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
         )}
       </nav>
 
-      {/* ── User ── */}
+      {/* ── User ── desktop only; on mobile this is in the header menu. */}
       <div
-        className="px-3 py-3 shrink-0"
+        className="hidden md:block px-3 py-3 shrink-0"
         style={{ borderTop: "1px solid var(--admin-divider)" }}
       >
         <div

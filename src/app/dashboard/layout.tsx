@@ -39,7 +39,9 @@ export default async function DashboardLayout({
             email={email}
             imageUrl={user?.imageUrl ?? ''}
           />
-          <main className="flex-1 md:ml-60 min-w-0"><DashboardCurrencyProvider currencies={currencies}>{children}</DashboardCurrencyProvider></main>
+          {/* pt-14 clears the fixed mobile header; the desktop sidebar is beside
+              the content rather than above it, so it needs no offset. */}
+          <main className="flex-1 md:ml-60 min-w-0 pt-14 md:pt-0"><DashboardCurrencyProvider currencies={currencies}>{children}</DashboardCurrencyProvider></main>
         </div>
       </div>
     </AdminThemeProvider>

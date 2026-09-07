@@ -700,15 +700,24 @@ function handlePageContentChange(content: unknown) {
   return (
     <div className="fixed inset-0 flex flex-col bg-zinc-900 z-50">
       {/* Top bar */}
-      <div className="h-14 bg-zinc-900 border-b border-zinc-800 grid grid-cols-3 items-center px-4 shrink-0">
-        <div className="flex items-center gap-3">
-          <Link href={`/dashboard/stores/${storeId}/theme`} className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors text-sm font-medium">
-            <ChevronLeft className="w-4 h-4" /> Exit
+      <div className="h-14 bg-zinc-900 border-b border-zinc-800 flex items-center gap-2 px-2 sm:px-4 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Link
+            href={`/dashboard/stores/${storeId}/theme`}
+            aria-label="Exit the editor"
+            className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors text-sm font-medium shrink-0"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            {/* The chevron says "back" on its own where space is short. */}
+            <span className="hidden sm:inline">Exit</span>
           </Link>
-          <div className="h-4 w-px bg-zinc-700" />
-          <span className="text-white text-sm font-semibold">{subdomain}</span>
+          <div className="hidden sm:block h-4 w-px bg-zinc-700" />
+          <span className="text-white text-sm font-semibold truncate">{subdomain}</span>
         </div>
-        <div className="flex items-center justify-center">
+        {/* Choosing a device preview is a desktop job: on a phone you are
+            already looking at the mobile width, and the three buttons were
+            taking a third of the bar to say so. */}
+        <div className="hidden sm:flex flex-1 items-center justify-center">
           <div className="flex items-center gap-1 bg-zinc-800 rounded-xl p-1">
             {([
               { id: 'desktop', icon: Monitor },
@@ -726,7 +735,7 @@ function handlePageContentChange(content: unknown) {
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-2 justify-end">
+        <div className="flex flex-1 sm:flex-none items-center gap-1 sm:gap-2 justify-end">
           <button
             onClick={togglePanel}
             aria-label="Toggle settings panel"
