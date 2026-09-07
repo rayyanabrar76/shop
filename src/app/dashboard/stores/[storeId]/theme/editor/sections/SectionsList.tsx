@@ -23,9 +23,9 @@ interface SectionsListProps {
   /** Resolved order of the movable sections, as section-order keys. */
   order: string[]
   onReorder: (keys: string[]) => void
-  /** Fires while a row is being dragged, so the preview can pull back and show
-      the whole page instead of the slice that happens to be scrolled to. */
-  onDragChange?: (dragging: boolean) => void
+  /** The row the cursor is currently over during a drag, so the preview can
+      scroll to that position. Null when no drag is in progress. */
+  onDragOverKey?: (key: string | null) => void
 }
 
 /**
@@ -45,7 +45,7 @@ export default function SectionsList({
   customSections,
   order,
   onReorder,
-  onDragChange,
+  onDragOverKey,
 }: SectionsListProps) {
   const [dragKey, setDragKey] = useState<string | null>(null)
   const [overKey, setOverKey] = useState<string | null>(null)
@@ -94,9 +94,16 @@ export default function SectionsList({
               draggable
               dragging={dragKey === key}
               dropTarget={overKey === key && dragKey !== key}
-              onDragStart={() => { setDragKey(key); onDragChange?.(true) }}
-              onDragEnd={() => { setDragKey(null); setOverKey(null); onDragChange?.(false) }}
-              onDragOver={() => setOverKey(key)}
+              onDragStart={() => { setDragKey(key); onDragOverKey?.(key) }}
+              onDragEnd={() => { setDragKey(null); setOverKey(null); onDragOverKey?.(null) }}
+              onDragOver={() => {
+                // dragover fires continuously while the cursor sits still, so
+                // only tell the preview when the row under it actually changes
+                // — otherwise it restarts its smooth scroll every few
+                // milliseconds and never arrives anywhere.
+                if (overKey !== key) onDragOverKey?.(key)
+                setOverKey(key)
+              }}
               onDrop={() => handleDrop(key)}
             />
           )

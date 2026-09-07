@@ -47,9 +47,6 @@ type DeviceMode = 'desktop' | 'tablet' | 'mobile'
 type Tab = 'sections' | 'theme'
 type SectionView = 'list' | 'banner' | 'header' | 'hero' | 'products' | 'footer' | 'custom' | 'code' | 'seo' | 'product-title' | 'product-price' | 'product-cart' | 'nav-menu' | 'category-filter'
 
-/** How far the preview pulls back while a section is being dragged. */
-const DRAG_ZOOM = 0.62
-
 const DEVICE_WIDTHS: Record<DeviceMode, string> = {
   desktop: '100%',
   tablet: '768px',
@@ -168,7 +165,24 @@ export default function VisualEditor({
   // 288px wide it left barely a hundred pixels of phone screen for the store.
   const [panelOpen, setPanelOpen] = useState(false)
   const [panelCollapsed, setPanelCollapsed] = useState(false)
-  const [reordering, setReordering] = useState(false)
+  /**
+   * The preview follows a drag: as a row passes over a position, the page
+   * scrolls to the section that sits there and outlines it, so the drop lands
+   * somewhere you can see.
+   *
+   * An earlier attempt shrank the whole page to 62% instead. It did show more
+   * at once, but it moved the thing being edited away from the cursor and made
+   * the type unreadable, which is presumably why Shopify does not do it either.
+   *
+   * The keys the list uses are section-order keys, and the storefront's element
+   * ids differ for custom sections, so they are translated here rather than in
+   * the list, which should not have to know how the store marks itself up.
+   */
+  function highlightDragTarget(key: string | null) {
+    if (!key) return
+    const section = key.startsWith('custom:') ? `custom-${key.slice('custom:'.length)}` : key
+    sendHighlightToPreview(section)
+  }
 
   function togglePanel() {
     if (window.matchMedia('(min-width: 1024px)').matches) setPanelCollapsed(v => !v)
@@ -804,7 +818,7 @@ function handlePageContentChange(content: unknown) {
                   <SectionsList
                     customSections={customSections}
                     order={resolveSectionOrder(theme.sectionOrder, customSections.filter(c => c.visible).map(c => c.id))}
-                    onDragChange={setReordering}
+                    onDragOverKey={highlightDragTarget}
                     onReorder={keys => updateTheme({ sectionOrder: serializeSectionOrder(keys) })}
                     onSectionClick={s => { setSectionView(s as SectionView); sendHighlightToPreview(s); triggerSidebarPulse() }}
                     onCustomSectionClick={id => {
@@ -892,13 +906,7 @@ function handlePageContentChange(content: unknown) {
             }`}
             style={{
               width: DEVICE_WIDTHS[device],
-              // Taller than the space it sits in, then scaled back down: that
-              // is what actually reveals more of the page. Scaling on its own
-              // would just draw the same slice smaller, with empty room round it.
-              height: reordering ? `${100 / DRAG_ZOOM}%` : '100%',
-              transform: reordering ? `scale(${DRAG_ZOOM})` : undefined,
-              transformOrigin: 'top center',
-              transition: 'transform 0.28s ease-out, height 0.28s ease-out',
+              height: '100%',
               maxWidth: '100%',
               borderRadius: device === 'desktop' ? '1rem' : '1.5rem',
             }}
