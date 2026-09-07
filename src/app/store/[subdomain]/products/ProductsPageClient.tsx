@@ -167,6 +167,28 @@ export default function ProductsPageClient({
       if (event.data?.type === 'theme:update' && event.data.theme) {
         setTheme(prev => ({ ...prev, ...event.data.theme }))
       }
+      if (event.data?.type === 'section:drag') {
+        // Clear any previous outline first: the cursor moves between sections
+        // during one drag, and two outlined sections at once would say the
+        // drop could land in either place.
+        document
+          .querySelectorAll('[data-dragging]')
+          .forEach(n => n.removeAttribute('data-dragging'))
+
+        const key = event.data.section
+        if (key) {
+          const el = document.getElementById(`section-${key}`)
+          if (el) {
+            // An attribute, not a class. The live reorder posts a theme update
+            // on the same gesture, React re-renders these sections, and
+            // re-rendering rewrites className — so a class added here was being
+            // wiped a frame later. React leaves attributes it does not manage
+            // alone.
+            el.setAttribute('data-dragging', '')
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }
+      }
       if (event.data?.type === 'section:highlight' && event.data.section) {
         const el = document.getElementById(`section-${event.data.section}`)
         if (el) {
@@ -276,6 +298,11 @@ export default function ProductsPageClient({
             55%  { box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
             75%  { box-shadow: 0 0 0 4px rgba(59,130,246,0.6); }
             100% { box-shadow: 0 0 0 0px rgba(59,130,246,0); }
+          }
+          [data-dragging] {
+            outline: 2px solid rgb(59, 130, 246);
+            outline-offset: -2px;
+            border-radius: 2px;
           }
           .preview-section-pulse { animation: preview-section-pulse 1.6s ease-in-out; }
         `}</style>

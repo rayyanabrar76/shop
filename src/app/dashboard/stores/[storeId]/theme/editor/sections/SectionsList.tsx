@@ -76,7 +76,7 @@ export default function SectionsList({
 
   /** What each key in the order actually renders as. */
   function rowFor(key: string) {
-    if (key === 'hero') return { icon: ImageIcon, label: 'Hero Slides', open: () => onSectionClick('hero') }
+    if (key === 'hero') return { icon: ImageIcon, label: 'Hero', open: () => onSectionClick('hero') }
     if (key === 'products') return { icon: LayoutGrid, label: 'Product Grid', open: () => onSectionClick('products') }
     if (!isCustomKey(key)) return null
     const id = customIdFromKey(key)

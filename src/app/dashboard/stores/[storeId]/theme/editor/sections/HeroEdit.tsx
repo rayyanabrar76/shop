@@ -81,7 +81,7 @@ export default function HeroEdit({ storeId, subdomain, onBack, slides, onSlidesC
 
   return (
     <div>
-      <SectionHeader title="Hero Slides" description="Carousel slides on top of store" onBack={onBack} />
+      <SectionHeader title="Hero" description="Carousel slides on top of store" onBack={onBack} />
       <div className="p-4 space-y-3">
 
         <button

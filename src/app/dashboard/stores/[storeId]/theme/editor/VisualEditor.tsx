@@ -206,9 +206,15 @@ export default function VisualEditor({
   }
 
   function highlightDragTarget(key: string | null) {
-    if (!key) return
-    const section = key.startsWith('custom:') ? `custom-${key.slice('custom:'.length)}` : key
-    sendHighlightToPreview(section)
+    // A distinct message from section:highlight, which pulses for a moment and
+    // fades — right for "you clicked this, here it is", wrong for a drag. This
+    // one holds the outline until the drag ends, and null clears it.
+    const section = key
+      ? key.startsWith('custom:')
+        ? `custom-${key.slice('custom:'.length)}`
+        : key
+      : null
+    iframeRef.current?.contentWindow?.postMessage({ type: 'section:drag', section }, '*')
   }
 
   function togglePanel() {
