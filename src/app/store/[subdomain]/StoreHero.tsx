@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { EditorItem } from './EditorHighlight'
 import { sanitizeRichText } from '@/lib/sanitize'
+import { useStoreBase, resolveStoreHref } from '@/components/StoreBaseProvider'
 
 export interface HeroSlide {
   id: string
@@ -41,6 +42,7 @@ function isVideoUrl(url?: string | null): boolean {
 }
 
 export default function StoreHero({ theme, slides: propSlides, activeSlide, isEditor = false, onEdit }: StoreHeroProps) {
+  const storeBase = useStoreBase()
   const slides = propSlides && propSlides.length > 0 ? propSlides : DEFAULT_SLIDES
   const [current, setCurrent] = useState(0)
   const [transitioning, setTransitioning] = useState(false)
@@ -166,7 +168,7 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
                     outline — a hairline, never 2px, which reads as chunky.
                     ghost   — type only, with a rule that draws in on hover. */}
               <a
-                href={slide.ctaUrl}
+                href={resolveStoreHref(slide.ctaUrl, storeBase)}
                 className={`group/cta relative inline-flex items-center px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-300 ${
                   buttonStyle === 'ghost' ? '' : 'hover:-translate-y-0.5'
                 }`}

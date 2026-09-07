@@ -3,7 +3,7 @@
 import { ImageOff } from 'lucide-react'
 import { readableText } from '@/lib/contrast'
 import { EditorItem } from './EditorHighlight'
-import { useStoreBase } from '@/components/StoreBaseProvider'
+import { useStoreBase, resolveStoreHref } from '@/components/StoreBaseProvider'
 
 export interface StoreCategory {
   id: string
@@ -68,6 +68,9 @@ function MediaDisplay({ url, alt, className, style }: { url?: string | null; alt
 
 export default function CustomSection({ section, themeStyle, categories = [], subdomain = '', isEditor = false, onEdit }: CustomSectionProps) {
   const storeBase = useStoreBase()
+  /** Links saved by the editor carry a /store/<sub> prefix that is wrong on a
+      subdomain host, so every saved URL is resolved before it is rendered. */
+  const href = (url: string) => resolveStoreHref(url, storeBase, subdomain)
   if (!section.visible) return null
 
   const { primaryColor, borderRadius, buttonStyle, headingFont } = themeStyle
@@ -107,7 +110,7 @@ export default function CustomSection({ section, themeStyle, categories = [], su
     // before anyone picks any.
     const picked = (section.categoryIds ?? '').split(',').map(x => x.trim()).filter(Boolean)
     const shown = picked.length ? categories.filter(c => picked.includes(c.id)) : categories
-    const viewAllHref = section.buttonUrl || `${storeBase}/products`
+    const viewAllHref = section.buttonUrl ? href(section.buttonUrl) : `${storeBase}/products`
     const viewAllLabel = section.buttonLabel || 'View all'
 
     return (
@@ -257,7 +260,7 @@ export default function CustomSection({ section, themeStyle, categories = [], su
           <div className="space-y-3">
             {heading && <H>{heading}</H>}
             {text && <T>{text}</T>}
-            {section.buttonLabel && section.buttonUrl && <Btn href={section.buttonUrl}>{section.buttonLabel}</Btn>}
+            {section.buttonLabel && section.buttonUrl && <Btn href={href(section.buttonUrl)}>{section.buttonLabel}</Btn>}
           </div>
         </div>
       </section>
@@ -271,7 +274,7 @@ export default function CustomSection({ section, themeStyle, categories = [], su
           <div className="space-y-3 md:order-1 order-2">
             {heading && <H>{heading}</H>}
             {text && <T>{text}</T>}
-            {section.buttonLabel && section.buttonUrl && <Btn href={section.buttonUrl}>{section.buttonLabel}</Btn>}
+            {section.buttonLabel && section.buttonUrl && <Btn href={href(section.buttonUrl)}>{section.buttonLabel}</Btn>}
           </div>
           <div className="aspect-video bg-zinc-100 overflow-hidden md:order-2 order-1" style={{ borderRadius }}>
             <MediaDisplay url={section.imageUrl} alt={heading ?? ''} className="w-full h-full object-cover" />
@@ -300,7 +303,7 @@ export default function CustomSection({ section, themeStyle, categories = [], su
               </EditorItem>
             )}
             {text && <T className="text-sm md:text-base opacity-90">{text}</T>}
-            {section.buttonLabel && section.buttonUrl && <Btn href={section.buttonUrl}>{section.buttonLabel}</Btn>}
+            {section.buttonLabel && section.buttonUrl && <Btn href={href(section.buttonUrl)}>{section.buttonLabel}</Btn>}
           </div>
         </div>
       </section>
@@ -319,7 +322,7 @@ export default function CustomSection({ section, themeStyle, categories = [], su
           {text && <T className="text-lg opacity-70 leading-relaxed">{text}</T>}
           {section.buttonLabel && section.buttonUrl && (
             <EditorItem section="custom" field="custom-button" meta={meta} label="Button" isEditor={isEditor} onEdit={notify}>
-              <a href={section.buttonUrl} style={buttonStyleObj} className="inline-block px-8 py-3 text-base font-bold mt-3 transition-opacity hover:opacity-90">
+              <a href={href(section.buttonUrl)} style={buttonStyleObj} className="inline-block px-8 py-3 text-base font-bold mt-3 transition-opacity hover:opacity-90">
                 {section.buttonLabel}
               </a>
             </EditorItem>
