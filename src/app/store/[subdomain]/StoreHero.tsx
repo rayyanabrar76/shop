@@ -219,24 +219,6 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
         </div>
       )}
 
-      {slides.length > 1 && (
-        <>
-          <button
-            onClick={() => goTo((current - 1 + slides.length) % slides.length)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 bg-white/80 backdrop-blur flex items-center justify-center hover:bg-white transition-colors text-base font-bold shadow-lg"
-            style={{ borderRadius: radius }}
-          >
-            &#8249;
-          </button>
-          <button
-            onClick={() => goTo((current + 1) % slides.length)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 bg-white/80 backdrop-blur flex items-center justify-center hover:bg-white transition-colors text-base font-bold shadow-lg"
-            style={{ borderRadius: radius }}
-          >
-            &#8250;
-          </button>
-        </>
-      )}
     </section>
   )
 }
