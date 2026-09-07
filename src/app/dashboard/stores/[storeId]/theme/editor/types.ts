@@ -14,6 +14,7 @@ export interface ThemeState {
   borderRadius: string
   buttonStyle: string
   layout: string
+  carouselOnMobile: boolean
   bannerText: string
   showBanner: boolean
   logoUrl: string
@@ -50,6 +51,7 @@ export interface ThemeState {
   dividerStyle: string
   shopAllLabel: string
   featuredLabel: string
+  featuredLabelLevel: string
   productsPageHeading: string
   productGridBg: string
   productImageRadius: string

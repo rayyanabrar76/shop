@@ -164,6 +164,12 @@ export default function VisualEditor({
   // Below lg the panel overlays the preview instead of sitting beside it: at
   // 288px wide it left barely a hundred pixels of phone screen for the store.
   const [panelOpen, setPanelOpen] = useState(false)
+  const [panelCollapsed, setPanelCollapsed] = useState(false)
+
+  function togglePanel() {
+    if (window.matchMedia('(min-width: 1024px)').matches) setPanelCollapsed(v => !v)
+    else setPanelOpen(v => !v)
+  }
   const [customSectionFocus, setCustomSectionFocus] = useState<{ id: string; ts: number } | null>(null)
   const [pageContentNav, setPageContentNav] = useState<{ section: string; ts: number } | null>(null)
 
@@ -178,6 +184,7 @@ export default function VisualEditor({
     borderRadius:    initialTheme?.borderRadius    ?? '0.75rem',
     buttonStyle:     initialTheme?.buttonStyle     ?? 'solid',
     layout:          initialTheme?.layout          ?? 'grid',
+    carouselOnMobile: initialTheme?.carouselOnMobile ?? false,
     bannerText:      initialTheme?.bannerText      ?? 'Welcome to our store',
     showBanner:      initialTheme?.showBanner      ?? true,
     logoUrl:         initialTheme?.logoUrl         ?? '',
@@ -214,6 +221,7 @@ export default function VisualEditor({
     dividerStyle:    initialTheme?.dividerStyle    ?? 'none',
     shopAllLabel:        initialTheme?.shopAllLabel        ?? 'Shop All Products',
     featuredLabel:       initialTheme?.featuredLabel       ?? 'Featured Products',
+    featuredLabelLevel:  initialTheme?.featuredLabelLevel  ?? '',
     productsPageHeading: initialTheme?.productsPageHeading ?? '',
     productGridBg:          initialTheme?.productGridBg          ?? '#ffffff',
     productImageRadius:     initialTheme?.productImageRadius     ?? '',
@@ -603,11 +611,12 @@ function handlePageContentChange(content: unknown) {
         </div>
         <div className="flex items-center gap-2 justify-end">
           <button
-            onClick={() => setPanelOpen(v => !v)}
-            aria-label={panelOpen ? 'Hide settings' : 'Show settings'}
-            className="lg:hidden p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            onClick={togglePanel}
+            aria-label="Toggle settings panel"
+            title="Toggle settings panel"
+            className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
           >
-            {panelOpen ? <X className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+            <PanelLeft className="w-4 h-4" />
           </button>
           <button onClick={undo} disabled={history.length === 0} className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-30">
             <Undo2 className="w-4 h-4" />
@@ -626,7 +635,7 @@ function handlePageContentChange(content: unknown) {
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 overflow-hidden relative bg-zinc-800">
         {panelOpen && (
           <div
             className="lg:hidden absolute inset-0 z-30 bg-black/40"
@@ -641,7 +650,14 @@ function handlePageContentChange(content: unknown) {
           // descendant, so on desktop the panel was capturing the modals opened
           // from inside it (media library, AI, product picker) and laying them
           // out inside this 288px column instead of over the page.
-          className={`w-72 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col shrink-0 transition-transform duration-200 max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 lg:transform-none ${
+          // Floats on the dark canvas from lg up: inset, rounded and
+          // shadowed, rather than a slab welded to the window edge.
+          // overflow-hidden matters — the sticky panel header would otherwise
+          // square off the top corners as content scrolls under it.
+          //
+          // Below lg it is still a drawer flush to the edge, where a rounded
+          // floating panel would just waste the little width a phone has.
+          className={`w-72 bg-white dark:bg-zinc-900 flex flex-col shrink-0 transition-[transform,width,opacity,margin] duration-300 ease-out max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:border-r max-lg:border-zinc-200 dark:max-lg:border-zinc-800 lg:transform-none lg:mt-0 lg:mb-1.5 lg:ml-1.5 lg:mr-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-zinc-200/80 dark:lg:border-zinc-800 lg:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] ${panelCollapsed ? 'lg:w-0 lg:ml-0 lg:mb-0 lg:border-0 lg:opacity-0 lg:pointer-events-none' : ''} ${
             panelOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'
           }`}
         >
@@ -860,14 +876,20 @@ function handlePageContentChange(content: unknown) {
           </div>
         </aside>
 
-        <main className="flex-1 bg-zinc-800 flex items-center justify-center overflow-auto p-8">
+        <main
+          className={`flex-1 bg-zinc-800 flex items-center justify-center overflow-auto ${
+            device === 'desktop' ? 'p-1.5' : 'p-5'
+          }`}
+        >
           <div
-            className="relative bg-white shadow-2xl transition-all duration-300 overflow-hidden"
+            className={`relative bg-white transition-all duration-300 overflow-hidden ${
+              device === 'desktop' ? '' : 'shadow-2xl'
+            }`}
             style={{
               width: DEVICE_WIDTHS[device],
               height: '100%',
               maxWidth: '100%',
-              borderRadius: device === 'desktop' ? '0.5rem' : '1.5rem',
+              borderRadius: device === 'desktop' ? '1rem' : '1.5rem',
             }}
           >
             <iframe

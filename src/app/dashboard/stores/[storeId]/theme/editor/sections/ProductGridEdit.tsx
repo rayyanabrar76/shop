@@ -4,6 +4,7 @@ import Link from 'next/link'
 import SectionHeader from './SectionHeader'
 import AiFieldLabel from '@/components/ai/AiFieldLabel'
 import { ThemeState, labelCls, inputCls } from '../types'
+import { ColorField, SelectField, ToggleRow } from '../controls'
 import { ExternalLink } from 'lucide-react'
 
 interface ProductGridEditProps {
@@ -20,139 +21,86 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
       <SectionHeader title={isProductsPage ? 'Product Listing' : 'Product Grid'} description="Layout and card styles" onBack={onBack} />
       <div className="p-4 space-y-5">
 
-        {/* Section Background Color */}
-        <div>
-          <label className={labelCls}>Section Background</label>
-          <div className="flex items-center gap-3">
-            <input
-              type="color"
-              value={theme.productGridBg}
-              onChange={e => updateTheme({ productGridBg: e.target.value })}
-              className="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5 cursor-pointer shrink-0"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Background Color</p>
-              <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">{theme.productGridBg}</p>
-            </div>
-            <input
-              type="text"
-              value={theme.productGridBg}
-              onChange={e => updateTheme({ productGridBg: e.target.value })}
-              className="w-20 text-[10px] font-mono border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
-            />
-          </div>
-        </div>
+        <ColorField
+          label="Section Background"
+          value={theme.productGridBg}
+          onChange={v => updateTheme({ productGridBg: v })}
+        />
 
-        {/* Text Color */}
-        <div>
-          <label className={labelCls}>Text Color <span className="normal-case font-normal opacity-60">— leave blank to use global</span></label>
-          <div className="flex items-center gap-3">
-            <input
-              type="color"
-              value={theme.productGridTextColor || theme.textColor}
-              onChange={e => updateTheme({ productGridTextColor: e.target.value })}
-              className="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5 cursor-pointer shrink-0"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Text Color</p>
-              <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">{theme.productGridTextColor || '(using global)'}</p>
-            </div>
-            <input
-              type="text"
-              value={theme.productGridTextColor}
-              onChange={e => updateTheme({ productGridTextColor: e.target.value })}
-              placeholder={theme.textColor}
-              className="w-20 text-[10px] font-mono border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
-            />
-          </div>
-          {theme.productGridTextColor && (
-            <button onClick={() => updateTheme({ productGridTextColor: '' })} className="mt-1.5 text-[10px] text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 underline">
-              Reset to global
-            </button>
-          )}
-        </div>
+        <ColorField
+          label="Text Colour"
+          hint="blank uses the global colour"
+          value={theme.productGridTextColor}
+          fallback={theme.textColor}
+          onChange={v => updateTheme({ productGridTextColor: v })}
+          onReset={() => updateTheme({ productGridTextColor: '' })}
+        />
 
-        {/* Font */}
-        <div>
-          <label className={labelCls}>Font <span className="normal-case font-normal opacity-60">— leave blank to use global</span></label>
-          <select
-            value={theme.productGridFont}
-            onChange={e => updateTheme({ productGridFont: e.target.value })}
-            className={inputCls}
-          >
-            <option value="">(Global font)</option>
-            <option value="sans">Inter — Sans</option>
-            <option value="serif">Playfair — Serif</option>
-            <option value="mono">Roboto Mono</option>
-          </select>
-        </div>
+        <SelectField
+          label="Font"
+          hint="blank uses the global font"
+          value={theme.productGridFont}
+          onChange={v => updateTheme({ productGridFont: v })}
+          options={[
+            { value: '',      label: 'Global font' },
+            { value: 'sans',  label: 'Inter — Sans' },
+            { value: 'serif', label: 'Playfair — Serif' },
+            { value: 'mono',  label: 'Roboto Mono' },
+          ]}
+        />
 
-        {/* Button Color */}
-        <div>
-          <label className={labelCls}>Button Color <span className="normal-case font-normal opacity-60">— leave blank to use Primary</span></label>
-          <div className="flex items-center gap-3">
-            <input
-              type="color"
-              value={theme.productGridButtonColor || theme.primaryColor}
-              onChange={e => updateTheme({ productGridButtonColor: e.target.value })}
-              className="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5 cursor-pointer shrink-0"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Button Color</p>
-              <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">{theme.productGridButtonColor || '(using primary)'}</p>
-            </div>
-            <input
-              type="text"
-              value={theme.productGridButtonColor}
-              onChange={e => updateTheme({ productGridButtonColor: e.target.value })}
-              placeholder={theme.primaryColor}
-              className="w-20 text-[10px] font-mono border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
-            />
-          </div>
-          {theme.productGridButtonColor && (
-            <button
-              onClick={() => updateTheme({ productGridButtonColor: '' })}
-              className="mt-1.5 text-[10px] text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 underline"
-            >
-              Reset to primary
-            </button>
-          )}
-        </div>
+        <ColorField
+          label="Button Colour"
+          hint="blank uses Primary"
+          value={theme.productGridButtonColor}
+          fallback={theme.primaryColor}
+          onChange={v => updateTheme({ productGridButtonColor: v })}
+          onReset={() => updateTheme({ productGridButtonColor: '' })}
+        />
 
         {/* Layout */}
-        <div data-field="layout">
-          <label className={labelCls}>Product Layout</label>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { value: 'grid', label: 'Grid' },
-              { value: 'list', label: 'List' },
-            ].map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => updateTheme({ layout: opt.value })}
-                className={`py-2.5 rounded-xl border text-xs font-bold transition-all ${
-                  theme.layout === opt.value
-                    ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
-                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+        <div data-field="layout" className="space-y-3">
+          <SelectField
+            label="Type"
+            value={['carousel', 'editorial'].includes(theme.layout) ? theme.layout : 'grid'}
+            onChange={v => updateTheme({ layout: v })}
+            options={[
+              { value: 'grid',      label: 'Grid' },
+              { value: 'carousel',  label: 'Carousel' },
+              { value: 'editorial', label: 'Editorial' },
+            ]}
+          />
+          {/* Separate from the type on purpose: a grid can swipe on a phone
+              without becoming a carousel on a monitor. */}
+          {theme.layout !== 'carousel' && (
+            <ToggleRow
+              label="Carousel on mobile"
+              on={!!theme.carouselOnMobile}
+              onChange={v => updateTheme({ carouselOnMobile: v })}
+            />
+          )}
         </div>
 
         {/* Curvature slider */}
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className={labelCls}>Curvature</label>
-            <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">{theme.borderRadius}</span>
+          <div className="flex items-center justify-between mb-2">
+            <label className={`${labelCls} mb-0`}>Curvature</label>
+            <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] text-zinc-600 tabular-nums dark:bg-zinc-800 dark:text-zinc-300">
+              {theme.borderRadius}
+            </span>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-5 h-5 border-2 border-zinc-300 dark:border-zinc-600 shrink-0" style={{ borderRadius: '2px' }} />
+            {/* Shows the value rather than describing it: the swatch carries
+                whatever radius the slider is on. */}
+            <div
+              className="h-5 w-5 shrink-0 border-2 border-zinc-300 transition-[border-radius] dark:border-zinc-600"
+              style={{ borderRadius: theme.borderRadius }}
+            />
             <input
               type="range"
               min={0} max={24} step={2}
+              // accent-color is the one part of a range input browsers let you
+              // restyle without rebuilding the whole control.
               value={(() => {
                 const r = theme.borderRadius
                 if (r === '0px' || r === '0') return 0
@@ -164,75 +112,39 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
                 const v = parseInt(e.target.value)
                 updateTheme({ borderRadius: v === 0 ? '0px' : `${(v / 16).toFixed(4)}rem` })
               }}
-              className="flex-1 accent-zinc-900 h-1.5 rounded-full cursor-pointer"
+              className="flex-1 h-1.5 cursor-pointer rounded-full accent-zinc-900 dark:accent-zinc-100"
             />
             <div className="w-5 h-5 border-2 border-zinc-300 dark:border-zinc-600 shrink-0 rounded-full" />
           </div>
-          <div className="flex gap-2 mt-2">
-            {[
-              { label: 'Sharp', value: '0px' },
-              { label: 'Soft',  value: '0.5rem' },
-              { label: 'Round', value: '0.75rem' },
-              { label: 'Pill',  value: '1.5rem' },
-            ].map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => updateTheme({ borderRadius: opt.value })}
-                className={`flex-1 py-1.5 text-[10px] font-bold border transition-all ${
-                  theme.borderRadius === opt.value
-                    ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
-                    : 'bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500'
-                }`}
-                style={{ borderRadius: opt.value }}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* Card cover corners — independent of the global curvature above, so a
-            store can square off its product images while buttons stay rounded. */}
+        {/* Independent of the curvature above, so a store can square off its
+            product images while its buttons stay rounded. */}
         <div data-field="product-image-radius">
-          <label className={labelCls}>
-            Card Cover Corners <span className="normal-case font-normal opacity-60">— the product image</span>
-          </label>
-          <div className="grid grid-cols-4 gap-2">
-            {[
-              { label: 'Theme', value: '',        radius: theme.borderRadius },
-              { label: 'Box',   value: '0px',     radius: '0px' },
-              { label: 'Soft',  value: '0.5rem',  radius: '0.5rem' },
-              { label: 'Round', value: '1rem',    radius: '1rem' },
-            ].map(opt => (
-              <button
-                key={opt.label}
-                onClick={() => updateTheme({ productImageRadius: opt.value })}
-                title={opt.value === '' ? 'Follow the Curvature setting above' : undefined}
-                className={`flex flex-col items-center gap-1.5 py-2 rounded-xl border text-[10px] font-bold transition-all ${
-                  (theme.productImageRadius ?? '') === opt.value
-                    ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
-                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800'
-                }`}
-              >
-                <span
-                  className="w-6 h-6 border-2 border-current opacity-70"
-                  style={{ borderRadius: opt.radius }}
-                />
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <SelectField
+            label="Card Cover Corners"
+            hint="the product image"
+            value={theme.productImageRadius ?? ''}
+            onChange={v => updateTheme({ productImageRadius: v })}
+            options={[
+              { value: '',       label: 'Follow theme curvature' },
+              { value: '0px',    label: 'Box — square' },
+              { value: '0.5rem', label: 'Soft' },
+              { value: '1rem',   label: 'Round' },
+            ]}
+          />
         </div>
 
-        {/* Button Style */}
-        <div>
-          <label className={labelCls}>Button Style</label>
-          <select value={theme.buttonStyle} onChange={e => updateTheme({ buttonStyle: e.target.value })} className={inputCls}>
-            <option value="solid">Solid</option>
-            <option value="outline">Outline</option>
-            <option value="ghost">Ghost</option>
-          </select>
-        </div>
+        <SelectField
+          label="Button Style"
+          value={theme.buttonStyle}
+          onChange={v => updateTheme({ buttonStyle: v })}
+          options={[
+            { value: 'solid',   label: 'Solid' },
+            { value: 'outline', label: 'Outline' },
+            { value: 'ghost',   label: 'Ghost' },
+          ]}
+        />
 
         {/* Products page heading — products page only */}
         {isProductsPage && (
@@ -255,6 +167,22 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
             />
           </div>
         )}
+
+        <SelectField
+          label="Heading Preset"
+          hint="size and level"
+          value={theme.featuredLabelLevel ?? ''}
+          onChange={v => updateTheme({ featuredLabelLevel: v })}
+          options={[
+            { value: '',   label: 'Default — small caps' },
+            { value: 'h1', label: 'Heading 1' },
+            { value: 'h2', label: 'Heading 2' },
+            { value: 'h3', label: 'Heading 3' },
+            { value: 'h4', label: 'Heading 4' },
+            { value: 'h5', label: 'Heading 5' },
+            { value: 'h6', label: 'Heading 6' },
+          ]}
+        />
 
         {/* Section Heading Label */}
         <div data-field="featured-label">
@@ -282,35 +210,20 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
           </div>
         )}
 
-        {/* Card Shadow */}
         <div data-field="card-shadow">
-          <label className={labelCls}>Card Shadow</label>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { value: 'none',    label: 'None',   preview: 'border border-zinc-200' },
-              { value: 'soft',    label: 'Soft',   preview: 'shadow-sm border border-zinc-100' },
-              { value: 'lifted',  label: 'Lifted', preview: 'shadow-md' },
-              { value: 'inset',   label: 'Inset',  preview: 'shadow-inner border border-zinc-200' },
-              { value: 'strong',  label: 'Strong', preview: 'shadow-xl' },
-              { value: 'glow',    label: 'Glow',   preview: 'shadow-md' },
-            ].map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => updateTheme({ cardShadow: opt.value })}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
-                  theme.cardShadow === opt.value
-                    ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
-                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800'
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-md bg-white shrink-0 ${opt.preview}`}
-                  style={opt.value === 'glow' ? { boxShadow: `0 0 12px ${theme.primaryColor}66` } : {}}
-                />
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <SelectField
+            label="Card Shadow"
+            value={theme.cardShadow}
+            onChange={v => updateTheme({ cardShadow: v })}
+            options={[
+              { value: 'none',   label: 'None' },
+              { value: 'soft',   label: 'Soft' },
+              { value: 'lifted', label: 'Lifted' },
+              { value: 'inset',  label: 'Inset' },
+              { value: 'strong', label: 'Strong' },
+              { value: 'glow',   label: 'Glow' },
+            ]}
+          />
         </div>
 
         <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
