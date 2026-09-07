@@ -262,14 +262,108 @@ export function ToggleRow({
 }
 
 const BLOCKS = [
-  { value: 'p',  label: 'Paragraph' },
-  { value: 'h1', label: 'Heading 1' },
-  { value: 'h2', label: 'Heading 2' },
-  { value: 'h3', label: 'Heading 3' },
-  { value: 'h4', label: 'Heading 4' },
-  { value: 'h5', label: 'Heading 5' },
-  { value: 'h6', label: 'Heading 6' },
+  { value: 'p',  label: 'Paragraph', cls: 'text-[13px]' },
+  { value: 'h1', label: 'Heading 1', cls: 'text-2xl font-bold tracking-tight' },
+  { value: 'h2', label: 'Heading 2', cls: 'text-xl font-bold tracking-tight' },
+  { value: 'h3', label: 'Heading 3', cls: 'text-lg font-semibold' },
+  { value: 'h4', label: 'Heading 4', cls: 'text-base font-semibold' },
+  { value: 'h5', label: 'Heading 5', cls: 'text-[13px] font-semibold' },
+  { value: 'h6', label: 'Heading 6', cls: 'text-[12px] font-medium text-zinc-500 dark:text-zinc-400' },
 ]
+
+/**
+ * Block-level picker for the text toolbar.
+ *
+ * Each option is drawn at the size it applies, so the menu is a specimen sheet
+ * rather than a list of names — you pick the one that looks right instead of
+ * translating "Heading 4" into a size in your head.
+ *
+ * Portalled for the same reason as SelectField: the settings panel clips its
+ * overflow, and a menu this tall opened from a field near the bottom would be
+ * cut in half.
+ */
+function BlockMenu({ onPick }: { onPick: (tag: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [current, setCurrent] = useState('p')
+  const btn = useRef<HTMLButtonElement>(null)
+  const menu = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ left: number; width: number; top?: number; bottom?: number } | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const r = btn.current?.getBoundingClientRect()
+    if (r) {
+      const wanted = 300
+      const below = window.innerHeight - r.bottom
+      const flip = below < wanted && r.top > below
+      setPos({
+        left: r.left,
+        width: 196,
+        ...(flip ? { bottom: window.innerHeight - r.top + 6 } : { top: r.bottom + 6 }),
+      })
+    }
+    // Reflects where the caret actually is, so the tick is not a guess.
+    try {
+      const v = document.queryCommandValue('formatBlock')
+      if (v) setCurrent(String(v).toLowerCase().replace(/[<>]/g, '') || 'p')
+    } catch {}
+
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node
+      if (!btn.current?.contains(t) && !menu.current?.contains(t)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <>
+      <button
+        ref={btn}
+        type="button"
+        title="Text style"
+        aria-label="Text style"
+        // Mouse-down would blur the editor and lose the selection before the
+        // menu could act on it.
+        onMouseDown={e => { e.preventDefault(); setOpen(v => !v) }}
+        className={`mr-1 flex h-7 items-center gap-1 rounded px-1.5 text-[12px] font-semibold transition-colors ${
+          open
+            ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-50'
+            : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700'
+        }`}
+      >
+        Aa
+        <ChevronDown className={`h-3 w-3 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && pos && createPortal(
+        <div
+          ref={menu}
+          style={{ position: 'fixed', left: pos.left, width: pos.width, top: pos.top, bottom: pos.bottom }}
+          className="z-[200] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-[0_8px_24px_-8px_rgba(9,9,11,0.25)] dark:border-zinc-700 dark:bg-zinc-800"
+        >
+          {BLOCKS.map(b => (
+            <button
+              key={b.value}
+              type="button"
+              onMouseDown={e => { e.preventDefault(); onPick(b.value); setOpen(false) }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-zinc-900 transition-colors hover:bg-zinc-50 dark:text-zinc-50 dark:hover:bg-zinc-700/60"
+            >
+              <Check className={`h-3 w-3 shrink-0 ${current === b.value ? 'opacity-100' : 'opacity-0'}`} />
+              <span className={b.cls}>{b.label}</span>
+            </button>
+          ))}
+        </div>,
+        document.body,
+      )}
+    </>
+  )
+}
 
 /**
  * Body copy with a small formatting toolbar: block level, bold, italic, link
@@ -332,16 +426,7 @@ export function RichTextField({
       <Label text={label} hint={hint} />
       <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white transition-[border-color,box-shadow] focus-within:border-zinc-900 focus-within:ring-2 focus-within:ring-zinc-900/5 dark:border-zinc-700 dark:bg-zinc-800 dark:focus-within:border-zinc-300 dark:focus-within:ring-white/10">
         <div className="flex items-center gap-0.5 border-b border-zinc-100 px-1.5 py-1 dark:border-zinc-700">
-          <select
-            onMouseDown={e => e.stopPropagation()}
-            onChange={e => run('formatBlock', e.target.value)}
-            defaultValue="p"
-            className="mr-1 rounded bg-transparent py-1 pl-1 pr-4 text-[11px] font-medium text-zinc-600 outline-none dark:text-zinc-300"
-          >
-            {BLOCKS.map(b => (
-              <option key={b.value} value={b.value}>{b.label}</option>
-            ))}
-          </select>
+          <BlockMenu onPick={tag => run('formatBlock', `<${tag}>`)} />
           <span className="mx-0.5 h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
           <Btn title="Bold" on={() => run('bold')}><Bold className="h-3.5 w-3.5" /></Btn>
           <Btn title="Italic" on={() => run('italic')}><Italic className="h-3.5 w-3.5" /></Btn>
@@ -365,7 +450,7 @@ export function RichTextField({
           suppressContentEditableWarning
           onInput={e => onChange((e.target as HTMLDivElement).innerHTML)}
           style={{ minHeight: rows * 22 }}
-          className="prose-sm max-w-none px-3 py-2 text-[13px] leading-relaxed text-zinc-900 outline-none dark:text-zinc-50 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:font-semibold [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+          className="prose-sm max-w-none px-3 py-2 text-[13px] leading-relaxed text-zinc-900 outline-none dark:text-zinc-50 [&_h1]:text-3xl [&_h1]:font-bold [&_h2]:text-2xl [&_h2]:font-bold [&_h3]:text-xl [&_h3]:font-semibold [&_h4]:text-lg [&_h4]:font-semibold [&_h5]:text-base [&_h5]:font-semibold [&_h6]:text-sm [&_h6]:font-semibold [&_h6]:uppercase [&_h6]:tracking-widest [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
         />
       </div>
     </div>

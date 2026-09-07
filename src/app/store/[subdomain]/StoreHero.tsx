@@ -126,16 +126,19 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
           style={{ opacity: transitioning ? 0 : 1, transition: 'opacity 0.22s' }}
         >
           <EditorItem section="hero" field="hero-heading" meta={{ slideIndex: current }} label="Heading" isEditor={isEditor} onEdit={notify}>
-            <h2
-              className="text-3xl md:text-5xl font-black leading-tight"
+            {/* Sanitised HTML like the subheading. The base classes below are
+                the default when the merchant has not picked a level; a chosen
+                heading tag overrides them through the [&_hN] rules, which have
+                to restate the sizes because preflight strips heading styles. */}
+            <div
+              className={`text-3xl md:text-5xl font-black leading-tight ${'[&_h1]:text-3xl [&_h1]:md:text-5xl [&_h1]:font-black [&_h2]:text-2xl [&_h2]:md:text-4xl [&_h2]:font-bold [&_h3]:text-xl [&_h3]:md:text-3xl [&_h3]:font-bold [&_h4]:text-lg [&_h4]:md:text-2xl [&_h4]:font-semibold [&_h5]:text-base [&_h5]:md:text-xl [&_h5]:font-semibold [&_h6]:text-sm [&_h6]:md:text-base [&_h6]:font-semibold [&_h6]:uppercase [&_h6]:tracking-widest'}`}
               style={{
                 fontFamily: theme?.headingFont === 'serif' ? 'serif' : 'inherit',
                 color: hasMedia ? '#ffffff' : (theme?.accentColor ?? '#09090b'),
                 textShadow: hasMedia ? '0 2px 12px rgba(0,0,0,0.4)' : 'none',
               }}
-            >
-              {slide.heading}
-            </h2>
+              dangerouslySetInnerHTML={{ __html: sanitizeRichText(slide.heading) }}
+            />
           </EditorItem>
           <EditorItem section="hero" field="hero-subheading" meta={{ slideIndex: current }} label="Subheading" isEditor={isEditor} onEdit={notify}>
             {/* Rendered as HTML so the toolbar's bold, links and lists show
@@ -143,7 +146,7 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
                 toolbar can only make safe markup, but a paste from Word or a
                 browser extension can put anything into the field. */}
             <div
-              className="text-sm md:text-lg max-w-md leading-relaxed [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+              className="text-sm md:text-lg max-w-md leading-relaxed [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_h1]:text-3xl [&_h1]:font-bold [&_h2]:text-2xl [&_h2]:font-bold [&_h3]:text-xl [&_h3]:font-semibold [&_h4]:text-lg [&_h4]:font-semibold [&_h5]:text-base [&_h5]:font-semibold [&_h6]:text-sm [&_h6]:font-semibold [&_h6]:uppercase [&_h6]:tracking-widest"
               style={{
                 color: hasMedia ? 'rgba(255,255,255,0.9)' : 'inherit',
                 opacity: hasMedia ? 1 : 0.6,

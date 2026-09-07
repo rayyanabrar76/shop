@@ -23,6 +23,9 @@ interface SectionsListProps {
   /** Resolved order of the movable sections, as section-order keys. */
   order: string[]
   onReorder: (keys: string[]) => void
+  /** Fires while a row is being dragged, so the preview can pull back and show
+      the whole page instead of the slice that happens to be scrolled to. */
+  onDragChange?: (dragging: boolean) => void
 }
 
 /**
@@ -42,6 +45,7 @@ export default function SectionsList({
   customSections,
   order,
   onReorder,
+  onDragChange,
 }: SectionsListProps) {
   const [dragKey, setDragKey] = useState<string | null>(null)
   const [overKey, setOverKey] = useState<string | null>(null)
@@ -90,8 +94,8 @@ export default function SectionsList({
               draggable
               dragging={dragKey === key}
               dropTarget={overKey === key && dragKey !== key}
-              onDragStart={() => setDragKey(key)}
-              onDragEnd={() => { setDragKey(null); setOverKey(null) }}
+              onDragStart={() => { setDragKey(key); onDragChange?.(true) }}
+              onDragEnd={() => { setDragKey(null); setOverKey(null); onDragChange?.(false) }}
               onDragOver={() => setOverKey(key)}
               onDrop={() => handleDrop(key)}
             />

@@ -146,7 +146,7 @@ function SlideCard({ storeId, subdomain, slide, index, total, isOpen, onToggle, 
         over a button label is clutter. */
     rich?: boolean
   }[] = [
-    { key: 'heading',    label: 'Heading',      placeholder: 'Big bold headline', fieldId: 'hero-heading',    aiKind: 'heading',    aiHint: 'the big headline on the home page hero slide' },
+    { key: 'heading',    label: 'Heading',      placeholder: 'Big bold headline', fieldId: 'hero-heading',    aiKind: 'heading',    aiHint: 'the big headline on the home page hero slide', rich: true },
     { key: 'subheading', label: 'Subheading',   placeholder: 'Supporting line',   fieldId: 'hero-subheading', aiKind: 'subheading', aiHint: 'the supporting line under the hero headline', rich: true },
     { key: 'ctaLabel',   label: 'Button Label', placeholder: 'Shop Now',          fieldId: 'hero-cta',        aiKind: 'button',     aiHint: 'the call-to-action button on the hero slide' },
   ]
