@@ -112,8 +112,25 @@ export interface ThemeState {
   catFilterFontWeight: string
 }
 
-export const labelCls = 'text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1 block'
-export const inputCls = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-all bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50'
+/**
+ * Field labels. Smaller and lighter than they were: 11px bold uppercase with
+ * `tracking-widest` is a lot of emphasis for a caption, and with one on every
+ * field the panel read as a stack of shouting rather than a form. 10px
+ * semibold on a tighter track still separates label from value.
+ */
+export const labelCls =
+  'text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-400 dark:text-zinc-500 mb-1.5 block'
+/**
+ * Text inputs. The focus state used to be a slightly greyer border, which is
+ * nearly invisible against the unfocused one — you could not tell which field
+ * you were in. It now takes a near-black border plus a soft ring.
+ */
+export const inputCls =
+  'w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-[13px] outline-none ' +
+  'shadow-[0_1px_2px_rgba(9,9,11,0.03)] transition-[border-color,box-shadow] ' +
+  'focus:border-zinc-900 dark:focus:border-zinc-300 focus:ring-2 focus:ring-zinc-900/5 dark:focus:ring-white/10 ' +
+  'placeholder:text-zinc-300 dark:placeholder:text-zinc-600 ' +
+  'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50'
 export const sectionLabelCls = 'text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-3 flex items-center gap-1.5'
 
 export const EDITOR_COLOR = '#18181b'
