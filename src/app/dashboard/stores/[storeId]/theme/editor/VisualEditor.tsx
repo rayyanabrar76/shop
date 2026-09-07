@@ -616,7 +616,11 @@ function handlePageContentChange(content: unknown) {
             <Eye className="w-4 h-4" />
             <span className="absolute right-0 top-full mt-1.5 px-2 py-1 bg-zinc-700 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">View Store</span>
           </Link>
-          <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-white text-zinc-900 hover:bg-zinc-100 transition-colors disabled:opacity-50">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-[13px] font-semibold tracking-[-0.01em] text-zinc-900 shadow-[0_1px_2px_rgba(0,0,0,0.35)] transition-all hover:bg-zinc-100 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
+          >
             {saved ? <><CheckCircle2 className="w-4 h-4" /> Saved!</> : saving ? 'Saving...' : <><Save className="w-4 h-4" /> Save</>}
           </button>
         </div>
@@ -631,8 +635,14 @@ function handlePageContentChange(content: unknown) {
           />
         )}
         <aside
-          className={`w-72 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col shrink-0 transition-transform duration-200 max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 lg:translate-x-0 ${
-            panelOpen ? 'translate-x-0' : 'max-lg:-translate-x-full'
+          // The transform is confined to max-lg, where it actually drives the
+          // drawer. A transform of any kind — `translate-x-0` included — makes
+          // this element the containing block for every `position: fixed`
+          // descendant, so on desktop the panel was capturing the modals opened
+          // from inside it (media library, AI, product picker) and laying them
+          // out inside this 288px column instead of over the page.
+          className={`w-72 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col shrink-0 transition-transform duration-200 max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 lg:transform-none ${
+            panelOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'
           }`}
         >
 

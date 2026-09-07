@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, type ChangeEvent, type DragEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Upload, Image as ImageIcon, Video, Trash2, Check, Loader2, FileImage } from 'lucide-react'
 
 export interface MediaAsset {
@@ -35,6 +36,10 @@ export default function MediaLibraryModal({ storeId, accept, onClose, onSelect }
   const [uploadProgress, setUploadProgress] = useState(0)
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // The modal is portalled to <body>, which cannot happen on the server.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
   useEffect(() => { fetchMedia() }, [])
 
@@ -159,7 +164,22 @@ export default function MediaLibraryModal({ storeId, accept, onClose, onSelect }
     accept === 'video' ? 'video/*' :
     'image/*,video/*'
 
-  return (
+  if (!mounted) return null
+
+  /**
+   * Portalled to <body> rather than rendered in place.
+   *
+   * Every caller of this lives somewhere inside the page, and the visual
+   * editor's section panels sit inside a sidebar carrying `translate-x-0` for
+   * its drawer animation. A transform — even a zero one — makes that element
+   * the containing block for any `position: fixed` descendant, so this
+   * "full screen" overlay was being laid out inside a 288px column: the
+   * library opened as a cramped strip in the sidebar instead of over the page.
+   *
+   * Escaping to <body> puts it back on the viewport, and fixes it for every
+   * other caller at the same time rather than one panel at a time.
+   */
+  return createPortal(
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-4xl h-[80vh] overflow-hidden shadow-2xl flex flex-col">
 
@@ -227,7 +247,8 @@ export default function MediaLibraryModal({ storeId, accept, onClose, onSelect }
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
