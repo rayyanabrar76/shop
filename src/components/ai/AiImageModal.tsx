@@ -27,7 +27,7 @@ const COPY = {
     placeholder: 'e.g. a matte black water bottle on a linen backdrop',
     working: 'Painting your product...',
     apply: 'Use this photo',
-    note: 'Generated images are a starting point. Check them before publishing — a real photo of the actual item is still what sells best.',
+    note: 'Generated images are a starting point. Check them before publishing. A real photo of the actual item is still what sells best.',
   },
   icon: {
     title: 'Generate a favicon',
@@ -41,7 +41,7 @@ const COPY = {
 }
 
 const inputCls =
-  'w-full rounded-xl border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-sm outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-colors bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-300 dark:placeholder:text-zinc-600'
+  'w-full rounded-xl border border-(--admin-field-border) px-3 py-2.5 text-sm outline-none focus:border-(--admin-field-border-focus) transition-colors bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-300 dark:placeholder:text-zinc-600'
 
 /**
  * Generates an image and stores it in the shop's media library, so applying it
@@ -135,7 +135,7 @@ export default function AiImageModal({
               <button
                 onClick={run}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-(--admin-border) text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
               >
                 <HiArrowPath className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
                 Try again
@@ -162,7 +162,7 @@ export default function AiImageModal({
     >
       <div className="space-y-5">
         <div>
-          <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1.5 block">
+          <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5 block">
             {copy.field}
           </label>
           <textarea
@@ -186,7 +186,7 @@ export default function AiImageModal({
                     return base ? `${base}, ${s}` : s
                   })
                 }}
-                className="px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+                className="px-2.5 py-1 rounded-lg border border-(--admin-border) text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:border-(--admin-field-border) hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
               >
                 + {s}
               </button>
@@ -201,9 +201,9 @@ export default function AiImageModal({
         )}
 
         {quotaPrompt && (
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3.5">
+          <div className="rounded-xl border border-(--admin-border) bg-zinc-50 dark:bg-zinc-800/60 p-3.5">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
                 Use this prompt elsewhere
               </p>
               <button
@@ -222,16 +222,16 @@ export default function AiImageModal({
             <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed font-mono break-words">
               {quotaPrompt}
             </p>
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2">
+            <p className="text-[10px] text-zinc-500 mt-2">
               Paste it into Gemini, or any image tool, and upload the result through
               Choose from Library.
             </p>
           </div>
         )}
 
-        <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 aspect-square max-h-80 mx-auto w-full max-w-80 flex items-center justify-center overflow-hidden">
+        <div className="rounded-xl border border-(--admin-border) bg-zinc-50 dark:bg-zinc-800/50 aspect-square max-h-80 mx-auto w-full max-w-80 flex items-center justify-center overflow-hidden">
           {loading ? (
-            <div className="flex flex-col items-center gap-2 text-zinc-400 dark:text-zinc-500">
+            <div className="flex flex-col items-center gap-2 text-zinc-500">
               <HiArrowPath className="w-5 h-5 animate-spin" />
               <p className="text-[11px] font-medium">{copy.working}</p>
               <p className="text-[10px]">This takes about 10 seconds</p>
@@ -247,7 +247,7 @@ export default function AiImageModal({
           )}
         </div>
 
-        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 text-center">{copy.note}</p>
+        <p className="text-[10px] text-zinc-500 text-center">{copy.note}</p>
       </div>
     </AiModalShell>
   )

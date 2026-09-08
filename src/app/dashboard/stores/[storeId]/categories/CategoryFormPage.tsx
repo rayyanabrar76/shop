@@ -3,9 +3,10 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, ImageIcon, Plus, X, Eye } from 'lucide-react'
-import { HiSparkles, HiPhoto } from 'react-icons/hi2'
-import AiCategoryModal from '@/components/ai/AiCategoryModal'
+import { ChevronRight, ImageIcon, Plus, X, Eye, Tag } from 'lucide-react'
+import AiFieldLabel from '@/components/ai/AiFieldLabel'
+import { inputCls, labelCls } from '@/components/dashboard/field-styles'
+import { HiPhoto } from 'react-icons/hi2'
 import AiImageModal from '@/components/ai/AiImageModal'
 import ProductPickerModal from '@/components/ProductPickerModal'
 import MediaPicker from '@/components/MediaPicker'
@@ -28,34 +29,36 @@ export default function CategoryFormPage({
 }) {
   const router = useRouter()
   const [picking, setPicking] = useState(false)
-  const [aiOpen, setAiOpen] = useState(false)
   const [imageAiOpen, setImageAiOpen] = useState(false)
   const f = useCategoryForm(storeId, () => {
     router.push(`/dashboard/stores/${storeId}/categories`)
     router.refresh()
   }, category)
 
-  const fieldCls =
-    'w-full rounded-xl border border-zinc-200 dark:border-zinc-700 px-3.5 py-2.5 text-sm outline-none transition-shadow focus:border-zinc-400 dark:focus:border-zinc-500 focus:ring-4 focus:ring-black/5 dark:focus:ring-white/5 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-300 dark:placeholder:text-zinc-600'
-  const labelCls =
-    'text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500 mb-2 block'
+  const fieldCls = inputCls
   const cardCls =
-    'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-sm'
+    'bg-(--admin-card) border border-(--admin-border) rounded-2xl shadow-sm'
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-full bg-(--admin-page)">
       {/* Sticky action bar, so Save is reachable however long the list gets */}
-      <div className="sticky top-0 z-30 border-b border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md">
-        <div className="max-w-5xl mx-auto px-6 py-3.5 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
+      {/* Floats over the page ground, so it is mixed from the same token
+          rather than a hardcoded pair that would drift from it. */}
+      <div
+        className="sticky top-0 z-30 backdrop-blur-xl"
+        style={{ background: "color-mix(in srgb, var(--admin-page) 75%, transparent)" }}
+      >
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-1.5 min-w-0">
             <Link
               href={`/dashboard/stores/${storeId}/categories`}
-              className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors shrink-0"
+              className="flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-md text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition-colors"
               aria-label="Back to categories"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <Tag className="w-4 h-4" />
             </Link>
-            <h1 className="text-[15px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50 truncate">
+            <ChevronRight className="w-3.5 h-3.5 shrink-0 text-zinc-300 dark:text-zinc-600" />
+            <h1 className="truncate text-[15px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
               {f.name.trim() || (f.isEdit ? 'Edit category' : 'Add category')}
             </h1>
           </div>
@@ -68,36 +71,30 @@ export default function CategoryFormPage({
                 href={storeUrl(subdomain, `/categories/${category.slug}`)}
                 target="_blank"
                 rel="noreferrer"
-                className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-800 dark:hover:text-zinc-100 transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-(--admin-border) bg-(--admin-card) text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-50 hover:border-(--admin-field-border) transition-colors"
                 title="View on storefront"
               >
                 <Eye className="w-4 h-4" />
               </a>
             ) : (
               <span
-                className="p-2 rounded-xl border border-zinc-100 dark:border-zinc-800 text-zinc-300 dark:text-zinc-700 cursor-not-allowed"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-(--admin-edge) text-zinc-300 dark:text-zinc-700 cursor-not-allowed"
                 title="Save the category first to view it on your storefront"
               >
                 <Eye className="w-4 h-4" />
               </span>
             )}
-            <button
-              type="button"
-              onClick={() => setAiOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
-            >
-              <HiSparkles className="w-3.5 h-3.5" /> Write with AI
-            </button>
+
             <Link
               href={`/dashboard/stores/${storeId}/categories`}
-              className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+              className="flex h-8 shrink-0 items-center rounded-lg border border-(--admin-border) bg-(--admin-card) px-3 text-[11.5px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-50 hover:border-(--admin-field-border) transition-colors"
             >
               {f.isEdit ? 'Cancel' : 'Discard'}
             </Link>
             <button
               onClick={f.submit}
               disabled={!f.canSubmit}
-              className="px-5 py-2 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+              className="flex h-8 shrink-0 items-center rounded-lg bg-zinc-900 dark:bg-zinc-50 px-3 text-[11.5px] font-semibold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {f.saving ? 'Saving…' : f.isEdit ? 'Save changes' : 'Save'}
             </button>
@@ -105,7 +102,7 @@ export default function CategoryFormPage({
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-7 grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-5 items-start">
+      <div className="max-w-5xl mx-auto px-6 pt-5 pb-7 grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-5 items-start">
         {/* Details */}
         <div className="space-y-5">
           <div className={`${cardCls} p-6`}>
@@ -119,7 +116,7 @@ export default function CategoryFormPage({
                     <img
                       src={f.imageUrl}
                       alt=""
-                      className="w-40 h-40 rounded-xl object-cover border border-zinc-200 dark:border-zinc-700"
+                      className="w-40 h-40 rounded-xl object-cover border border-(--admin-border)"
                     />
                     <button
                       onClick={() => f.setImageUrl('')}
@@ -134,15 +131,25 @@ export default function CategoryFormPage({
                 <button
                   type="button"
                   onClick={() => setImageAiOpen(true)}
-                  className="mt-2 w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
+                  className="mt-2 w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-(--admin-border) text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-(--admin-field-border) transition-colors"
                 >
                   <HiPhoto className="w-3.5 h-3.5" /> Generate with AI
                 </button>
               </div>
 
               <div className="flex-1 min-w-0 space-y-4">
-                <div>
-                  <label className={labelCls}>Title</label>
+                {/* group/ai: the button inside the label only appears on
+                    hover, and the hover target has to be the whole field. */}
+                <div className="group/ai">
+                  <AiFieldLabel
+                    label="Title"
+                    storeId={storeId}
+                    kind="heading"
+                    current={f.name}
+                    hint="the name of a product category in this shop"
+                    onWrite={f.setName}
+                    labelClassName={labelCls}
+                  />
                   <input
                     autoFocus
                     value={f.name}
@@ -154,13 +161,21 @@ export default function CategoryFormPage({
                     <p className="text-[10px] text-zinc-400 mt-1.5 font-mono">/products?category={f.slug}</p>
                   )}
                 </div>
-                <div>
-                  <label className={labelCls}>Description</label>
+                <div className="group/ai">
+                  <AiFieldLabel
+                    label="Description"
+                    storeId={storeId}
+                    kind="paragraph"
+                    current={f.description}
+                    hint={`a short line about the "${f.name || 'this'}" category`}
+                    onWrite={f.setDescription}
+                    labelClassName={labelCls}
+                  />
                   <textarea
                     value={f.description}
                     onChange={e => f.setDescription(e.target.value)}
                     rows={4}
-                    placeholder="Optional — a short line about this group"
+                    placeholder="Optional, a short line about this group"
                     className={`${fieldCls} resize-none leading-relaxed`}
                   />
                 </div>
@@ -170,7 +185,7 @@ export default function CategoryFormPage({
 
           {/* Items already chosen, mirroring Shopify's "Collection items" card */}
           <div className={cardCls}>
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-(--admin-edge)">
               <p className="text-sm font-bold text-zinc-800 dark:text-zinc-100">Category items</p>
               <span className="text-[11px] font-semibold text-zinc-400 tabular-nums">{f.productIds.length}</span>
               {f.productIds.length === 0 && (
@@ -184,7 +199,7 @@ export default function CategoryFormPage({
                   .map(p => (
                     <div key={p.id} className="relative group">
                       {p.imageUrl ? (
-                        <img src={p.imageUrl} alt="" className="w-full aspect-square rounded-xl object-cover border border-zinc-100 dark:border-zinc-700" />
+                        <img src={p.imageUrl} alt="" className="w-full aspect-square rounded-xl object-cover border border-(--admin-edge)" />
                       ) : (
                         <div className="w-full aspect-square rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
                           <ImageIcon className="w-5 h-5 text-zinc-300 dark:text-zinc-600" />
@@ -207,12 +222,12 @@ export default function CategoryFormPage({
 
         {/* Products */}
         <div className={`${cardCls} overflow-hidden lg:sticky lg:top-24`}>
-          <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-(--admin-edge)">
             <p className="text-sm font-bold text-zinc-800 dark:text-zinc-100">Products</p>
             <button
               type="button"
               onClick={() => setPicking(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-(--admin-border) text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
             >
               <Plus className="w-3 h-3" /> Add products
             </button>
@@ -224,7 +239,7 @@ export default function CategoryFormPage({
               </p>
             ) : (
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                {f.productIds.length} product{f.productIds.length === 1 ? '' : 's'} selected — shown in the card on the left.
+                {f.productIds.length} product{f.productIds.length === 1 ? '' : 's'} selected, shown in the card on the left.
               </p>
             )}
           </div>
@@ -237,19 +252,6 @@ export default function CategoryFormPage({
         storeId={storeId}
         seed={f.name}
         onApply={url => f.setImageUrl(url)}
-      />
-
-      <AiCategoryModal
-        open={aiOpen}
-        onClose={() => setAiOpen(false)}
-        storeId={storeId}
-        products={f.products}
-        onImage={url => f.setImageUrl(url)}
-        onApply={(result, pick) => {
-          if (pick.title) f.setName(result.title)
-          if (pick.description) f.setDescription(result.description)
-          if (pick.products) f.setProductIds(result.productIds)
-        }}
       />
 
       {picking && (

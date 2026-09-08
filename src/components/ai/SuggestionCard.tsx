@@ -102,13 +102,13 @@ export default function SuggestionCard({
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800/40 p-4 flex items-center gap-3">
+      <div className="rounded-xl border border-(--admin-border) bg-zinc-50/70 dark:bg-zinc-800/40 p-4 flex items-center gap-3">
         <HiArrowPath className="w-4 h-4 animate-spin text-zinc-400 shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-zinc-700 dark:text-zinc-200">Reading your shop...</p>
-          <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+          <p className="text-[11px] text-zinc-500 mt-0.5">
             {slow
-              ? 'Taking longer than usual — the model is busy. You can start typing below instead.'
+              ? 'Taking longer than usual. The model is busy, so you can start typing below instead.'
               : 'Working out what would help most.'}
           </p>
         </div>
@@ -118,7 +118,7 @@ export default function SuggestionCard({
 
   if (error) {
     return (
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800/40 p-3.5 flex items-center justify-between gap-3">
+      <div className="rounded-xl border border-(--admin-border) bg-zinc-50/70 dark:bg-zinc-800/40 p-3.5 flex items-center justify-between gap-3">
         <p className="text-[11px] text-zinc-500 dark:text-zinc-400 min-w-0">{error}</p>
         <button
           onClick={onRetry}
@@ -132,7 +132,7 @@ export default function SuggestionCard({
 
   if (empty) {
     return (
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800/40 p-3.5 flex items-start gap-2.5">
+      <div className="rounded-xl border border-(--admin-border) bg-zinc-50/70 dark:bg-zinc-800/40 p-3.5 flex items-start gap-2.5">
         <HiCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
         <p className="text-[11px] text-zinc-500 dark:text-zinc-400">{reason}</p>
       </div>
@@ -148,7 +148,7 @@ export default function SuggestionCard({
           <HiLightBulb className="w-3.5 h-3.5 text-white dark:text-black" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
             Suggested for your shop
           </p>
           {reason && (
@@ -169,9 +169,9 @@ export default function SuggestionCard({
 
         {/* Cover / product photo */}
         {imagePrompt && (
-          <div className="rounded-lg border border-zinc-100 dark:border-zinc-700 p-3">
+          <div className="rounded-lg border border-(--admin-edge) p-3">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
                 Suggested photo
               </p>
               {!editing && (
@@ -189,7 +189,7 @@ export default function SuggestionCard({
                 value={prompt}
                 onChange={e => setPrompt(e.target.value)}
                 rows={2}
-                className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-2.5 py-2 text-[11px] outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 resize-none leading-relaxed"
+                className="w-full rounded-lg border border-(--admin-field-border) px-2.5 py-2 text-[11px] outline-none focus:border-(--admin-field-border-focus) bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 resize-none leading-relaxed"
               />
             ) : (
               <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed italic">
@@ -199,16 +199,16 @@ export default function SuggestionCard({
 
             {imageUrl ? (
               <div className="mt-2.5 flex items-center gap-2.5">
-                <img src={imageUrl} alt="" className="w-14 h-14 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700" />
+                <img src={imageUrl} alt="" className="w-14 h-14 rounded-lg object-cover border border-(--admin-border)" />
                 <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                  <HiCheck className="w-3.5 h-3.5" /> Added — it saves when you apply
+                  <HiCheck className="w-3.5 h-3.5" /> Added, it saves when you apply
                 </p>
               </div>
             ) : (
               <button
                 onClick={generate}
                 disabled={generating || applying || !effectivePrompt.trim()}
-                className="mt-2.5 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
+                className="mt-2.5 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-(--admin-border) text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
               >
                 {generating
                   ? <><HiArrowPath className="w-3.5 h-3.5 animate-spin" /> Generating...</>
@@ -221,7 +221,7 @@ export default function SuggestionCard({
         )}
       </div>
 
-      <div className="px-4 py-2.5 border-t border-zinc-100 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800/40">
+      <div className="px-4 py-2.5 border-t border-(--admin-edge) bg-zinc-50/70 dark:bg-zinc-800/40">
         <div className="flex items-center gap-2.5">
           <button
             onClick={useAll}
@@ -233,7 +233,7 @@ export default function SuggestionCard({
               : <><HiSparkles className="w-3.5 h-3.5" /> Use this suggestion</>}
           </button>
           {onImage && imagePrompt && !imageUrl && !applying && (
-            <span className="text-[10px] text-zinc-400 dark:text-zinc-500">Generates the photo too</span>
+            <span className="text-[10px] text-zinc-500">Generates the photo too</span>
           )}
         </div>
       </div>

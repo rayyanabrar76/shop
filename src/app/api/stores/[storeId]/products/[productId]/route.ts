@@ -62,7 +62,10 @@ export async function PATCH(
     })
     if (!store) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    const { title, description, price, inventory, status, category, sku, tags, imageUrl, images, variants } = await req.json()
+    const {
+      title, description, price, inventory, status, category, sku, tags,
+      imageUrl, images, variants, seoTitle, seoDescription, imageAlt,
+    } = await req.json()
 
     // Renaming a product re-derives its handle, so the URL keeps matching the
     // title. Old links still resolve because lookups also accept the id.
@@ -82,15 +85,28 @@ export async function PATCH(
         ...(sku !== undefined && { sku }),
         ...(tags !== undefined && { tags: normalizeTags(tags) }),
         ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),
+        // Blank means "fall back to the title/description", so an empty
+        // string is stored as null rather than as an empty override.
+        ...(seoTitle !== undefined && { seoTitle: seoTitle?.trim() || null }),
+        ...(seoDescription !== undefined && { seoDescription: seoDescription?.trim() || null }),
+        ...(imageAlt !== undefined && { imageAlt: imageAlt?.trim() || null }),
       },
     })
 
     if (Array.isArray(images)) {
       await prisma.productImage.deleteMany({ where: { productId } })
       if (images.length > 0) {
-        await prisma.productImage.createMany({
-          data: images.map((url: string, i: number) => ({ productId, url, position: i })),
-        })
+        // Images used to arrive as bare URL strings and now arrive as
+        // { url, alt }. Both shapes are accepted so an older client, or a
+        // tab left open across a deploy, does not wipe the gallery.
+        const rows = images
+          .map((img: string | { url?: string; alt?: string }, i: number) =>
+            typeof img === 'string'
+              ? { productId, url: img, alt: null, position: i }
+              : { productId, url: img.url ?? '', alt: img.alt?.trim() || null, position: i },
+          )
+          .filter(r => r.url)
+        if (rows.length > 0) await prisma.productImage.createMany({ data: rows })
       }
     }
 

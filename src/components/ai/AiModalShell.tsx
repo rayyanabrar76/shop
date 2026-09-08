@@ -42,14 +42,14 @@ export default function AiModalShell({
       onMouseDown={e => { e.stopPropagation(); if (e.target === e.currentTarget) onClose() }}
       onClick={e => e.stopPropagation()}
     >
-      <div className="w-full max-w-2xl max-h-[88vh] flex flex-col bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-2xl overflow-hidden">
-        <div className="flex items-start gap-3 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800">
+      <div className="w-full max-w-2xl max-h-[88vh] flex flex-col bg-white dark:bg-zinc-900 rounded-2xl border border-(--admin-border) shadow-2xl overflow-hidden">
+        <div className="flex items-start gap-3 px-6 py-5 border-b border-(--admin-edge)">
           <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-black flex items-center justify-center shrink-0">
             {icon}
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">{title}</h2>
-            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">{subtitle}</p>
+            <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>
           </div>
           <button
             onClick={onClose}
@@ -63,7 +63,7 @@ export default function AiModalShell({
         <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
 
         {footer && (
-          <div className="px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 flex items-center justify-end gap-2">
+          <div className="px-6 py-4 border-t border-(--admin-edge) bg-zinc-50/70 dark:bg-zinc-900/60 flex items-center justify-end gap-2">
             {footer}
           </div>
         )}

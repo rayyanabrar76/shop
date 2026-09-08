@@ -12,9 +12,15 @@ export type AiFieldKind =
  *
  * It renders only the label row, so it drops into the editor panels without
  * changing how any of them handle their own value. The button is hidden until
- * hover — a sparkle on every field at rest would be noise in a panel this
- * dense — but the hover target has to be the whole field, so the element
+ * hover, because a sparkle on every field at rest would be noise in a panel
+ * this dense, but the hover target has to be the whole field, so the element
  * wrapping the label AND the input must carry `group/ai`. Every call site does.
+ *
+ * On a touch screen there is no hover to reveal it with, so the button sits
+ * there permanently instead, as a sparkle alone with a finger-sized target.
+ * That is keyed to the pointer rather than the screen width: hiding it by
+ * breakpoint would still lose it on a touchscreen laptop, and would pin it
+ * open on a desktop window dragged narrow.
  */
 export default function AiFieldLabel({
   label,
@@ -66,7 +72,7 @@ export default function AiFieldLabel({
 
   return (
     <div className={`flex items-center justify-between gap-2 mb-1.5 ${className}`}>
-      <label className={labelClassName || 'text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500'}>
+      <label className={labelClassName || 'text-[10.5px] font-semibold uppercase tracking-[0.08em] text-zinc-600 dark:text-zinc-400'}>
         {label}
       </label>
       <div className="flex items-center gap-2 min-w-0">
@@ -77,11 +83,17 @@ export default function AiFieldLabel({
           onClick={run}
           disabled={loading}
           title="Write this with AI"
-          className="flex items-center gap-1 px-1.5 py-1 rounded-md text-[10px] font-bold text-zinc-400 dark:text-zinc-500 opacity-0 group-hover/ai:opacity-100 focus:opacity-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-800 dark:hover:text-zinc-100 transition-all disabled:opacity-100 disabled:text-zinc-400 shrink-0"
+          // The words are the button's only name on a wide screen, and they
+          // are dropped on a narrow one, so it carries its own.
+          aria-label={loading ? 'Writing with AI' : 'Write with AI'}
+          className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-md text-[10px] font-bold text-zinc-500 opacity-0 group-hover/ai:opacity-100 focus:opacity-100 touch:opacity-100 touch:min-h-9 touch:min-w-9 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-800 dark:hover:text-zinc-100 transition-all disabled:opacity-100 disabled:text-zinc-400 shrink-0"
         >
+          {/* The label row is already a long uppercase title against an
+              optional extra control, so on a phone the words go and the
+              sparkle stands on its own. */}
           {loading
-            ? <><HiArrowPath className="w-3 h-3 animate-spin" /> Writing</>
-            : <><HiSparkles className="w-3 h-3" /> Write with AI</>}
+            ? <><HiArrowPath className="w-3 h-3 touch:w-4 touch:h-4 animate-spin" /> <span className="hidden sm:inline">Writing</span></>
+            : <><HiSparkles className="w-3 h-3 touch:w-4 touch:h-4" /> <span className="hidden sm:inline">Write with AI</span></>}
         </button>
       </div>
     </div>

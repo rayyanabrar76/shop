@@ -25,7 +25,7 @@ const TONES = [
 ]
 
 const inputCls =
-  'w-full rounded-xl border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-sm outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-colors bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-300 dark:placeholder:text-zinc-600'
+  'w-full rounded-xl border border-(--admin-field-border) px-3 py-2.5 text-sm outline-none focus:border-(--admin-field-border-focus) transition-colors bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-300 dark:placeholder:text-zinc-600'
 
 /**
  * Names a category, describes it, and picks which products go in it.
@@ -173,7 +173,7 @@ export default function AiCategoryModal({
               <button
                 onClick={run}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-(--admin-border) text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
               >
                 <HiArrowPath className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
                 Try again
@@ -242,7 +242,7 @@ export default function AiCategoryModal({
         </SuggestionCard>
 
         <div>
-          <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1.5 block">
+          <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5 block">
             Or describe your own
           </label>
           <textarea
@@ -254,13 +254,13 @@ export default function AiCategoryModal({
             placeholder="e.g. everything chocolate, for people who want the richest thing on the menu"
             className={`${inputCls} resize-none`}
           />
-          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1.5">
+          <p className="text-[10px] text-zinc-500 mt-1.5">
             It reads your product titles and suggests which ones belong.
           </p>
         </div>
 
         <div>
-          <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1.5 block">
+          <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5 block">
             Tone
           </label>
           <div className="flex flex-wrap gap-1.5">
@@ -271,7 +271,7 @@ export default function AiCategoryModal({
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
                   tone === t.value
                     ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                    : 'bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
+                    : 'bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-(--admin-border) hover:border-(--admin-field-border)'
                 }`}
               >
                 {t.label}
@@ -288,8 +288,8 @@ export default function AiCategoryModal({
 
         {result && (
           <div className="space-y-3 pt-1">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-              Draft — untick anything you want to keep as it is
+            <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+              Draft, untick anything you want to keep as it is
             </p>
 
             <Section label="Title" checked={pick.title} onToggle={() => setPick(p => ({ ...p, title: !p.title }))}>
@@ -310,8 +310,8 @@ export default function AiCategoryModal({
               onToggle={() => setPick(p => ({ ...p, products: !p.products }))}
             >
               {suggested.length === 0 ? (
-                <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                  Nothing in your catalogue clearly fits — pick products yourself after applying.
+                <p className="text-xs text-zinc-500">
+                  Nothing in your catalogue clearly fits. Pick products yourself after applying.
                 </p>
               ) : (
                 <div className="flex flex-wrap gap-2">
@@ -355,8 +355,8 @@ function Section({
     <div
       className={`rounded-xl border p-3.5 transition-colors ${
         checked
-          ? 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50'
-          : 'border-zinc-100 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900 opacity-50'
+          ? 'border-(--admin-border) bg-white dark:bg-zinc-800/50'
+          : 'border-(--admin-edge) bg-zinc-50/60 dark:bg-zinc-900 opacity-50'
       }`}
     >
       <button onClick={onToggle} className="flex items-center gap-2 mb-2 group">
@@ -364,12 +364,12 @@ function Section({
           className={`w-4 h-4 rounded-[5px] border flex items-center justify-center transition-colors ${
             checked
               ? 'bg-black dark:bg-white border-black dark:border-white'
-              : 'border-zinc-300 dark:border-zinc-600 group-hover:border-zinc-400'
+              : 'border-(--admin-field-border) group-hover:border-(--admin-field-border-hover)'
           }`}
         >
           {checked && <HiCheck className="w-3 h-3 text-white dark:text-black" />}
         </span>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
           {label}
         </span>
       </button>

@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import PageHeader from '@/components/dashboard/PageHeader'
 import {
   HiPlus, HiTag, HiPencil, HiTrash, HiX,
-  HiExclamation, HiArrowLeft, HiChevronDown, HiPhotograph, HiEye,
+  HiExclamation, HiChevronDown, HiPhotograph, HiEye,
 } from 'react-icons/hi'
 import ProductPickerModal from '@/components/ProductPickerModal'
 import { formatPrice } from '@/lib/currency'
@@ -115,53 +116,54 @@ export default function CategoriesClient({
   const uncategorised = allProducts.length - totalAssigned
 
   return (
-    <div className="p-5 pt-16 md:p-10 md:pt-10 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Link href={`/dashboard/stores/${storeId}`} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200">
-            <HiArrowLeft className="w-4 h-4" />
+    <>
+      <PageHeader
+        storeId={storeId}
+        maxWidth="max-w-5xl"
+        icon={<HiTag className="w-5 h-5" />}
+        title="Categories"
+        count={categories.length}
+        action={
+          <Link
+            href={`/dashboard/stores/${storeId}/categories/new`}
+            className="flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-50 px-3 text-[11.5px] font-semibold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white transition-colors"
+          >
+            <HiPlus className="w-3.5 h-3.5" /> New category
           </Link>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Categories</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Organise your products into groups.</p>
-          </div>
-        </div>
-        <Link href={`/dashboard/stores/${storeId}/categories/new`} className="flex items-center gap-2 rounded-xl bg-black dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-all shadow-sm">
-          <HiPlus className="w-4 h-4" /> New Category
-        </Link>
-      </div>
+        }
+      />
 
-      {/* At-a-glance counts */}
+    <div className="max-w-5xl mx-auto px-6 pb-10">
+      {/* At-a-glance counts. The dividers between them went: three numbers do
+          not need fencing off from each other, and the rules were the same
+          hairlines being cleared out everywhere else. */}
       {categories.length > 0 && (
-        <div className="flex items-center gap-5 mb-5 text-xs">
-          <span className="text-zinc-500 dark:text-zinc-400">
-            <span className="font-bold text-zinc-900 dark:text-zinc-50">{categories.length}</span> categor{categories.length !== 1 ? 'ies' : 'y'}
-          </span>
-          <span className="w-px h-3 bg-zinc-200 dark:bg-zinc-700" />
-          <span className="text-zinc-500 dark:text-zinc-400">
-            <span className="font-bold text-zinc-900 dark:text-zinc-50">{totalAssigned}</span> of {allProducts.length} products filed
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 text-[11px] text-zinc-500">
+          <span>
+            <span className="font-semibold text-zinc-700 dark:text-zinc-200">{totalAssigned}</span> of {allProducts.length} products filed
           </span>
           {uncategorised > 0 && (
-            <>
-              <span className="w-px h-3 bg-zinc-200 dark:bg-zinc-700" />
-              <span className="text-amber-600 dark:text-amber-400 font-medium">{uncategorised} uncategorised</span>
-            </>
+            <span className="text-amber-600 dark:text-amber-400 font-medium">{uncategorised} uncategorised</span>
           )}
         </div>
       )}
 
       {categories.length === 0 ? (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl py-20 flex flex-col items-center justify-center text-center">
-          <div className="w-12 h-12 bg-zinc-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4">
-            <HiTag className="w-6 h-6 text-zinc-300 dark:text-zinc-600" />
+        <div className="bg-(--admin-card) border border-(--admin-border) rounded-2xl py-16 flex flex-col items-center justify-center text-center">
+          <div className="w-11 h-11 bg-zinc-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-3">
+            <HiTag className="w-5 h-5 text-zinc-300 dark:text-zinc-600" />
           </div>
-          <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">No categories yet</p>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Create your first category to organise products.</p>
-          <Link href={`/dashboard/stores/${storeId}/categories/new`} className="mt-4 text-xs font-bold text-black dark:text-white underline">Create a category</Link>
+          <p className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-50">No categories yet</p>
+          <p className="text-[11px] text-zinc-500 mt-1">Groups make a catalogue browsable.</p>
+          <Link
+            href={`/dashboard/stores/${storeId}/categories/new`}
+            className="mt-4 flex h-8 items-center gap-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-50 px-3 text-[11px] font-semibold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white transition-colors"
+          >
+            <HiPlus className="w-3 h-3" /> Create a category
+          </Link>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {categories.map(cat => {
             const isOpen = expanded === cat.id
             // Same fallback the storefront tile uses, so this matches what a
@@ -171,15 +173,15 @@ export default function CategoriesClient({
             return (
               <div
                 key={cat.id}
-                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl overflow-hidden shadow-sm hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
+                className="bg-(--admin-card) border border-(--admin-border) rounded-2xl overflow-hidden hover:border-(--admin-field-border) transition-colors"
               >
-                <div className="flex items-center gap-4 p-4">
-                  {/* Cover — clicking it opens the form, which is where the
+                <div className="flex items-center gap-3 p-3">
+                  {/* Cover, clicking it opens the form, which is where the
                       image is changed. */}
                   <Link
                     href={`/dashboard/stores/${storeId}/categories/${cat.id}`}
                     title="Change cover image"
-                    className="relative w-14 h-14 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 flex items-center justify-center group/cover"
+                    className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 flex items-center justify-center group/cover ring-1 ring-zinc-200/70 dark:ring-zinc-700/70"
                   >
                     {cover ? (
                       <img src={cover} alt="" className="w-full h-full object-cover" />
@@ -194,17 +196,18 @@ export default function CategoriesClient({
                   {/* Name + meta */}
                   <Link href={`/dashboard/stores/${storeId}/categories/${cat.id}`} className="flex-1 min-w-0 group/name">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50 truncate group-hover/name:underline">{cat.name}</h3>
+                      <h3 className="text-[13px] font-medium text-zinc-900 dark:text-zinc-50 truncate group-hover/name:underline">{cat.name}</h3>
                       {!cat.visible && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 shrink-0">
+                        <span className="inline-flex items-center gap-1 pl-1.5 pr-2 h-[20px] rounded-full text-[10.5px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 shrink-0">
+                          <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
                           Hidden
                         </span>
                       )}
                     </div>
                     {cat.description ? (
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">{cat.description}</p>
+                      <p className="text-[11px] text-zinc-500 truncate mt-0.5">{cat.description}</p>
                     ) : (
-                      <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 mt-0.5">/products?category={cat.slug}</p>
+                      <p className="text-[10.5px] font-mono text-zinc-500 mt-0.5">/products?category={cat.slug}</p>
                     )}
                   </Link>
 
@@ -219,7 +222,7 @@ export default function CategoriesClient({
                         {cat.products.slice(0, 4).map(p => (
                           <div
                             key={p.id}
-                            className="w-8 h-8 rounded-lg overflow-hidden border-2 border-white dark:border-zinc-900 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center"
+                            className="w-8 h-8 rounded-lg overflow-hidden border-2 border-(--admin-card) bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center"
                           >
                             {p.imageUrl
                               ? <img src={p.imageUrl} alt="" className="w-full h-full object-cover" />
@@ -227,15 +230,15 @@ export default function CategoriesClient({
                           </div>
                         ))}
                         {cat.products.length > 4 && (
-                          <div className="w-8 h-8 rounded-lg border-2 border-white dark:border-zinc-900 bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-lg border-2 border-(--admin-card) bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center">
                             <span className="text-[9px] font-bold text-white dark:text-zinc-900">+{cat.products.length - 4}</span>
                           </div>
                         )}
                       </div>
                     ) : (
-                      <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">Empty</span>
+                      <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Empty</span>
                     )}
-                    <span className="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums w-16 text-left">
+                    <span className="text-[11px] text-zinc-500 tabular-nums w-14 text-left">
                       {cat._count.products} item{cat._count.products !== 1 ? 's' : ''}
                     </span>
                     {cat.products.length > 0 && (
@@ -250,11 +253,11 @@ export default function CategoriesClient({
                       className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none mr-1 ${cat.visible ? 'bg-black dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700'}`}
                       title={cat.visible ? 'Hide from store' : 'Show in store'}
                     >
-                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white dark:bg-zinc-900 shadow transition-transform ${cat.visible ? 'translate-x-4' : 'translate-x-1'}`} />
+                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-(--admin-card) shadow transition-transform ${cat.visible ? 'translate-x-4' : 'translate-x-1'}`} />
                     </button>
                     <button
                       onClick={() => setPicking(cat)}
-                      className="px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                      className="h-7 px-2.5 rounded-lg border border-(--admin-border) text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-(--admin-field-border) transition-colors"
                       title="Choose which products are in this category"
                     >
                       Products
@@ -263,21 +266,21 @@ export default function CategoriesClient({
                       href={storeUrl(subdomain, `/categories/${cat.slug}`)}
                       target="_blank"
                       rel="noreferrer"
-                      className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200"
+                      className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200"
                       title="View on storefront"
                     >
                       <HiEye className="w-3.5 h-3.5" />
                     </a>
                     <Link
                       href={`/dashboard/stores/${storeId}/categories/${cat.id}`}
-                      className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200"
+                      className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200"
                       title="Edit name, image and description"
                     >
                       <HiPencil className="w-3.5 h-3.5" />
                     </Link>
                     <button
                       onClick={() => { setDeleteTarget(cat); setDeleteError('') }}
-                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors text-zinc-400 dark:text-zinc-500 hover:text-red-500"
+                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors text-zinc-500 hover:text-red-500"
                       title="Delete"
                     >
                       <HiTrash className="w-3.5 h-3.5" />
@@ -287,13 +290,13 @@ export default function CategoriesClient({
 
                 {/* Products in this category */}
                 {isOpen && cat.products.length > 0 && (
-                  <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/40 p-4">
+                  <div className="border-t border-(--admin-edge) bg-zinc-50/60 dark:bg-zinc-950/40 p-4">
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
                       {cat.products.map(p => (
                         <Link
                           key={p.id}
                           href={`/dashboard/stores/${storeId}/products/${p.id}`}
-                          className="flex items-center gap-2.5 p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors min-w-0 group/p"
+                          className="flex items-center gap-2.5 p-2 rounded-xl bg-(--admin-card) border border-(--admin-border) hover:border-(--admin-field-border) transition-colors min-w-0 group/p"
                         >
                           <div className="w-9 h-9 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 flex items-center justify-center">
                             {p.imageUrl
@@ -302,7 +305,7 @@ export default function CategoriesClient({
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-100 truncate group-hover/p:underline">{p.title}</p>
-                            <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                            <p className="text-[10px] text-zinc-500">
                               {formatPrice(p.price, currency)}
                               {p.status !== 'active' && <span className="ml-1.5 text-amber-600 dark:text-amber-400">Draft</span>}
                             </p>
@@ -332,8 +335,8 @@ export default function CategoriesClient({
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm" onClick={() => !deleting && setDeleteTarget(null)} />
-          <div className="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 w-full max-w-sm p-6 space-y-4">
-            <button onClick={() => setDeleteTarget(null)} disabled={deleting} className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-400 dark:text-zinc-500"><HiX className="w-4 h-4" /></button>
+          <div className="relative bg-(--admin-card) rounded-2xl shadow-2xl border border-(--admin-border) w-full max-w-sm p-6 space-y-4">
+            <button onClick={() => setDeleteTarget(null)} disabled={deleting} className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500"><HiX className="w-4 h-4" /></button>
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/40 flex items-center justify-center shrink-0"><HiExclamation className="w-5 h-5 text-red-500" /></div>
               <div>
@@ -349,7 +352,7 @@ export default function CategoriesClient({
               <button onClick={handleDelete} disabled={deleting} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors disabled:opacity-50">
                 <HiTrash className="w-4 h-4" />{deleting ? 'Deleting...' : 'Delete'}
               </button>
-              <button onClick={() => setDeleteTarget(null)} disabled={deleting} className="flex-1 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50">
+              <button onClick={() => setDeleteTarget(null)} disabled={deleting} className="flex-1 py-2.5 rounded-xl border border-(--admin-border) text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50">
                 Cancel
               </button>
             </div>
@@ -357,5 +360,6 @@ export default function CategoriesClient({
         </div>
       )}
     </div>
+    </>
   )
 }

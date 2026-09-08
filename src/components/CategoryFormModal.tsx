@@ -41,9 +41,9 @@ export default function CategoryFormModal({
   useModalEscape(() => { if (!f.saving) onClose() })
 
   const fieldCls =
-    'w-full rounded-xl border border-zinc-200 dark:border-zinc-700 px-3.5 py-2.5 text-sm outline-none transition-shadow focus:border-zinc-400 dark:focus:border-zinc-500 focus:ring-4 focus:ring-black/5 dark:focus:ring-white/5 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-300 dark:placeholder:text-zinc-600'
+    'w-full rounded-xl border border-(--admin-field-border) px-3.5 py-2.5 text-sm outline-none transition-shadow focus:border-(--admin-field-border-focus) focus:ring-4 focus:ring-black/5 dark:focus:ring-white/5 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-300 dark:placeholder:text-zinc-600'
   const labelCls =
-    'text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500 mb-2 block'
+    'text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-500 mb-2 block'
 
   return (
     <div
@@ -51,11 +51,11 @@ export default function CategoryFormModal({
       onMouseDown={e => { if (e.target === e.currentTarget && !f.saving) onClose() }}
     >
       <div
-        className="w-full max-w-4xl max-h-[88vh] flex flex-col rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.45)] animate-in zoom-in-95 duration-200 overflow-hidden"
+        className="w-full max-w-4xl max-h-[88vh] flex flex-col rounded-2xl bg-white dark:bg-zinc-900 border border-(--admin-border) shadow-[0_32px_80px_-20px_rgba(0,0,0,0.45)] animate-in zoom-in-95 duration-200 overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-(--admin-edge)">
           <div className="flex items-center gap-3 min-w-0">
             <span className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center shrink-0">
               <Tag className="w-4 h-4 text-white dark:text-zinc-900" />
@@ -64,7 +64,7 @@ export default function CategoryFormModal({
               <h3 className="text-[15px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
                 {f.isEdit ? 'Edit category' : 'New category'}
               </h3>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
+              <p className="text-xs text-zinc-500 mt-0.5">
                 Group products so customers can browse them together.
               </p>
             </div>
@@ -80,7 +80,7 @@ export default function CategoryFormModal({
           </div>
         </div>
 
-        {/* Body — single column now that products live in their own picker,
+        {/* Body, single column now that products live in their own picker,
             which is what was squeezing this layout. */}
         <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="p-6 space-y-5">
@@ -90,7 +90,7 @@ export default function CategoryFormModal({
                 <button
                   type="button"
                   onClick={() => setImageAiOpen(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-(--admin-border) text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-(--admin-field-border) transition-colors"
                 >
                   <HiPhoto className="w-3.5 h-3.5" /> Generate with AI
                 </button>
@@ -103,7 +103,7 @@ export default function CategoryFormModal({
                     <img
                       src={f.imageUrl}
                       alt=""
-                      className="w-full aspect-4/3 rounded-xl object-cover border border-zinc-200 dark:border-zinc-700"
+                      className="w-full aspect-4/3 rounded-xl object-cover border border-(--admin-border)"
                     />
                     <button
                       onClick={() => f.setImageUrl('')}
@@ -155,7 +155,7 @@ export default function CategoryFormModal({
                 value={f.description}
                 onChange={e => f.setDescription(e.target.value)}
                 rows={3}
-                placeholder="Optional — a short line about this group"
+                placeholder="Optional, a short line about this group"
                 className={`${fieldCls} resize-none leading-relaxed`}
               />
             </div>
@@ -166,22 +166,22 @@ export default function CategoryFormModal({
                 <button
                   type="button"
                   onClick={() => setPicking(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-(--admin-border) text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
                 >
                   <Plus className="w-3 h-3" /> Add products
                 </button>
               </div>
 
               {f.productIds.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700 px-4 py-8 text-center">
-                  <p className="text-xs text-zinc-400">No products yet — add some, or set a product&apos;s category from its own page.</p>
+                <div className="rounded-xl border border-dashed border-(--admin-border) px-4 py-8 text-center">
+                  <p className="text-xs text-zinc-400">No products yet. Add some, or set a product&apos;s category from its own page.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
                   {f.products.filter(p => f.productIds.includes(p.id)).map(p => (
                     <div key={p.id} className="relative group min-w-0">
                       {p.imageUrl ? (
-                        <img src={p.imageUrl} alt="" className="w-full aspect-square rounded-xl object-cover border border-zinc-100 dark:border-zinc-700" />
+                        <img src={p.imageUrl} alt="" className="w-full aspect-square rounded-xl object-cover border border-(--admin-edge)" />
                       ) : (
                         <div className="w-full aspect-square rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
                           <ImageIcon className="w-4 h-4 text-zinc-300 dark:text-zinc-600" />
@@ -206,13 +206,13 @@ export default function CategoryFormModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-4 px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900">
+        <div className="flex items-center justify-between gap-4 px-6 py-4 border-t border-(--admin-edge) bg-zinc-50/60 dark:bg-zinc-900">
           <p className="text-[11px] text-red-500 font-medium min-h-4 truncate">{f.error}</p>
           <div className="flex gap-2 shrink-0">
             <button
               onClick={onClose}
               disabled={f.saving}
-              className="px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+              className="px-4 py-2.5 rounded-xl border border-(--admin-border) text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>

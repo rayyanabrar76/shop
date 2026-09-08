@@ -19,7 +19,9 @@ export async function GET(
     // slug included because the storefront addresses products by it; without
     // it the link picker silently falls back to ids and builds a URL that does
     // not match the one the product cards link to.
-    select: { id: true, title: true, imageUrl: true, status: true, category: true, slug: true },
+    // price + inventory feed the admin search's product rows ("15 available
+    // · Rs 120"), so a match can be recognised without opening it.
+    select: { id: true, title: true, imageUrl: true, status: true, category: true, slug: true, price: true, inventory: true },
     orderBy: { createdAt: 'desc' },
   })
   return NextResponse.json(products)
@@ -43,6 +45,10 @@ export async function POST(
     sku,
     status,
     tags,
+    images,
+    imageAlt,
+    seoTitle,
+    seoDescription,
   } = await req.json()
 
   if (!title || !price) {
@@ -73,8 +79,23 @@ export async function POST(
       sku: sku ?? null,
       status: status ?? 'active',
       tags: normalizeTags(tags),
+      imageAlt: imageAlt?.trim() || null,
+      seoTitle: seoTitle?.trim() || null,
+      seoDescription: seoDescription?.trim() || null,
     },
   })
+
+  // Gallery shots, same { url, alt } shape the update route takes.
+  if (Array.isArray(images) && images.length > 0) {
+    const rows = images
+      .map((img: string | { url?: string; alt?: string }, i: number) =>
+        typeof img === 'string'
+          ? { productId: product.id, url: img, alt: null, position: i }
+          : { productId: product.id, url: img.url ?? '', alt: img.alt?.trim() || null, position: i },
+      )
+      .filter(r => r.url)
+    if (rows.length > 0) await prisma.productImage.createMany({ data: rows })
+  }
 
   return NextResponse.json({ ...product, subdomain: store.subdomain })
 }
