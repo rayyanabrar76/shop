@@ -2,7 +2,7 @@ import { Sk } from '@/components/ui/Skeleton'
 
 export default function DiscountsLoading() {
   return (
-    <div className="px-6 pt-8 pb-10 max-w-5xl mx-auto">
+    <div className="px-6 pt-8 pb-10 max-w-3xl">
       <div className="space-y-2 mb-8">
         <Sk className="h-7 w-40" />
         <Sk className="h-4 w-60" />

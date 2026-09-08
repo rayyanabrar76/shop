@@ -217,7 +217,7 @@ export default function ProductCreateForm({
 
   return (
     <div className={embedded ? '' : 'min-h-full bg-(--admin-page)'}>
-      <div className={embedded ? 'p-5' : 'max-w-5xl mx-auto px-6 pt-6 pb-10'}>
+      <div className={embedded ? 'p-5' : 'max-w-5xl px-6 pt-6 pb-10'}>
 
         {/* Header, the modal supplies its own title, so only actions there */}
         <div className={`flex items-center justify-between ${embedded ? 'mb-4' : 'mb-5'}`}>

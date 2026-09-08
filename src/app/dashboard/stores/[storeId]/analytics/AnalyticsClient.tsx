@@ -79,7 +79,7 @@ export default function AnalyticsClient({ store, stats, revenueChart, customerCh
         meta="Last 30 days"
       />
 
-      <div className="max-w-6xl mx-auto px-6 pb-10 space-y-6">
+      <div className="max-w-6xl px-6 pb-10 space-y-6">
         {/* Stat cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {statCards.map(card => (

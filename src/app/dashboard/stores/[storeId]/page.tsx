@@ -37,7 +37,7 @@ export default async function StoreDashboardPage({
   const showOnboarding = remaining > 0 && store._count.orders === 0
 
   return (
-    <div className="p-4 pt-5 md:p-10 max-w-7xl mx-auto">
+    <div className="p-4 pt-5 md:p-10 max-w-7xl">
       <div className="flex items-start justify-between gap-3 mb-6 md:mb-8">
         <div className="min-w-0">
           <h1 className="text-xl md:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 truncate">{store.name}</h1>

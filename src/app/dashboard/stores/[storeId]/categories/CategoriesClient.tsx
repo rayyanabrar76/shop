@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import PageHeader from '@/components/dashboard/PageHeader'
+import TableSearch from '@/components/dashboard/TableSearch'
 import {
   HiPlus, HiTag, HiPencil, HiTrash, HiX,
   HiExclamation, HiChevronDown, HiPhotograph, HiEye,
@@ -48,6 +49,8 @@ export default function CategoriesClient({
   subdomain: string
 }) {
   const router = useRouter()
+  const [query, setQuery] = useState('')
+  const [visibility, setVisibility] = useState('')
   const [categories, setCategories] = useState<Category[]>(initial)
   const [expanded, setExpanded] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null)
@@ -115,11 +118,26 @@ export default function CategoriesClient({
   const totalAssigned = new Set(categories.flatMap(c => c.products.map(p => p.id))).size
   const uncategorised = allProducts.length - totalAssigned
 
+
+  // Name, description, and the slug that shows up in the storefront URL, so
+  // a category can be found by what it is called or by how it is addressed.
+  const shown = (() => {
+    const q = query.trim().toLowerCase()
+    return categories.filter(c => {
+      if (visibility === 'visible' && !c.visible) return false
+      if (visibility === 'hidden' && c.visible) return false
+      if (!q) return true
+      return c.name.toLowerCase().includes(q) ||
+        (c.description ?? '').toLowerCase().includes(q) ||
+        c.slug.toLowerCase().includes(q)
+    })
+  })()
+
   return (
     <>
       <PageHeader
         storeId={storeId}
-        maxWidth="max-w-5xl"
+        maxWidth="max-w-7xl"
         icon={<HiTag className="w-5 h-5" />}
         title="Categories"
         count={categories.length}
@@ -133,19 +151,15 @@ export default function CategoriesClient({
         }
       />
 
-    <div className="max-w-5xl mx-auto px-6 pb-10">
-      {/* At-a-glance counts. The dividers between them went: three numbers do
-          not need fencing off from each other, and the rules were the same
-          hairlines being cleared out everywhere else. */}
-      {categories.length > 0 && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 text-[11px] text-zinc-500">
-          <span>
-            <span className="font-semibold text-zinc-700 dark:text-zinc-200">{totalAssigned}</span> of {allProducts.length} products filed
-          </span>
-          {uncategorised > 0 && (
-            <span className="text-amber-600 dark:text-amber-400 font-medium">{uncategorised} uncategorised</span>
-          )}
-        </div>
+    <div className="max-w-7xl px-6 pb-10">
+      {/* Only when something is wrong. "8 of 8 products filed" is a line
+          that says nothing on the day it is true, and the day it is not true
+          the number that matters is the one left over. So the count of filed
+          products goes and only the shortfall stays. */}
+      {uncategorised > 0 && (
+        <p className="mb-4 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+          {uncategorised} product{uncategorised === 1 ? '' : 's'} not in any category
+        </p>
       )}
 
       {categories.length === 0 ? (
@@ -163,161 +177,218 @@ export default function CategoriesClient({
           </Link>
         </div>
       ) : (
-        <div className="space-y-2">
-          {categories.map(cat => {
-            const isOpen = expanded === cat.id
-            // Same fallback the storefront tile uses, so this matches what a
-            // shopper sees rather than showing an empty square.
-            const cover = cat.imageUrl || cat.products.find(p => p.imageUrl)?.imageUrl || null
+        /* One rounded card holding the list, the same shape Products uses,
+           so the two pages read as the same kind of thing. */
+        <div className="bg-(--admin-card) border border-(--admin-border) rounded-2xl overflow-hidden">
+          <TableSearch
+            value={query}
+            onChange={setQuery}
+            placeholder="Search categories"
+            matches={shown.length}
+            total={categories.length}
+            filter={{
+              value: visibility,
+              onChange: setVisibility,
+              options: [
+                { value: 'visible', label: 'Visible' },
+                { value: 'hidden', label: 'Hidden' },
+              ],
+            }}
+          />
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-(--admin-edge)">
+                  <th className="px-5 py-3 text-[11px] font-semibold text-zinc-500">Category</th>
+                  <th className="px-5 py-3 text-[11px] font-semibold text-zinc-500">Products</th>
+                  <th className="px-5 py-3 text-[11px] font-semibold text-zinc-500">Visible</th>
+                  <th className="px-5 py-3 text-right text-[11px] font-semibold text-zinc-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-(--admin-edge)">
+                {shown.map(cat => {
+                  const isOpen = expanded === cat.id
+                  // Same fallback the storefront tile uses, so this matches
+                  // what a shopper sees rather than showing an empty square.
+                  const cover = cat.imageUrl || cat.products.find(p => p.imageUrl)?.imageUrl || null
 
-            return (
-              <div
-                key={cat.id}
-                className="bg-(--admin-card) border border-(--admin-border) rounded-2xl overflow-hidden hover:border-(--admin-field-border) transition-colors"
-              >
-                <div className="flex items-center gap-3 p-3">
-                  {/* Cover, clicking it opens the form, which is where the
-                      image is changed. */}
-                  <Link
-                    href={`/dashboard/stores/${storeId}/categories/${cat.id}`}
-                    title="Change cover image"
-                    className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 flex items-center justify-center group/cover ring-1 ring-zinc-200/70 dark:ring-zinc-700/70"
-                  >
-                    {cover ? (
-                      <img src={cover} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <HiTag className="w-5 h-5 text-zinc-300 dark:text-zinc-600" />
-                    )}
-                    <span className="absolute inset-0 bg-black/55 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity">
-                      <HiPhotograph className="w-4 h-4 text-white" />
-                    </span>
-                  </Link>
+                  return (
+                    <Fragment key={cat.id}>
+                      <tr
+                        onClick={e => {
+                          const el = e.target as HTMLElement
+                          if (el.closest('a, button, [role="menu"]')) return
+                          if (window.getSelection()?.toString()) return
+                          router.push(`/dashboard/stores/${storeId}/categories/${cat.id}`)
+                        }}
+                        className="group cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors"
+                      >
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-zinc-200/70 dark:ring-zinc-700/70">
+                              {cover
+                                ? <img src={cover} alt="" className="w-full h-full object-cover" />
+                                : <HiTag className="w-4 h-4 text-zinc-500" />}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <Link
+                                  href={`/dashboard/stores/${storeId}/categories/${cat.id}`}
+                                  className="text-[13px] font-medium text-zinc-900 dark:text-zinc-50 hover:underline block truncate"
+                                >
+                                  {cat.name}
+                                </Link>
+                                {!cat.visible && (
+                                  <span className="inline-flex shrink-0 items-center gap-1 pl-1.5 pr-2 h-5 rounded-full text-[10.5px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+                                    Hidden
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-zinc-500 truncate">
+                                {cat.description || `/products?category=${cat.slug}`}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
 
-                  {/* Name + meta */}
-                  <Link href={`/dashboard/stores/${storeId}/categories/${cat.id}`} className="flex-1 min-w-0 group/name">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-[13px] font-medium text-zinc-900 dark:text-zinc-50 truncate group-hover/name:underline">{cat.name}</h3>
-                      {!cat.visible && (
-                        <span className="inline-flex items-center gap-1 pl-1.5 pr-2 h-[20px] rounded-full text-[10.5px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 shrink-0">
-                          <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
-                          Hidden
-                        </span>
-                      )}
-                    </div>
-                    {cat.description ? (
-                      <p className="text-[11px] text-zinc-500 truncate mt-0.5">{cat.description}</p>
-                    ) : (
-                      <p className="text-[10.5px] font-mono text-zinc-500 mt-0.5">/products?category={cat.slug}</p>
-                    )}
-                  </Link>
-
-                  {/* Product thumbnails */}
-                  <button
-                    onClick={() => setExpanded(isOpen ? null : cat.id)}
-                    className="flex items-center gap-2 shrink-0"
-                    title={cat._count.products > 0 ? 'Show products' : undefined}
-                  >
-                    {cat.products.length > 0 ? (
-                      <div className="flex -space-x-2">
-                        {cat.products.slice(0, 4).map(p => (
-                          <div
-                            key={p.id}
-                            className="w-8 h-8 rounded-lg overflow-hidden border-2 border-(--admin-card) bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center"
+                        <td className="px-5 py-3">
+                          {/* The thumbnails are the control that opens the
+                              drawer, so the count and the faces of what is
+                              inside are one target rather than two. */}
+                          <button
+                            onClick={() => setExpanded(isOpen ? null : cat.id)}
+                            className="flex items-center gap-2"
+                            title={cat._count.products > 0 ? 'Show products' : undefined}
                           >
-                            {p.imageUrl
-                              ? <img src={p.imageUrl} alt="" className="w-full h-full object-cover" />
-                              : <HiPhotograph className="w-3 h-3 text-zinc-300 dark:text-zinc-600" />}
-                          </div>
-                        ))}
-                        {cat.products.length > 4 && (
-                          <div className="w-8 h-8 rounded-lg border-2 border-(--admin-card) bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center">
-                            <span className="text-[9px] font-bold text-white dark:text-zinc-900">+{cat.products.length - 4}</span>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Empty</span>
-                    )}
-                    <span className="text-[11px] text-zinc-500 tabular-nums w-14 text-left">
-                      {cat._count.products} item{cat._count.products !== 1 ? 's' : ''}
-                    </span>
-                    {cat.products.length > 0 && (
-                      <HiChevronDown className={`w-4 h-4 text-zinc-300 dark:text-zinc-600 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                    )}
-                  </button>
+                            {cat.products.length > 0 ? (
+                              <div className="flex -space-x-2">
+                                {cat.products.slice(0, 4).map(p => (
+                                  <div
+                                    key={p.id}
+                                    className="w-7 h-7 rounded-lg overflow-hidden border-2 border-(--admin-card) bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center"
+                                  >
+                                    {p.imageUrl
+                                      ? <img src={p.imageUrl} alt="" className="w-full h-full object-cover" />
+                                      : <HiPhotograph className="w-3 h-3 text-zinc-300 dark:text-zinc-600" />}
+                                  </div>
+                                ))}
+                                {cat.products.length > 4 && (
+                                  <div className="w-7 h-7 rounded-lg border-2 border-(--admin-card) bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center">
+                                    <span className="text-[9px] font-bold text-white dark:text-zinc-900">+{cat.products.length - 4}</span>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Empty</span>
+                            )}
+                            <span className="text-[13px] text-zinc-500 dark:text-zinc-400 tabular-nums">
+                              {cat._count.products} item{cat._count.products !== 1 ? 's' : ''}
+                            </span>
+                            {cat.products.length > 0 && (
+                              <HiChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                            )}
+                          </button>
+                        </td>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => toggleVisible(cat)}
-                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none mr-1 ${cat.visible ? 'bg-black dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700'}`}
-                      title={cat.visible ? 'Hide from store' : 'Show in store'}
-                    >
-                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-(--admin-card) shadow transition-transform ${cat.visible ? 'translate-x-4' : 'translate-x-1'}`} />
-                    </button>
-                    <button
-                      onClick={() => setPicking(cat)}
-                      className="h-7 px-2.5 rounded-lg border border-(--admin-border) text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-(--admin-field-border) transition-colors"
-                      title="Choose which products are in this category"
-                    >
-                      Products
-                    </button>
-                    <a
-                      href={storeUrl(subdomain, `/categories/${cat.slug}`)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200"
-                      title="View on storefront"
-                    >
-                      <HiEye className="w-3.5 h-3.5" />
-                    </a>
-                    <Link
-                      href={`/dashboard/stores/${storeId}/categories/${cat.id}`}
-                      className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200"
-                      title="Edit name, image and description"
-                    >
-                      <HiPencil className="w-3.5 h-3.5" />
-                    </Link>
-                    <button
-                      onClick={() => { setDeleteTarget(cat); setDeleteError('') }}
-                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors text-zinc-500 hover:text-red-500"
-                      title="Delete"
-                    >
-                      <HiTrash className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
+                        <td className="px-5 py-3">
+                          <button
+                            onClick={() => toggleVisible(cat)}
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${cat.visible ? 'bg-black dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700'}`}
+                            title={cat.visible ? 'Hide from store' : 'Show in store'}
+                          >
+                            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-(--admin-card) shadow transition-transform ${cat.visible ? 'translate-x-4' : 'translate-x-1'}`} />
+                          </button>
+                        </td>
 
-                {/* Products in this category */}
-                {isOpen && cat.products.length > 0 && (
-                  <div className="border-t border-(--admin-edge) bg-zinc-50/60 dark:bg-zinc-950/40 p-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-                      {cat.products.map(p => (
-                        <Link
-                          key={p.id}
-                          href={`/dashboard/stores/${storeId}/products/${p.id}`}
-                          className="flex items-center gap-2.5 p-2 rounded-xl bg-(--admin-card) border border-(--admin-border) hover:border-(--admin-field-border) transition-colors min-w-0 group/p"
-                        >
-                          <div className="w-9 h-9 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 flex items-center justify-center">
-                            {p.imageUrl
-                              ? <img src={p.imageUrl} alt="" className="w-full h-full object-cover" />
-                              : <HiPhotograph className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600" />}
+                        <td className="px-5 py-3">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => setPicking(cat)}
+                              className="h-7 px-2.5 rounded-lg border border-(--admin-border) text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-(--admin-field-border) transition-colors"
+                              title="Choose which products are in this category"
+                            >
+                              Products
+                            </button>
+                            <a
+                              href={storeUrl(subdomain, `/categories/${cat.slug}`)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all text-zinc-500 hover:text-black dark:hover:text-zinc-100"
+                              title="View on storefront"
+                            >
+                              <HiEye className="w-4 h-4" />
+                            </a>
+                            <Link
+                              href={`/dashboard/stores/${storeId}/categories/${cat.id}`}
+                              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all text-zinc-500 hover:text-black dark:hover:text-zinc-100"
+                              title="Edit name, image and description"
+                            >
+                              <HiPencil className="w-4 h-4" />
+                            </Link>
+                            <button
+                              onClick={() => { setDeleteTarget(cat); setDeleteError('') }}
+                              className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-all text-zinc-500 hover:text-red-500"
+                              title="Delete"
+                            >
+                              <HiTrash className="w-4 h-4" />
+                            </button>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-100 truncate group-hover/p:underline">{p.title}</p>
-                            <p className="text-[10px] text-zinc-500">
-                              {formatPrice(p.price, currency)}
-                              {p.status !== 'active' && <span className="ml-1.5 text-amber-600 dark:text-amber-400">Draft</span>}
-                            </p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
+                        </td>
+                      </tr>
+
+                      {/* What is inside, opened under its own row rather than
+                          floating beside it. */}
+                      {isOpen && cat.products.length > 0 && (
+                        <tr>
+                          <td colSpan={4} className="p-0">
+                            <div className="border-t border-(--admin-edge) bg-zinc-50/60 dark:bg-zinc-950/40 p-4">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                                {cat.products.map(p => (
+                                  <Link
+                                    key={p.id}
+                                    href={`/dashboard/stores/${storeId}/products/${p.id}`}
+                                    className="flex items-center gap-2.5 p-2 rounded-xl bg-(--admin-card) border border-(--admin-border) hover:border-(--admin-field-border) transition-colors min-w-0 group/p"
+                                  >
+                                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 flex items-center justify-center">
+                                      {p.imageUrl
+                                        ? <img src={p.imageUrl} alt="" className="w-full h-full object-cover" />
+                                        : <HiPhotograph className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600" />}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-100 truncate group-hover/p:underline">{p.title}</p>
+                                      <p className="text-[10px] text-zinc-500">
+                                        {formatPrice(p.price, currency)}
+                                        {p.status !== 'active' && <span className="ml-1.5 text-amber-600 dark:text-amber-400">Draft</span>}
+                                      </p>
+                                    </div>
+                                  </Link>
+                                ))}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {shown.length === 0 && (
+            <div className="py-16 text-center">
+              <p className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-50">
+                {query.trim() ? <>No categories match “{query.trim()}”</> : 'No categories in this view'}
+              </p>
+              <button
+                onClick={() => { setQuery(''); setVisibility('') }}
+                className="mt-1 text-[11px] font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+              >
+                Show all categories
+              </button>
+            </div>
+          )}
         </div>
       )}
 

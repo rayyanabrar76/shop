@@ -11,6 +11,7 @@ import {
 } from 'react-icons/hi'
 import { useDashboardPrice } from '@/components/CurrencyProvider'
 import PageHeader from '@/components/dashboard/PageHeader'
+import TableSearch from '@/components/dashboard/TableSearch'
 
 interface Product {
   id: string
@@ -69,6 +70,7 @@ function RowMenu({ product, storeId, onDelete }: { product: Product; storeId: st
     }
   }, [open])
 
+
   return (
     <>
       <button
@@ -115,10 +117,28 @@ export default function ProductsClient({ storeId, products: initial, categories 
   const categoryLabel = (value: string | null) =>
     value ? (categories.find(c => c.slug === value || c.name === value)?.name ?? null) : null
   const router = useRouter()
+  const [query, setQuery] = useState('')
+  const [status, setStatus] = useState('')
   const [products, setProducts] = useState<Product[]>(initial)
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
+
+  // Title and the category it is filed under, which is everything this list
+  // actually loads. Plain includes rather than a scorer: a list you can see
+  // does not need ranking, it needs the rows that do not match to go away.
+  const shown = (() => {
+    const q = query.trim().toLowerCase()
+    return products.filter(p => {
+      // Live products are stored as either 'active' or 'PUBLISHED' depending
+      // on when the row was written, so both answer to the same filter.
+      if (status === 'active' && p.status !== 'active' && p.status !== 'PUBLISHED') return false
+      if (status && status !== 'active' && p.status !== status) return false
+      if (!q) return true
+      return p.title.toLowerCase().includes(q) ||
+        (categoryLabel(p.category) ?? '').toLowerCase().includes(q)
+    })
+  })()
 
   async function confirmDelete() {
     if (!deleteTarget) return
@@ -154,11 +174,27 @@ export default function ProductsClient({ storeId, products: initial, categories 
         }
       />
 
-    <div className="max-w-7xl mx-auto px-6 pb-10">
+    <div className="max-w-7xl px-6 pb-10">
       {/* One rounded card holding the list, with the seams between rows kept
           to a whisper: the shape does the containing, so the rules inside
           only need to hint at where one product ends. */}
       <div className="bg-(--admin-card) border border-(--admin-border) rounded-2xl overflow-hidden">
+        <TableSearch
+          value={query}
+          onChange={setQuery}
+          placeholder="Search products"
+          matches={shown.length}
+          total={products.length}
+          filter={{
+            value: status,
+            onChange: setStatus,
+            options: [
+              { value: 'active', label: 'Active' },
+              { value: 'DRAFT', label: 'Draft' },
+              { value: 'ARCHIVED', label: 'Archived' },
+            ],
+          }}
+        />
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -171,7 +207,7 @@ export default function ProductsClient({ storeId, products: initial, categories 
               </tr>
             </thead>
             <tbody className="divide-y divide-(--admin-edge)">
-              {products.map((p) => (
+              {shown.map((p) => (
                 <tr
                   key={p.id}
                   onClick={e => {
@@ -226,6 +262,20 @@ export default function ProductsClient({ storeId, products: initial, categories 
             </tbody>
           </table>
         </div>
+
+        {shown.length === 0 && products.length > 0 && (
+          <div className="py-16 text-center">
+            <p className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-50">
+              {query.trim() ? <>No products match “{query.trim()}”</> : 'No products in this view'}
+            </p>
+            <button
+              onClick={() => { setQuery(''); setStatus('') }}
+              className="mt-1 text-[11px] font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+            >
+              Show all products
+            </button>
+          </div>
+        )}
 
         {products.length === 0 && (
           <div className="py-16 flex flex-col items-center justify-center text-center">

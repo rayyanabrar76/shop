@@ -78,7 +78,7 @@ export default function DiscountsClient({ storeId, discounts: initial, shippingR
         title="Discounts"
       />
 
-    <div className="max-w-3xl mx-auto px-6 pb-10 space-y-6">
+    <div className="max-w-3xl px-6 pb-10 space-y-6">
 
       {/* ── Discount Codes ── */}
       <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) overflow-hidden">

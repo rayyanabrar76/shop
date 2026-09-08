@@ -30,7 +30,7 @@ export default async function DomainSettingsPage({
         title="Custom domain"
       />
 
-    <div className="max-w-3xl mx-auto px-6 pb-10">
+    <div className="max-w-3xl px-6 pb-10">
 
       <DomainSettings
         storeId={storeId}

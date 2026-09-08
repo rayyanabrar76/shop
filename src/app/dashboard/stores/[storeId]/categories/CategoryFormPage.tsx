@@ -48,7 +48,7 @@ export default function CategoryFormPage({
         className="sticky top-0 z-30 backdrop-blur-xl"
         style={{ background: "color-mix(in srgb, var(--admin-page) 75%, transparent)" }}
       >
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+        <div className="max-w-5xl px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-1.5 min-w-0">
             <Link
               href={`/dashboard/stores/${storeId}/categories`}
@@ -102,7 +102,7 @@ export default function CategoryFormPage({
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 pt-5 pb-7 grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-5 items-start">
+      <div className="max-w-5xl px-6 pt-5 pb-7 grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-5 items-start">
         {/* Details */}
         <div className="space-y-5">
           <div className={`${cardCls} p-6`}>

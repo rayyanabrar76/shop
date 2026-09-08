@@ -81,7 +81,7 @@ export default function CustomersClient({
         }
       />
 
-      <div className="max-w-6xl mx-auto px-6 pb-10">
+      <div className="max-w-6xl px-6 pb-10">
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {[

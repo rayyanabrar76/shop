@@ -2,7 +2,7 @@ import { Sk } from '@/components/ui/Skeleton'
 
 export default function CustomersLoading() {
   return (
-    <div className="px-6 pt-8 pb-10 max-w-7xl mx-auto">
+    <div className="px-6 pt-8 pb-10 max-w-6xl">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2.5">
           <Sk className="h-9 w-9 rounded-lg shrink-0" />

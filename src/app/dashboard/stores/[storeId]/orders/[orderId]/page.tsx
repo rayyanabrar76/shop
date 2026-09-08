@@ -53,7 +53,7 @@ export default async function OrderDetailPage({
         title="Order"
       />
 
-    <div className="max-w-5xl mx-auto px-6 pb-10">
+    <div className="max-w-5xl px-6 pb-10">
 
       <OrderDetailClient
         storeId={storeId}

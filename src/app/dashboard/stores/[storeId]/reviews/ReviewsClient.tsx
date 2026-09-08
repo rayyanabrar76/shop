@@ -105,7 +105,7 @@ export default function ReviewsClient({
         meta={published.length ? `${average.toFixed(1)} average from ${published.length} published` : undefined}
       />
 
-      <div className="max-w-6xl mx-auto px-6 pb-10">
+      <div className="max-w-6xl px-6 pb-10">
         <div className="flex items-center gap-1.5 mb-4">
           {TABS.map(t => (
             <button

@@ -145,7 +145,7 @@ export default function PaymentSettingsClient({
         }
       />
 
-      <div className="max-w-3xl mx-auto px-6 pb-10">
+      <div className="max-w-3xl px-6 pb-10">
 
         <div className="space-y-4">
 

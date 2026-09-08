@@ -190,7 +190,7 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
         }
       />
 
-      <div className="max-w-5xl mx-auto px-6 pb-10 flex gap-8">
+      <div className="max-w-5xl px-6 pb-10 flex gap-8">
         {/* Sidebar nav */}
         <aside className="w-48 shrink-0">
           <nav className="flex flex-col gap-1 sticky top-6">

@@ -344,6 +344,8 @@ model Order {
   shippingAmount  Int         @default(0)
   shippingMethod  String?
   taxAmount       Int         @default(0)
+  /** When the review request went out, so it goes out once and no more. */
+  reviewRequestedAt DateTime?
 
   store Store       @relation(fields: [storeId], references: [id])
   items OrderItem[]
@@ -501,6 +503,9 @@ model ProductReview {
   title       String?
   body        String?
   status      ReviewStatus @default(PENDING)
+  /** The shop's public answer. Shown under the review on the storefront. */
+  reply       String?
+  repliedAt   DateTime?
   /** The email placed an order in this shop containing this product. */
   verified    Boolean      @default(false)
   createdAt   DateTime     @default(now())

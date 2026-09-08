@@ -2,7 +2,7 @@ import { Sk } from '@/components/ui/Skeleton'
 
 export default function ThemeLoading() {
   return (
-    <div className="px-6 pt-8 pb-10 max-w-5xl mx-auto">
+    <div className="px-6 pt-8 pb-10 max-w-2xl">
       <div className="flex items-center justify-between mb-8">
         <div className="space-y-2">
           <Sk className="h-7 w-32" />

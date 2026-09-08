@@ -46,7 +46,7 @@ export default async function ThemePage({
 
       {/* Left-aligned like every other section now, rather than a centred
           card floating in the middle of the page. */}
-      <div className="w-full max-w-2xl mx-auto px-6 pb-10 space-y-4">
+      <div className="w-full max-w-2xl px-6 pb-10 space-y-4">
 
         <div className="space-y-3">
           {/* View Live Store */}
