@@ -6,10 +6,14 @@ import { loadStoreEntitlements, assertStorage } from '@/lib/entitlements'
 async function checkAuth(storeId: string) {
   const { userId } = await auth()
   if (!userId) return null
-  const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
-  const store = await prisma.store.findUnique({ where: { id: storeId } })
-  if (!store || store.ownerId !== dbUser?.id) return null
-  return userId
+  // One query, not two sequential ones. Every round trip to Neon costs real
+  // latency, and the library modal only starts fetching once it opens -- so
+  // the user is watching a spinner for the whole chain.
+  const store = await prisma.store.findFirst({
+    where: { id: storeId, owner: { clerkId: userId } },
+    select: { id: true },
+  })
+  return store ? userId : null
 }
 
 export async function GET(

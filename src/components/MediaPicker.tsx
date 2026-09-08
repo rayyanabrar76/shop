@@ -12,6 +12,8 @@ interface MediaPickerProps {
   placeholder?: string
   /** For callers that render their own, larger preview. */
   hidePreview?: boolean
+  /** Given, the preview becomes clickable and opens the image full size. */
+  onOpen?: (url: string) => void
 }
 
 export default function MediaPicker({
@@ -21,6 +23,7 @@ export default function MediaPicker({
   accept = 'image',
   placeholder,
   hidePreview = false,
+  onOpen,
 }: MediaPickerProps) {
   const [showLibrary, setShowLibrary] = useState(false)
 
@@ -43,11 +46,18 @@ export default function MediaPicker({
 
       {/* Preview */}
       {value && !hidePreview && (
-        <div className="relative rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+        <div className="relative rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-(--admin-border)">
           {isVideo ? (
             <video src={value} className="w-full max-h-32 object-cover" controls={false} muted />
           ) : (
-            <img src={value} alt="Preview" className="w-full max-h-32 object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
+            <img
+              src={value}
+              alt="Preview"
+              onClick={onOpen ? () => onOpen(value) : undefined}
+              title={onOpen ? 'Open full size' : undefined}
+              className={`w-full max-h-32 object-cover ${onOpen ? 'cursor-zoom-in' : ''}`}
+              onError={e => (e.currentTarget.style.display = 'none')}
+            />
           )}
           <button
             type="button"

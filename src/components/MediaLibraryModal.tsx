@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef, type ChangeEvent, type DragEvent } from 'react'
+import { thumbUrl, videoPosterUrl } from '@/lib/media-url'
+import { slugifyFileName } from '@/lib/upload-filename'
 import { createPortal } from 'react-dom'
 import { X, Upload, Image as ImageIcon, Video, Trash2, Check, Loader2, FileImage } from 'lucide-react'
 
@@ -71,7 +73,9 @@ export default function MediaLibraryModal({ storeId, accept, onClose, onSelect }
 
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('fileName', file.name)
+      // The picked name goes into the public URL, so it is slugified here
+      // rather than shipped as "ChatGPT Image Sep 6, 2026, 12_45_59 PM.png".
+      formData.append('fileName', slugifyFileName(file.name, file.type.split('/')[1]))
       formData.append('publicKey', PUBLIC_KEY!)
       formData.append('signature', auth.signature)
       formData.append('expire', String(auth.expire))
@@ -183,17 +187,17 @@ export default function MediaLibraryModal({ storeId, accept, onClose, onSelect }
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-4xl h-[80vh] overflow-hidden shadow-2xl flex flex-col">
 
-        <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between shrink-0">
+        <div className="px-5 py-4 border-b border-(--admin-edge) flex items-center justify-between shrink-0">
           <div>
             <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-50">Media Library</h2>
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">Choose existing media or upload new</p>
+            <p className="text-xs text-zinc-500">Choose existing media or upload new</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500 dark:text-zinc-400">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+        <div className="flex border-b border-(--admin-edge) shrink-0">
           <TabBtn active={tab === 'library'} onClick={() => setTab('library')} icon={<FileImage className="w-4 h-4" />} label="My Library" count={media.length} />
           <TabBtn active={tab === 'upload'} onClick={() => setTab('upload')} icon={<Upload className="w-4 h-4" />} label="Upload New" />
         </div>
@@ -226,14 +230,14 @@ export default function MediaLibraryModal({ storeId, accept, onClose, onSelect }
           )}
         </div>
 
-        <div className="px-5 py-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between shrink-0">
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+        <div className="px-5 py-4 border-t border-(--admin-edge) flex items-center justify-between shrink-0">
+          <p className="text-xs text-zinc-500">
             {selectedId ? '1 file selected' : 'Click any file to select'}
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+              className="px-4 py-2 rounded-xl border border-(--admin-border) text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
             >
               Cancel
             </button>
@@ -279,7 +283,7 @@ function LibraryView({
   return (
     <div className="h-full flex flex-col">
       {accept === 'all' && (
-        <div className="px-5 py-3 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+        <div className="px-5 py-3 border-b border-(--admin-edge) flex items-center gap-2">
           <FilterChip active={filter === 'all'} onClick={() => setFilter('all')} label="All" />
           <FilterChip active={filter === 'image'} onClick={() => setFilter('image')} label="Images" icon={<ImageIcon className="w-3 h-3" />} />
           <FilterChip active={filter === 'video'} onClick={() => setFilter('video')} label="Videos" icon={<Video className="w-3 h-3" />} />
@@ -304,18 +308,32 @@ function LibraryView({
                 key={m.id}
                 onClick={() => setSelectedId(m.id)}
                 className={`relative aspect-square bg-zinc-100 dark:bg-zinc-800 rounded-xl overflow-hidden border-2 transition-all group ${
-                  selectedId === m.id ? 'border-zinc-900 dark:border-zinc-400 ring-2 ring-zinc-900/20 dark:ring-zinc-400/20' : 'border-transparent hover:border-zinc-300 dark:hover:border-zinc-600'
+                  selectedId === m.id ? 'border-zinc-900 dark:border-zinc-400 ring-2 ring-zinc-900/20 dark:ring-zinc-400/20' : 'border-transparent hover:border-(--admin-field-border)'
                 }`}
               >
                 {m.type === 'video' ? (
                   <>
-                    <video src={m.url} className="w-full h-full object-cover" muted />
+                    {/* A still, not the clip. Rendering <video src> here made
+                        the grid download every video just to show a frame. */}
+                    <img
+                      src={videoPosterUrl(m.url)}
+                      alt={m.filename}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                    />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                       <Video className="w-6 h-6 text-white drop-shadow" />
                     </div>
                   </>
                 ) : (
-                  <img src={m.url} alt={m.filename} className="w-full h-full object-cover" />
+                  <img
+                    src={thumbUrl(m.url)}
+                    alt={m.filename}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover"
+                  />
                 )}
 
                 {selectedId === m.id && (
@@ -350,7 +368,7 @@ function UploadView({
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         className={`w-full max-w-md aspect-3/2 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-3 transition-all p-6 ${
-          dragOver ? 'border-zinc-900 dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800' : 'border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500'
+          dragOver ? 'border-zinc-900 dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800' : 'border-(--admin-field-border) hover:border-(--admin-field-border-hover)'
         }`}
       >
         {uploading ? (

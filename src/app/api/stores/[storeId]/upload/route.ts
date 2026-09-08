@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { imagekit } from '@/lib/imagekit'
 import { loadStoreEntitlements, assertStorage } from '@/lib/entitlements'
-import crypto from 'crypto'
+import { slugifyFileName } from '@/lib/upload-filename'
 
 /**
  * POST /api/stores/[storeId]/upload  — one image, straight from a form.
@@ -74,19 +74,12 @@ export async function POST(
 
     const bytes = Buffer.from(await file.arrayBuffer())
 
-    // Keep the original name where there is one — it is what makes a file
-    // findable in the library later — but prefix it so two uploads called
-    // "donut.jpg" cannot collide.
-    const stub = (file.name || 'image')
-      .replace(/\.[^.]+$/, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 40) || 'image'
-
+    // Keeps the original name, which is what makes a file findable in the
+    // library later and readable in the public URL, with a suffix so two
+    // uploads called "donut.jpg" cannot collide.
     const uploaded = await imagekit.upload({
       file: bytes.toString('base64'),
-      fileName: `${stub}-${crypto.randomBytes(6).toString('hex')}.${ext}`,
+      fileName: slugifyFileName(file.name, ext),
       folder: `/stores/${storeId}`,
     })
 

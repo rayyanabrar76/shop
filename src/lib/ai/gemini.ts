@@ -72,7 +72,17 @@ export class GeminiError extends Error {
  */
 export async function generateText(
   prompt: string,
-  opts: { schema?: Record<string, unknown>; temperature?: number; system?: string } = {},
+  opts: {
+    schema?: Record<string, unknown>
+    temperature?: number
+    system?: string
+    /**
+     * An image for the model to look at, base64 encoded. The flash models are
+     * multimodal, so describing a photo is a matter of handing it over rather
+     * than guessing from the filename.
+     */
+    image?: { data: string; mimeType: string }
+  } = {},
 ): Promise<GeminiResult> {
   const all = keys()
   if (all.length === 0) {
@@ -80,7 +90,16 @@ export async function generateText(
   }
 
   const body = {
-    contents: [{ parts: [{ text: prompt }] }],
+    contents: [{
+      parts: [
+        // The image goes first: the model reads parts in order, and asking a
+        // question before showing the subject reads as a riddle.
+        ...(opts.image
+          ? [{ inlineData: { mimeType: opts.image.mimeType, data: opts.image.data } }]
+          : []),
+        { text: prompt },
+      ],
+    }],
     ...(opts.system
       ? { systemInstruction: { parts: [{ text: opts.system }] } }
       : {}),
