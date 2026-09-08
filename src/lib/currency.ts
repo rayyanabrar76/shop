@@ -176,6 +176,34 @@ export function amountToInput(amount: number | null | undefined, currency: strin
  * float error (1.14 * 100 is 114.00000000000001), so a round-trip through the
  * form never shifts a price by a minor unit.
  */
+/**
+ * Groups the whole part of a half-typed amount: 12000 reads as 12,000.
+ *
+ * Display only. What is held in state and sent to the server stays plain
+ * digits, because inputToAmount runs parseFloat and parseFloat stops dead at
+ * a comma: let a grouped string reach it and a twelve thousand rupee donut
+ * quietly becomes a twelve rupee one.
+ *
+ * Written by hand rather than through Intl because this runs on a value
+ * somebody is still typing. Intl would turn a trailing "12." into "12" and
+ * eat the decimal point out from under the caret.
+ */
+export function groupAmountInput(input: string): string {
+  if (!input) return ''
+  const dot = input.indexOf('.')
+  const whole = dot === -1 ? input : input.slice(0, dot)
+  const rest = dot === -1 ? '' : input.slice(dot)
+  return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + rest
+}
+
+/** Strips a typed amount back to digits and at most one decimal point. */
+export function cleanAmountInput(input: string, wholeNumbersOnly: boolean): string {
+  const digits = input.replace(wholeNumbersOnly ? /[^0-9]/g : /[^0-9.]/g, '')
+  if (wholeNumbersOnly) return digits
+  const dot = digits.indexOf('.')
+  return dot === -1 ? digits : digits.slice(0, dot + 1) + digits.slice(dot + 1).replace(/\./g, '')
+}
+
 export function inputToAmount(input: string | number): number {
   const value = typeof input === 'number' ? input : parseFloat(input)
   if (!Number.isFinite(value)) return 0

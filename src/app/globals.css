@@ -9,6 +9,34 @@
 /* ── Admin dark mode: dark: prefix works when html has data-theme="dark" ── */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
+/* ── Save feedback ───────────────────────────────────────────────────────
+   Two answers from the same button, so the eye never has to leave it. A
+   save that worked gives a short pop and then the button greys out, because
+   there is nothing left to save. A save that failed shakes, which is the
+   one thing a shake should ever mean. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes admin-pop {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(1.06); }
+    100% { transform: scale(1); }
+  }
+  @keyframes admin-shake {
+    0%, 100% { transform: translateX(0); }
+    15%, 55% { transform: translateX(-3px); }
+    35%, 75% { transform: translateX(3px); }
+  }
+  .admin-pop   { animation: admin-pop 320ms cubic-bezier(0.2, 0.9, 0.25, 1.1); }
+  .admin-shake { animation: admin-shake 380ms cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+}
+
+/* ── Touch: a device with no hover to reveal anything with ───────────────
+   A control that only appears on hover is invisible on a phone, and an
+   element at zero opacity still takes taps, so it can be pressed by
+   accident. This variant asks what the pointer can do rather than how wide
+   the screen is: a touchscreen laptop counts as touch, a desktop window
+   dragged narrow does not. */
+@custom-variant touch (@media (hover: none));
+
 /* ── Storefront / global CSS variables ── */
 :root {
   --background: #fdfdfc;
@@ -21,9 +49,59 @@
 :root,
 [data-theme="light"] {
   --admin-bg:           #ffffff;
+  /* The canvas is the same surface as the bar, not a lighter grey behind
+     it: the chrome reads as one dark frame with the light panel set into
+     it, and the panel's rounded corners actually show against it. */
+  --admin-canvas:        #000000;
+  /* The bar is dark in both themes, the way Shopify's admin is: one dark
+     rail across the top with the light UI beneath it. It carries its own
+     content colours rather than inheriting the theme's, so nothing else in
+     the light theme has to know there is a dark surface in the layout. */
+  --admin-header:        #000000;
+  --admin-header-text:   #f4f4f5;
+  --admin-header-text-2: #b4b4bb;
+  --admin-header-text-3: #8b8b94;
+  /* A tint over the bar rather than a painted grey, so the field reads
+     as glass set into the surface and picks up the bar's own sheen. */
+  --admin-header-field:  rgba(255, 255, 255, 0.07);
+  --admin-header-hover:  rgba(255, 255, 255, 0.09);
+  --admin-header-border: rgba(255, 255, 255, 0.12);
+  /* Sits a step between the canvas and the content panel, so the sidebar
+     separates by tone rather than by a rule drawn down its edge. */
+  --admin-sidebar:      #f1f1f1;
+  /* The ground the content cards sit on. The layout panel and every page
+     paint this same token: they used to disagree (panel on --admin-bg,
+     pages on zinc-950), so in dark mode the panel showed through lighter
+     at its own rounded corners. */
+  --admin-page:         #fafafa;
+  /* Raised above the ground: cards, menus, dropdowns. */
+  --admin-card:         #ffffff;
+  /* Selection inside the sidebar is measured against the sidebar, not the
+     content panel: the old highlight was the panel-muted grey, which on a
+     tinted sidebar landed three units away from its own background and
+     vanished. The selected row rises to white instead. */
+  --admin-sidebar-hover:  #fbfbfb;
+  --admin-sidebar-active: #ffffff;
+  --admin-sidebar-ring:   inset 0 0 0 1px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.05);
   --admin-bg-subtle:    #fafafa;
   --admin-bg-muted:     #f4f4f5;
-  --admin-border:       #e4e4e7;
+  /* ── Edges ──
+     Three of them, strongest first, and every rule in the admin uses one
+     of these rather than naming a grey. That is the whole point: these
+     were roughly 400 hand-written Tailwind pairs, and the dark half of
+     one pair sat four steps from the surface it was drawn on, so the
+     lines between table rows were invisible and nobody could fix it in
+     fewer than sixty files.
+
+     A field edge has to say "type here", so it is the loudest. A card
+     frame closes a surface. An inner edge separates two rows inside one
+     card and is the quietest thing that can still be seen. Dark mode has
+     less room to work in, so the frame and the inner edge meet there. */
+  --admin-field-border:       #a1a1aa;
+  --admin-field-border-hover: #71717a;
+  --admin-field-border-focus: #18181b;
+  --admin-border:       #d4d4d8;
+  --admin-edge:         #e4e4e7;
   --admin-divider:      rgba(0, 0, 0, 0.06);
   --admin-text:         #09090b;
   --admin-text-2:       #52525b;
@@ -35,10 +113,25 @@
 }
 
 [data-theme="dark"] {
-  --admin-bg:           #18181b;
-  --admin-bg-subtle:    #27272a;
+  --admin-bg:           #232327;
+  --admin-canvas:        #000000;
+  --admin-header:        #000000;
+  /* A shade below the page it sits beside, so the content area is the
+     brighter of the two. Only a shade: at #121214 it sat almost at the
+     header black and the whole left edge went flat. */
+  --admin-sidebar:      #151518;
+  --admin-page:         #18181b;
+  --admin-card:         #232327;
+  --admin-sidebar-hover:  #202024;
+  --admin-sidebar-active: #2a2a30;
+  --admin-sidebar-ring:   inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  --admin-bg-subtle:    #2c2c31;
   --admin-bg-muted:     #3f3f46;
+  --admin-field-border:       #52525b;
+  --admin-field-border-hover: #71717a;
+  --admin-field-border-focus: #d4d4d8;
   --admin-border:       #3f3f46;
+  --admin-edge:         #3f3f46;
   --admin-divider:      rgba(255, 255, 255, 0.06);
   --admin-text:         #fafafa;
   --admin-text-2:       #a1a1aa;
@@ -79,19 +172,106 @@ body {
   display: none;
 }
 
+/* Result rows settle in one after another when the search opens. Only for
+   people who have not asked for less motion; for them the rows simply are
+   there. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes admin-row-in {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .admin-row-in {
+    animation: admin-row-in 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+/* ── The admin shell ─────────────────────────────────────────────────────
+   data-admin is set on <html> for as long as the dashboard is mounted.
+
+   The page's own scrollbar gutter and its overscroll area are painted from
+   <body>, not from any layout div -- so a dark dashboard on the storefront's
+   near-white body left a bright strip down the right-hand edge. Painting the
+   body with the admin canvas puts that strip on the same surface as the rest
+   of the shell. color-scheme tells the browser to render its own chrome --
+   native scrollbars, form controls, the corner square -- to match, instead
+   of assuming light. */
+[data-admin] {
+  color-scheme: light;
+}
+[data-admin][data-theme="dark"] {
+  color-scheme: dark;
+}
+[data-admin] body {
+  background-color: var(--admin-canvas);
+}
+/* Inside the admin the scrollbar is a real control, not a hint: white on
+   the dark theme, dark on the light one, at a weight you can find without
+   looking for it. The storefront keeps the quieter default above. */
+[data-admin] {
+  --scrollbar-thumb:        rgba(0, 0, 0, 0.32);
+  --scrollbar-thumb-hover:  rgba(0, 0, 0, 0.48);
+  --scrollbar-thumb-active: rgba(0, 0, 0, 0.60);
+}
+[data-admin][data-theme="dark"] {
+  --scrollbar-thumb:        rgba(255, 255, 255, 0.34);
+  --scrollbar-thumb-hover:  rgba(255, 255, 255, 0.50);
+  --scrollbar-thumb-active: rgba(255, 255, 255, 0.64);
+}
+
+.admin-header-field::placeholder {
+  color: var(--admin-header-text-3);
+}
+/* The same field once it has joined the light panel beneath it. */
+.admin-panel-field::placeholder {
+  color: var(--admin-text-3);
+}
+
+/* ── The admin's own scroll container ────────────────────────────────────
+   The window does not scroll; the content panel does. That puts the
+   scrollbar inside the panel -- starting below the header, ending at the
+   window's bottom edge -- instead of running the full height of the window
+   alongside a header it has nothing to do with.
+
+   Only from md up. On a phone there is no panel inset worth protecting, and
+   a scroller nested inside the viewport fights the browser's own address-bar
+   collapse, so the page scrolls normally there. */
+.admin-scroll {
+  /* clip, not hidden: pages inside paint their own backgrounds and would
+     otherwise square off the panel's rounded corners, but clip does not
+     become a scroll container, so the phone's page scroll is untouched. */
+  overflow: clip;
+}
+
+@media (min-width: 768px) {
+  .admin-shell {
+    height: 100vh;
+    overflow: hidden;
+  }
+  .admin-scroll {
+    height: calc(100vh - 3.75rem);
+    overflow: auto;
+    /* Reaching the end of the panel should stop, not hand the gesture to
+       the window behind it. */
+    overscroll-behavior: contain;
+  }
+}
+
 /* ── Scrollbars ──────────────────────────────────────────────────────────
    Applied to everything rather than opted into class by class, so modals,
    textareas and panels all match without each one remembering to ask.
    Driven by tokens so it follows data-theme="dark" like the rest of the UI.
-   3px was too thin to actually grab; 8px with a padded thumb reads as ~5px
-   while keeping a usable hit target. */
+   The track is transparent, so the thumb floats on whatever surface it is
+   over; a padded thumb reads as a slim ~5px bar while the bar itself stays
+   wide enough to actually grab. */
 :root {
-  --scrollbar-thumb:       rgba(0, 0, 0, 0.18);
-  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.32);
+  --scrollbar-thumb:        rgba(0, 0, 0, 0.16);
+  --scrollbar-thumb-hover:  rgba(0, 0, 0, 0.30);
+  --scrollbar-thumb-active: rgba(0, 0, 0, 0.42);
 }
 [data-theme="dark"] {
-  --scrollbar-thumb:       rgba(255, 255, 255, 0.16);
-  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.30);
+  --scrollbar-thumb:        rgba(255, 255, 255, 0.14);
+  --scrollbar-thumb-hover:  rgba(255, 255, 255, 0.26);
+  --scrollbar-thumb-active: rgba(255, 255, 255, 0.38);
 }
 
 * {
@@ -100,8 +280,8 @@ body {
 }
 
 *::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 11px;
+  height: 11px;
 }
 *::-webkit-scrollbar-track {
   background: transparent;
@@ -110,12 +290,23 @@ body {
   background-color: var(--scrollbar-thumb);
   border-radius: 999px;
   /* Transparent border padded from the track keeps the thumb visually slim
-     while the scrollbar itself stays wide enough to hit. */
-  border: 2px solid transparent;
+     (~5px) while the scrollbar itself stays wide enough to hit. */
+  border: 3px solid transparent;
   background-clip: content-box;
 }
 *::-webkit-scrollbar-thumb:hover {
   background-color: var(--scrollbar-thumb-hover);
+}
+*::-webkit-scrollbar-thumb:active {
+  background-color: var(--scrollbar-thumb-active);
+}
+/* The arrow buttons at each end are a Windows default that no other surface
+   in this UI has; without this Chrome reserves space for them and the thumb
+   never reaches the ends. */
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 *::-webkit-scrollbar-corner {
   background: transparent;
