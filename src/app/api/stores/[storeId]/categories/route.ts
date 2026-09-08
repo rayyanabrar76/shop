@@ -9,9 +9,25 @@ export async function GET(
 ) {
   try {
     const { storeId } = await params
-    const categories = await prisma.category.findMany({
-      where: { storeId },
-      orderBy: { name: 'asc' },
+    const [cats, products] = await Promise.all([
+      prisma.category.findMany({ where: { storeId }, orderBy: { name: 'asc' } }),
+      prisma.product.findMany({
+        where: { storeId },
+        select: { imageUrl: true, category: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ])
+    // Product.category is a plain string that may hold the slug or the
+    // name, so both are matched, as the categories page does. Each category
+    // goes out with its product count and, when it has no image of its own,
+    // the newest product photo as a cover.
+    const categories = cats.map(cat => {
+      const mine = products.filter(p => p.category === cat.slug || p.category === cat.name)
+      return {
+        ...cat,
+        imageUrl: cat.imageUrl || mine.find(p => p.imageUrl)?.imageUrl || null,
+        _count: { products: mine.length },
+      }
     })
     return NextResponse.json({ categories })
   } catch {

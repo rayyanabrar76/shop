@@ -2,36 +2,26 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { SignOutButton } from "@clerk/nextjs";
 import { storeUrl } from "@/lib/config";
+import { storeInitials } from "@/lib/store-initials";
 import AdminSearch from "./AdminSearch";
 import {
-  LayoutDashboard,
-  Package,
-  ShoppingBag,
-  Users,
-  BarChart2,
-  Settings,
-  Store,
-  LogOut,
-  Plus,
-  ChevronsUpDown,
-  Palette,
-  Eye,
-  Pencil,
-  Tag,
-  CreditCard,
-  Truck,
-  Sparkles,
-  Menu,
+  ChevronRight, LogOut, Plus, ChevronsUpDown, Eye, Pencil, Menu,
 } from "lucide-react";
+import { getStoreNav } from "@/lib/admin-nav";
 
 type StoreItem = {
   id: string;
   name: string;
   subdomain: string;
+  currency?: string;
+  /** The store's own square mark, when it has uploaded one. Falls back to
+      the first letter of its name -- most stores never upload anything. */
+  markUrl?: string | null;
 };
 
 type Props = {
@@ -42,20 +32,6 @@ type Props = {
   stores: StoreItem[];
 };
 
-function getStoreNav(storeId: string) {
-  return [
-    { label: "Home",          href: `/dashboard/stores/${storeId}`,                  icon: LayoutDashboard, exact: true },
-    { label: "Products",      href: `/dashboard/stores/${storeId}/products`,          icon: Package },
-    { label: "Categories",    href: `/dashboard/stores/${storeId}/categories`,        icon: Tag },
-    { label: "Orders",        href: `/dashboard/stores/${storeId}/orders`,            icon: ShoppingBag },
-    { label: "Customers",     href: `/dashboard/stores/${storeId}/customers`,         icon: Users },
-    { label: "Analytics",     href: `/dashboard/stores/${storeId}/analytics`,         icon: BarChart2 },
-    { label: "Customization", href: `/dashboard/stores/${storeId}/theme`,             icon: Palette },
-    { label: "Discounts & Shipping", href: `/dashboard/stores/${storeId}/discounts`,  icon: Truck },
-    { label: "Payments",      href: `/dashboard/stores/${storeId}/settings/payments`, icon: CreditCard },
-    { label: "Settings",      href: `/dashboard/stores/${storeId}/settings`,          icon: Settings },
-  ];
-}
 
 export default function Sidebar({ firstName, lastName, email, imageUrl, stores }: Props) {
   const pathname = usePathname();
@@ -117,6 +93,7 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
   };
 
   const initials = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
+  const storeMark = activeStore ? storeInitials(activeStore.name) : initials || "?";
 
   // Below md the sidebar is a drawer. It would otherwise take 240px of a 390px
   // screen and push the page it is navigating clean off the side.
@@ -143,23 +120,70 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
     {/* A real header on small screens, rather than a lone floating button.
         It carries the three things wanted from any page: the menu, a way to
         see the shop, and the account. */}
+    {/* h-15 is 3.75rem, and five places encode that height: this bar, the
+        sidebar's top offset, the main content offset, and two calc()s in
+        globals.css and the dashboard layout. They move together or the
+        panel stops meeting the bar. */}
     <header
-      className="md:hidden fixed inset-x-0 top-0 z-50 h-14 flex items-center gap-1 px-2"
-      style={{ background: "var(--admin-bg)", borderBottom: "1px solid var(--admin-border)" }}
+      className="fixed inset-x-0 top-0 z-50 h-15 flex items-center gap-1 px-2 md:px-3"
+      style={{
+        // Flat black reads as a hole. A faint sheen towards the top edge and a
+        // one-pixel highlight along it make the bar a surface lit from above;
+        // the soft dark line beneath sets the panel under it rather than
+        // beside it.
+        background:
+          "linear-gradient(to bottom, color-mix(in srgb, var(--admin-header) 93%, white), var(--admin-header) 70%)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.07), 0 1px 0 rgba(0,0,0,0.65)",
+      }}
     >
       <button
         onClick={() => setDrawerOpen(true)}
         aria-label="Open menu"
-        className="p-2.5 rounded-xl shrink-0"
+        className="md:hidden group/btn flex h-9 w-9 items-center justify-center rounded-lg shrink-0 transition-[background,transform] hover:bg-(--admin-header-hover) active:scale-[0.96]"
       >
-        <Menu className="w-4 h-4" style={{ color: "var(--admin-text)" }} />
+        <Menu className="w-4 h-4" style={{ color: "var(--admin-header-text)" }} />
       </button>
 
+      {/* On a wide screen the header runs above the sidebar, so the brand
+          belongs here, the sidebar's own logo row is hidden to match. */}
+      <Link
+        href="/dashboard"
+        className="hidden md:flex items-center gap-1 shrink-0 w-52 pl-5 group/brand"
+      >
+        {/* The artwork carries a wide black margin of its own, and it is the
+            same black as the bar -- so the box crops to the glyph and the
+            surplus simply disappears into the header, keeping the gap to the
+            wordmark optically right rather than merely mathematically. */}
+        <span className="w-5 h-5 shrink-0 overflow-hidden flex items-center justify-center transition-transform group-hover/brand:scale-[1.04]">
+          <Image
+            src="/logo.png"
+            alt=""
+            width={96}
+            height={96}
+            priority
+            className="w-full h-full object-cover scale-[1.9]"
+          />
+        </span>
+        {/* Set the way the landing page sets it, so the product is one brand
+            either side of the sign-in. */}
+        <span
+          className="text-[15px] font-black tracking-tighter leading-none"
+          style={{ color: "var(--admin-header-text)" }}
+        >
+          Shopflow<span className="text-violet-500">.</span>
+        </span>
+      </Link>
+
       {activeStore ? (
-        <AdminSearch storeId={activeStore.id} />
+        <div className="flex-1 min-w-0 md:max-w-xl md:mx-auto">
+          <AdminSearch storeId={activeStore.id} currency={activeStore.currency} />
+        </div>
       ) : (
-        <p className="flex-1 min-w-0 truncate text-[13px] font-semibold" style={{ color: "var(--admin-text)" }}>
-          ShopFlow
+        <p
+          className="flex-1 min-w-0 truncate text-[15px] font-black tracking-tighter leading-none"
+          style={{ color: "var(--admin-header-text)" }}
+        >
+          Shopflow<span className="text-violet-500">.</span>
         </p>
       )}
 
@@ -170,90 +194,207 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
           rel="noopener noreferrer"
           aria-label="View storefront"
           title="View storefront"
-          className="p-2.5 rounded-xl shrink-0"
+          className="group/btn flex h-9 w-9 items-center justify-center rounded-lg shrink-0 transition-[background,transform] hover:bg-(--admin-header-hover) active:scale-[0.96]"
         >
-          <Eye className="w-4 h-4" style={{ color: "var(--admin-text-3)" }} />
+          <Eye
+            className="w-4.5 h-4.5 transition-colors text-(--admin-header-text-2) group-hover/btn:text-(--admin-header-text)"
+          />
         </a>
       )}
+
+      <span
+        className="hidden md:block h-5 w-px mx-1.5 shrink-0"
+        style={{ background: "linear-gradient(to bottom, transparent, var(--admin-header-border), transparent)" }}
+      />
 
       <div ref={accountRef} className="relative shrink-0">
         <button
           onClick={() => setAccountOpen((v) => !v)}
           aria-label="Account"
           aria-expanded={accountOpen}
-          className="p-1.5 rounded-xl"
+          className="flex items-center gap-2 p-1 pr-2 rounded-lg transition-[background,transform] hover:bg-(--admin-header-hover) active:scale-[0.98]"
         >
-          {imageUrl ? (
-            <img src={imageUrl} alt="" className="w-7 h-7 rounded-lg object-cover" />
-          ) : (
-            <span className="w-7 h-7 rounded-lg bg-black text-white text-[11px] font-bold flex items-center justify-center">
-              {initials || "?"}
+          {/* The store's mark, not the person's face. This button is reached to
+              switch stores far more often than to open account settings, and
+              the menu it opens leads with the store list -- so the trigger
+              should name the store it would switch away from. The user's own
+              initials stand in only before any store exists. */}
+          <span
+            className="w-7 h-7 rounded-lg font-bold flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/15 shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
+            style={{ background: "var(--admin-header-text)", color: "var(--admin-header)" }}
+          >
+            {activeStore?.markUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={activeStore.markUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className={storeMark.length > 2 ? "text-[9.5px] tracking-tight" : "text-[11px]"}>
+                {storeMark}
+              </span>
+            )}
+          </span>
+          {activeStore && (
+            <span
+              className="hidden md:block max-w-32 truncate text-[13px] font-medium tracking-[-0.01em]"
+              style={{ color: "var(--admin-header-text)" }}
+            >
+              {activeStore.name}
             </span>
           )}
         </button>
 
-        {accountOpen && (
-          <div
-            className="absolute right-0 top-full mt-1.5 w-64 rounded-xl overflow-hidden shadow-xl"
-            style={{ background: "var(--admin-bg)", border: "1px solid var(--admin-border)" }}
-          >
-            {stores.length > 0 && (
-              <div className="p-1.5">
-                {stores.map((store) => (
+        <div
+          inert={!accountOpen}
+          aria-hidden={!accountOpen}
+          className={`absolute right-0 top-full mt-2 w-76 rounded-2xl overflow-hidden origin-top-right backdrop-blur-xl transition-[opacity,transform] ${
+            accountOpen ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'opacity-0 -translate-y-1.5 scale-[0.98] pointer-events-none'
+          }`}
+          style={{
+            transitionDuration: accountOpen ? '180ms' : '130ms',
+            transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            background: "color-mix(in srgb, var(--admin-bg) 94%, transparent)",
+            boxShadow: [
+              "0 0 0 1px color-mix(in srgb, var(--admin-text) 9%, transparent)",
+              "0 2px 4px -1px rgba(0,0,0,0.10)",
+              "0 24px 48px -16px rgba(0,0,0,0.32)",
+            ].join(", "),
+          }}
+        >
+          {/* ── Where you are ─────────────────────────────────────────
+              The menu opens on the store you are in, named plainly with
+              its address, before it offers anywhere else to go. */}
+          {activeStore && (
+            <div
+              className="m-1.5 mb-0 flex items-center gap-3 rounded-xl px-3 py-3"
+              style={{ background: "color-mix(in srgb, var(--admin-text) 5%, transparent)" }}
+            >
+              <span
+                className="w-9 h-9 rounded-[10px] bg-black text-white font-bold flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/10"
+              >
+                {activeStore.markUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={activeStore.markUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className={storeMark.length > 2 ? "text-[10px] tracking-tight" : "text-[12px]"}>{storeMark}</span>
+                )}
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block truncate text-[13px] font-semibold" style={{ color: "var(--admin-text)" }}>
+                  {activeStore.name}
+                </span>
+                <span className="block truncate text-[11px]" style={{ color: "var(--admin-text-3)" }}>
+                  {storeUrl(activeStore.subdomain).replace(/^https?:\/\//, "")}
+                </span>
+              </span>
+              <a
+                href={storeUrl(activeStore.subdomain)}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="View storefront"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-(--admin-bg-muted)"
+                style={{ color: "var(--admin-text-3)" }}
+              >
+                <Eye className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          )}
+
+          {/* ── Switch ──────────────────────────────────────────────── */}
+          {stores.filter((s) => s.id !== activeStore?.id).length > 0 && (
+            <>
+              <p
+                className="px-4 pt-3.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.1em]"
+                style={{ color: "var(--admin-text-4)" }}
+              >
+                Switch store
+              </p>
+              <div className="px-1.5">
+                {stores.filter((s) => s.id !== activeStore?.id).map((store) => (
                   <Link
                     key={store.id}
                     href={`/dashboard/stores/${store.id}`}
-                    className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-left"
-                    style={{
-                      background: store.id === activeStore?.id ? "var(--admin-bg-muted)" : "",
-                    }}
+                    className="group/row w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors hover:bg-(--admin-bg-muted)"
                   >
-                    <span className="w-6 h-6 rounded-md bg-black text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-                      {store.name?.[0]?.toUpperCase()}
+                    <span className="w-7 h-7 rounded-lg bg-black text-white font-bold flex items-center justify-center shrink-0 ring-1 ring-white/10 overflow-hidden">
+                      {store.markUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={store.markUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className={storeInitials(store.name).length > 2 ? "text-[8.5px] tracking-tight" : "text-[10px]"}>
+                          {storeInitials(store.name)}
+                        </span>
+                      )}
                     </span>
-                    <span
-                      className="flex-1 min-w-0 truncate text-[13px]"
-                      style={{ color: "var(--admin-text)" }}
-                    >
+                    <span className="flex-1 min-w-0 truncate text-[13px]" style={{ color: "var(--admin-text)" }}>
                       {store.name}
                     </span>
+                    {/* Arrives with the hover, so the row says "go" only
+                        when the pointer is already asking. */}
+                    <ChevronRight
+                      className="w-3.5 h-3.5 shrink-0 opacity-0 -translate-x-1 transition-[opacity,transform] group-hover/row:opacity-100 group-hover/row:translate-x-0"
+                      style={{ color: "var(--admin-text-3)" }}
+                    />
                   </Link>
                 ))}
-                <Link
-                  href="/dashboard/stores/new"
-                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-left"
-                >
-                  <Plus className="w-4 h-4 shrink-0" style={{ color: "var(--admin-text-3)" }} />
-                  <span className="text-[13px]" style={{ color: "var(--admin-text)" }}>
-                    Create store
-                  </span>
-                </Link>
               </div>
-            )}
+            </>
+          )}
 
-            <div style={{ borderTop: "1px solid var(--admin-border)" }} className="p-1.5">
-              <div className="px-2 py-1.5">
-                <p
-                  className="text-[13px] font-semibold truncate"
-                  style={{ color: "var(--admin-text)" }}
-                >
-                  {firstName} {lastName}
-                </p>
-                <p className="text-[11px] truncate" style={{ color: "var(--admin-text-3)" }}>
-                  {email}
-                </p>
-              </div>
-              <SignOutButton>
-                <button className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-left">
-                  <LogOut className="w-4 h-4 shrink-0" style={{ color: "var(--admin-text-3)" }} />
-                  <span className="text-[13px]" style={{ color: "var(--admin-text)" }}>
-                    Log out
-                  </span>
-                </button>
-              </SignOutButton>
-            </div>
+          <div className="px-1.5 pt-1.5 pb-1.5">
+            <Link
+              href="/dashboard/create-store"
+              className="group/row w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors hover:bg-(--admin-bg-muted)"
+            >
+              <span
+                className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors"
+                style={{
+                  border: "1px dashed color-mix(in srgb, var(--admin-text) 22%, transparent)",
+                  color: "var(--admin-text-3)",
+                }}
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </span>
+              <span className="text-[13px]" style={{ color: "var(--admin-text-2)" }}>
+                Create store
+              </span>
+            </Link>
           </div>
-        )}
+
+          {/* ── The person ──────────────────────────────────────────── */}
+          <div
+            className="flex items-center gap-2.5 px-3 py-2.5"
+            style={{ borderTop: "1px solid color-mix(in srgb, var(--admin-text) 7%, transparent)" }}
+          >
+            {imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={imageUrl} alt="" className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-black/5" />
+            ) : (
+              <span
+                className="w-7 h-7 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
+                style={{ background: "var(--admin-bg-muted)", color: "var(--admin-text-2)" }}
+              >
+                {initials || "?"}
+              </span>
+            )}
+            <span className="flex-1 min-w-0">
+              <span className="block truncate text-[12.5px] font-medium" style={{ color: "var(--admin-text)" }}>
+                {firstName} {lastName}
+              </span>
+              <span className="block truncate text-[11px]" style={{ color: "var(--admin-text-3)" }}>
+                {email}
+              </span>
+            </span>
+            <SignOutButton>
+              <button
+                title="Log out"
+                aria-label="Log out"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-(--admin-bg-muted)"
+                style={{ color: "var(--admin-text-3)" }}
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </SignOutButton>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -265,28 +406,28 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
       aria-hidden
     />
 
+    {/* No rule down the right-hand edge: a line there was a third colour
+        drawing a seam. The sidebar separates from the content panel by
+        sitting a shade darker instead, which needs no edge to be read. */}
     <aside
-      className={`fixed left-0 top-0 bottom-0 w-60 flex flex-col z-50 select-none transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform md:z-40 md:translate-x-0 md:transition-none ${
+      className={`fixed left-0 top-0 md:top-15 bottom-0 w-60 flex flex-col z-50 select-none md:rounded-tl-2xl transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform md:z-40 md:translate-x-0 md:transition-none ${
         drawerOpen ? "translate-x-0" : "-translate-x-full"
       }`}
-      style={{
-        background: "var(--admin-bg)",
-        borderRight: "1px solid var(--admin-border)",
-      }}
+      style={{ background: "var(--admin-sidebar)" }}
     >
-      {/* ── Logo ── */}
+      {/* ── Logo ── mobile only: on desktop the header above carries it. */}
       <div
-        className="flex items-center gap-2.5 px-5 h-15 shrink-0"
+        className="md:hidden flex items-center gap-2.5 px-5 h-15 shrink-0"
         style={{ borderBottom: "1px solid var(--admin-divider)" }}
       >
-        <div className="w-7 h-7 rounded-lg bg-black flex items-center justify-center">
-          <Store className="w-3.5 h-3.5 text-white" />
+        <div className="w-7 h-7 rounded-lg bg-black overflow-hidden flex items-center justify-center shrink-0">
+          <Image src="/logo.png" alt="" width={96} height={96} className="w-full h-full object-cover scale-[1.55]" />
         </div>
         <span
-          className="font-semibold text-[15px] tracking-tight flex-1"
+          className="text-[15px] font-black tracking-tighter leading-none flex-1"
           style={{ color: "var(--admin-text)" }}
         >
-          ShopFlow
+          Shopflow<span className="text-violet-600">.</span>
         </span>
       </div>
 
@@ -307,7 +448,7 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
             </button>
           </Link>
         ) : (
-          <div className="relative hidden md:block" ref={switcherRef}>
+          <div className="relative hidden" ref={switcherRef}>
             <button
               onClick={() => setSwitcherOpen((v) => !v)}
               className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-left"
@@ -419,7 +560,7 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
           <>
             <p
               className="text-[10px] font-bold uppercase tracking-[0.15em] px-3 pt-2 pb-1.5"
-              style={{ color: "var(--admin-text-4)" }}
+              style={{ color: "var(--admin-text-3)" }}
             >
               {activeStore.name}
             </p>
@@ -457,9 +598,9 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
         )}
       </nav>
 
-      {/* ── User ── desktop only; on mobile this is in the header menu. */}
+      {/* ── User ── the header account menu holds this now. */}
       <div
-        className="hidden md:block px-3 py-3 shrink-0"
+        className="hidden px-3 py-3 shrink-0"
         style={{ borderTop: "1px solid var(--admin-divider)" }}
       >
         <div
@@ -524,9 +665,14 @@ function NavItem({
   return (
     <div
       className="group/nav relative rounded-xl transition-all"
-      style={{ background: active ? "var(--admin-bg-muted)" : "transparent" }}
+      style={{
+        background: active ? "var(--admin-sidebar-active)" : "transparent",
+        // A hairline and a whisper of shadow, so the selected row reads as
+        // lifted off the sidebar rather than as a slightly different grey.
+        boxShadow: active ? "var(--admin-sidebar-ring)" : "none",
+      }}
       onMouseEnter={(e) => {
-        if (!active) (e.currentTarget as HTMLElement).style.background = "var(--admin-bg-subtle)";
+        if (!active) (e.currentTarget as HTMLElement).style.background = "var(--admin-sidebar-hover)";
       }}
       onMouseLeave={(e) => {
         if (!active) (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -535,9 +681,8 @@ function NavItem({
       <Link href={href}>
         <div className="flex items-center gap-2.5 px-3 py-2">
           <Icon
-            className="w-4 h-4 shrink-0"
-            style={{ color: active ? "var(--admin-text)" : "var(--admin-text-3)" }}
-            strokeWidth={active ? 2.2 : 1.8}
+            className="w-4.5 h-4.5 shrink-0"
+            style={{ color: active ? "var(--admin-text)" : "var(--admin-text-2)" }}
           />
           <span
             className="text-[13px] flex-1"

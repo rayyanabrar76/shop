@@ -33,6 +33,15 @@ export function AdminThemeProvider({
   const [mode, setModeState] = useState<AdminThemeMode>(initialMode)
   const [mounted, setMounted] = useState(false)
 
+  // Marks <html> for as long as the admin is on screen, so the page's own
+  // scrollbar gutter and overscroll area can be painted with the admin's
+  // canvas instead of the storefront's near-white body. See [data-admin]
+  // in globals.css.
+  useEffect(() => {
+    document.documentElement.setAttribute('data-admin', '')
+    return () => document.documentElement.removeAttribute('data-admin')
+  }, [])
+
   useEffect(() => {
     setMounted(true)
     const saved = localStorage.getItem('admin-theme') as AdminThemeMode | null

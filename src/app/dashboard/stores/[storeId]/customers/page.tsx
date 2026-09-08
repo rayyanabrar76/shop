@@ -5,10 +5,14 @@ import CustomersClient from './CustomersClient'
 
 export default async function CustomersPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ storeId: string }>
+  searchParams: Promise<{ q?: string }>
 }) {
   const { storeId } = await params
+  // The admin search lands here with ?q=<email> to open on one customer.
+  const { q } = await searchParams
   const { userId: clerkId } = await auth()
   if (!clerkId) redirect('/sign-in')
 
@@ -21,5 +25,5 @@ export default async function CustomersPage({
     orderBy: { createdAt: 'desc' },
   })
 
-  return <CustomersClient store={store} customers={customers} />
+  return <CustomersClient store={store} customers={customers} initialSearch={q ?? ''} />
 }
