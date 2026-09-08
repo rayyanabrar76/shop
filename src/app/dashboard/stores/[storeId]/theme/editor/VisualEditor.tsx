@@ -732,27 +732,27 @@ function handlePageContentChange(content: unknown) {
   const currentPageName = activePage ? activePage.name : activeSystemPage ? activeSystemPage.name : 'Home'
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-zinc-900 z-50">
+    <div className="fixed inset-0 flex flex-col bg-white dark:bg-zinc-900 z-50">
       {/* Top bar */}
-      <div className="h-14 bg-zinc-900 border-b border-zinc-800 flex items-center gap-2 px-2 sm:px-4 shrink-0">
+      <div className="h-14 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-2 px-2 sm:px-4 shrink-0">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Link
             href={`/dashboard/stores/${storeId}/theme`}
             aria-label="Exit the editor"
-            className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors text-sm font-medium shrink-0"
+            className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors text-sm font-medium shrink-0"
           >
             <ChevronLeft className="w-4 h-4" />
             {/* The chevron says "back" on its own where space is short. */}
             <span className="hidden sm:inline">Exit</span>
           </Link>
-          <div className="hidden sm:block h-4 w-px bg-zinc-700" />
-          <span className="text-white text-sm font-semibold truncate">{subdomain}</span>
+          <div className="hidden sm:block h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
+          <span className="text-zinc-900 dark:text-white text-sm font-semibold truncate">{subdomain}</span>
         </div>
         {/* Choosing a device preview is a desktop job: on a phone you are
             already looking at the mobile width, and the three buttons were
             taking a third of the bar to say so. */}
         <div className="hidden sm:flex flex-1 items-center justify-center">
-          <div className="flex items-center gap-1 bg-zinc-800 rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1">
             {([
               { id: 'desktop', icon: Monitor },
               { id: 'tablet', icon: Tablet },
@@ -774,28 +774,28 @@ function handlePageContentChange(content: unknown) {
             onClick={togglePanel}
             aria-label="Toggle settings panel"
             title="Toggle settings panel"
-            className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
             <PanelLeft className="w-4 h-4" />
           </button>
-          <button onClick={undo} disabled={history.length === 0} className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-30">
+          <button onClick={undo} disabled={history.length === 0} className="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-30">
             <Undo2 className="w-4 h-4" />
           </button>
-          <Link href={storeUrl(subdomain, '?owner=1')} target="_blank" className="group relative p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
+          <Link href={storeUrl(subdomain, '?owner=1')} target="_blank" className="group relative p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
             <Eye className="w-4 h-4" />
-            <span className="absolute right-0 top-full mt-1.5 px-2 py-1 bg-zinc-700 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">View Store</span>
+            <span className="absolute right-0 top-full mt-1.5 px-2 py-1 bg-zinc-900 dark:bg-zinc-700 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">View Store</span>
           </Link>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-[13px] font-semibold tracking-[-0.01em] text-zinc-900 shadow-[0_1px_2px_rgba(0,0,0,0.35)] transition-all hover:bg-zinc-100 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
+            className="flex items-center gap-2 rounded-lg bg-zinc-900 dark:bg-white px-4 py-2 text-[13px] font-semibold tracking-[-0.01em] text-white dark:text-zinc-900 shadow-sm transition-all hover:bg-zinc-800 dark:hover:bg-zinc-100 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
           >
             {saved ? <><CheckCircle2 className="w-4 h-4" /> Saved!</> : saving ? 'Saving...' : <><Save className="w-4 h-4" /> Save</>}
           </button>
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden relative bg-zinc-800">
+      <div className="flex flex-1 overflow-hidden relative bg-zinc-100 dark:bg-zinc-800">
         <div
           className={`lg:hidden absolute inset-0 z-30 bg-black/40 transition-opacity duration-300 ${
             panelOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
