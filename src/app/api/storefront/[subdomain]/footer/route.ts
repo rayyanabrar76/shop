@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { isStarterPage } from '@/lib/default-pages'
+import { publishedPolicies } from '@/lib/policies-db'
+import { POLICY_BY_KIND } from '@/lib/policies'
 
 /**
- * GET /api/storefront/[subdomain]/footer -> { categories, pages }
+ * GET /api/storefront/[subdomain]/footer -> { categories, pages, policies }
  *
  * The footer renders on ten different pages. Fetching its own links in one
  * request keeps it self-contained instead of threading the same two lists
@@ -20,9 +22,9 @@ export async function GET(
       where: { subdomain },
       select: { id: true },
     })
-    if (!store) return NextResponse.json({ categories: [], pages: [] })
+    if (!store) return NextResponse.json({ categories: [], pages: [], policies: [] })
 
-    const [categories, pages] = await Promise.all([
+    const [categories, pages, policies] = await Promise.all([
       prisma.category.findMany({
         where: { storeId: store.id, visible: true },
         select: { name: true, slug: true },
@@ -35,6 +37,7 @@ export async function GET(
         orderBy: { createdAt: 'asc' },
         take: 12,
       }),
+      publishedPolicies(store.id),
     ])
 
     // A shopper clicking "Refund Policy" and finding writing prompts is worse
@@ -45,12 +48,14 @@ export async function GET(
       .map(p => ({ name: p.name, slug: p.slug }))
 
     return NextResponse.json(
-      { categories, pages: written },
+      // Policies are separate from pages so the footer can put them in their
+      // own group; the checkout reads the same list.
+      { categories, pages: written, policies: policies.map(p => ({ name: p.title, slug: POLICY_BY_KIND[p.kind].slug })) },
       { headers: { 'Cache-Control': 'public, max-age=0, s-maxage=300' } },
     )
   } catch (err) {
     console.error('[footer]', err)
     // The footer is decoration around the real page — never fail it.
-    return NextResponse.json({ categories: [], pages: [] })
+    return NextResponse.json({ categories: [], pages: [], policies: [] })
   }
 }

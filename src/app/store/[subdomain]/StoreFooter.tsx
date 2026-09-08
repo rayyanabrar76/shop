@@ -208,7 +208,10 @@ export default function StoreFooter({
         if (cancelled || !d) return
         setFetched({
           categories: d.categories ?? [],
-          pages: (d.pages ?? []).map((pg: { name: string; slug: string }) => ({
+          // Pages first, then policies, which is the order a shopper scans
+          // an Information column: what the shop says about itself, then the
+          // small print.
+          pages: [...(d.pages ?? []), ...(d.policies ?? [])].map((pg: { name: string; slug: string }) => ({
             label: pg.name,
             href: `${storeBase}/${pg.slug}`,
           })),

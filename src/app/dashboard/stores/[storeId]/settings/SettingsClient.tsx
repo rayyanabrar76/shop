@@ -7,7 +7,7 @@ import {
   Store, Globe, Trash2, Save, ArrowLeft,
   CheckCircle2, AlertCircle, ExternalLink,
   Copy, ShieldAlert, Settings, RefreshCw, Palette,
-  Sun, Moon, Monitor, ChevronRight,
+  Sun, Moon, Monitor, ChevronRight, FileText,
 } from 'lucide-react'
 import {
   HiCheck, HiX, HiCheckCircle, HiClock,
@@ -19,6 +19,7 @@ import { normalizeSubdomainInput, slugifySubdomain, validateSubdomain } from '@/
 import { CURRENCIES, currencySymbol } from '@/lib/currency'
 import Select from '@/components/dashboard/Select'
 import PageHeader from '@/components/dashboard/PageHeader'
+import PoliciesPanel from './PoliciesPanel'
 import { inputCls } from '@/components/dashboard/field-styles'
 import { storeInitials } from '@/lib/store-initials'
 import { COUNTRIES } from '@/lib/countries'
@@ -43,7 +44,7 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
   const [subdomain, setSubdomain] = useState(store.subdomain)
   const [currency, setCurrency] = useState(store.currency)
   const [country, setCountry] = useState(store.country ?? '')
-  const [activeSection, setActiveSection] = useState<'general' | 'appearance' | 'domain' | 'danger'>('general')
+  const [activeSection, setActiveSection] = useState<'general' | 'appearance' | 'domain' | 'policies' | 'danger'>('general')
   /** A theme card to ring briefly, when the search sent someone here for it. */
   const [focusPulse, setFocusPulse] = useState<string | null>(null)
 
@@ -54,7 +55,7 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
     const params = new URLSearchParams(window.location.search)
     const section = params.get('section')
     const focus = params.get('focus')
-    if (section && ['general', 'appearance', 'domain', 'danger'].includes(section)) {
+    if (section && ['general', 'appearance', 'domain', 'policies', 'danger'].includes(section)) {
       setActiveSection(section as typeof activeSection)
     }
     if (focus) {
@@ -169,6 +170,7 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
     { id: 'general',    label: 'General',      icon: Settings },
     { id: 'appearance', label: 'Appearance',   icon: Palette },
     { id: 'domain',     label: 'Domain & URL', icon: Globe },
+    { id: 'policies',   label: 'Policies',     icon: FileText },
     { id: 'danger',     label: 'Danger Zone',  icon: ShieldAlert },
   ] as const
 
@@ -487,6 +489,10 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
           )}
 
           {/* ── DANGER ZONE ── */}
+          {activeSection === 'policies' && (
+            <PoliciesPanel storeId={store.id} subdomain={store.subdomain} />
+          )}
+
           {activeSection === 'danger' && (
             <Card title="Danger Zone" description="Permanent actions that cannot be undone." danger>
               <div className="space-y-6">

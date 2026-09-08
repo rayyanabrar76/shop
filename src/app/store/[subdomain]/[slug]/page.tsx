@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import StorePageClient from './StorePageClient'
+import { POLICY_BY_SLUG, isPolicyPublished } from '@/lib/policies'
 
 export default async function StorePageRenderer({
   params,
@@ -20,7 +21,16 @@ export default async function StorePageRenderer({
     where: { storeId_slug: { storeId: store.id, slug } },
   })
 
-  if (!page) notFound()
+  // Not a page? It may be a policy. The four legal pages became policies and
+  // kept their addresses, so a link a shop shared before still resolves. A
+  // policy that is unwritten or hidden is simply not here.
+  const policyDef = page ? null : POLICY_BY_SLUG[slug]
+  const policy = policyDef
+    ? await prisma.storePolicy.findUnique({ where: { storeId_kind: { storeId: store.id, kind: policyDef.kind } } })
+    : null
+  const policyLive = !!(policyDef && policy &&
+    isPolicyPublished({ kind: policyDef.kind, content: policy.content, visible: policy.visible }))
+  if (!page && !policyLive) notFound()
 
   const t = store.theme
 
@@ -67,17 +77,25 @@ export default async function StorePageRenderer({
     navDividers:     t?.navDividers     ?? false,
   }
 
-  const customSections = await prisma.customSection.findMany({
-    where: { storeId: store.id, pageId: page.id },
-    orderBy: { position: 'asc' },
-  })
+  const customSections = page
+    ? await prisma.customSection.findMany({
+        where: { storeId: store.id, pageId: page.id },
+        orderBy: { position: 'asc' },
+      })
+    : []
+
+  // A policy renders through the same plain-text page the old policy pages
+  // used, under a type of its own so the editor does not mistake it for one.
+  const pageName = page ? page.name : policy!.title
+  const pageType = page ? page.type : 'policy'
+  const initialContent = page ? (page.content ?? {}) : { heading: policy!.title, content: policy!.content }
 
   return (
     <StorePageClient
       store={store}
-      pageName={page.name}
-      pageType={page.type}
-      initialContent={page.content ?? {}}
+      pageName={pageName}
+      pageType={pageType}
+      initialContent={initialContent}
       initialCustomSections={customSections}
       theme={theme}
       subdomain={subdomain}

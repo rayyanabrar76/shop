@@ -97,6 +97,8 @@ export default function CheckoutClient({
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  /** The shop's written policies, for the line under the order button. */
+  const [policies, setPolicies] = useState<{ name: string; slug: string }[]>([])
 
   useEffect(() => {
     fetch(`/api/storefront/${subdomain}/payment`)
@@ -121,6 +123,14 @@ export default function CheckoutClient({
         setShippingRates(data.rates ?? [])
         if (data.rates?.length > 0) setSelectedRateId(data.rates[0].id)
       })
+      .catch(() => {})
+
+    // Same list the footer shows. Read here so the order button can say what
+    // an order agrees to, with links, rather than leaving it to the footer
+    // three screens down.
+    fetch(`/api/storefront/${subdomain}/footer`)
+      .then(r => r.json())
+      .then(data => setPolicies(data.policies ?? []))
       .catch(() => {})
   }, [subdomain])
 
@@ -488,6 +498,27 @@ export default function CheckoutClient({
                 <HiLockClosed className="w-3 h-3" />
                 {selectedMethod === 'stripe' ? 'Card details are handled by Stripe' : 'Your details are sent securely'}
               </p>
+
+              {/* Only the policies that exist. A line promising terms a shop
+                  has not written would link to nothing. */}
+              {policies.length > 0 && (
+                <p className="text-center text-[11px] leading-relaxed text-zinc-500">
+                  By placing this order you agree to our{' '}
+                  {policies.map((pol, i) => (
+                    <span key={pol.slug}>
+                      {i > 0 && (i === policies.length - 1 ? ' and ' : ', ')}
+                      <Link
+                        href={`/store/${subdomain}/${pol.slug}`}
+                        target="_blank"
+                        className="underline underline-offset-2 hover:text-zinc-800"
+                      >
+                        {pol.name}
+                      </Link>
+                    </span>
+                  ))}
+                  .
+                </p>
+              )}
             </section>
           </div>
         </div>

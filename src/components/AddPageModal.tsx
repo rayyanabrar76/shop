@@ -1,11 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import {
-  Globe, X,
-  Users, Mail, HelpCircle, BookOpen,
-  Package, Shield, FileText, Layers, RotateCcw,
-} from 'lucide-react'
+import { Globe, X, Users, Mail, HelpCircle, BookOpen, Layers } from 'lucide-react'
 
 export interface PageResult {
   id: string
@@ -20,10 +16,6 @@ export const PAGE_TEMPLATES = [
   { type: 'contact',  name: 'Contact Us',       slug: 'contact',         Icon: Mail,        desc: 'Get in touch' },
   { type: 'faq',      name: 'FAQ',              slug: 'faq',             Icon: HelpCircle,  desc: 'Common questions' },
   { type: 'blog',     name: 'Blog',             slug: 'blog',            Icon: BookOpen,    desc: 'Articles & updates' },
-  { type: 'shipping', name: 'Shipping Policy',  slug: 'shipping-policy', Icon: Package,     desc: 'Delivery info' },
-  { type: 'privacy',  name: 'Privacy Policy',   slug: 'privacy-policy',  Icon: Shield,      desc: 'Data handling' },
-  { type: 'refund',   name: 'Refund Policy',    slug: 'refund-policy',   Icon: RotateCcw,   desc: 'Returns & refunds' },
-  { type: 'terms',    name: 'Terms of Service', slug: 'terms',           Icon: FileText,    desc: 'Legal terms' },
   { type: 'custom',   name: 'Custom Page',      slug: '',                Icon: Layers,      desc: 'Name it yourself' },
 ]
 

@@ -2,7 +2,7 @@ import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateSubdomain } from '@/lib/subdomain'
-import { DEFAULT_PAGES, starterContent } from '@/lib/default-pages'
+import { POLICY_KINDS } from '@/lib/policies'
 
 export async function POST(req: Request) {
   try {
@@ -59,16 +59,11 @@ export async function POST(req: Request) {
         // customization and payment pages have something to read.
         theme: { create: {} },
         payment: { create: {} },
-        // Every shop is expected to publish these, so they exist from the
-        // start rather than being discovered when a customer asks. They stay
-        // out of the storefront footer until they are actually written.
-        pages: {
-          create: DEFAULT_PAGES.map(p => ({
-            type: p.type,
-            name: p.name,
-            slug: p.slug,
-            content: starterContent(p),
-          })),
+        // Every shop is expected to publish these, and the checkout and the
+        // footer read them by kind, so the rows exist from the start. They
+        // start empty and stay off the storefront until they are written.
+        policies: {
+          create: POLICY_KINDS.map(p => ({ kind: p.kind, title: p.title })),
         },
       },
       // Select explicitly: the Store model has a BigInt column (storageUsed)

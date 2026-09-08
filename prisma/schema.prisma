@@ -57,6 +57,39 @@ model Store {
   shippingRates   ShippingRate[]
   aiSuggestions   AiSuggestion[]
   subscribers     NewsletterSubscriber[]
+  policies        StorePolicy[]
+}
+
+/**
+ * A shop's written policies: refund, privacy, terms, shipping, contact.
+ *
+ * These used to be ordinary StorePage rows, indistinguishable from About Us,
+ * which meant nothing knew they were policies: the checkout linked to none of
+ * them and the footer could only hide one by it being blank. They are a fixed,
+ * known set, so they get a table of their own, one row per kind per shop, and
+ * the checkout and footer read them by kind.
+ *
+ * `content` starts empty. A policy is a promise to real customers and nobody
+ * should ship one the merchant did not write or at least read; the editor
+ * offers a draft, it does not publish one.
+ */
+model StorePolicy {
+  id        String   @id @default(cuid())
+  storeId   String
+  /// refund | privacy | terms | shipping | contact
+  kind      String
+  title     String
+  content   String   @default("")
+  /// Whether the storefront footer lists it. The checkout always links a
+  /// written terms and privacy policy, since those are the ones an order
+  /// agrees to.
+  visible   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, kind])
 }
 
 enum Plan {

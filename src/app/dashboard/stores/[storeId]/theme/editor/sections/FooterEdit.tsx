@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 import { useState, useEffect } from 'react'
 import SectionHeader from './SectionHeader'
 import AiFieldLabel from '@/components/ai/AiFieldLabel'
@@ -21,17 +23,7 @@ interface FooterEditProps {
   onAddPage?: () => void
 }
 
-/** The pages a shop is normally expected to have. */
-const EXPECTED_PAGES = [
-  { slug: 'privacy-policy', label: 'Privacy Policy' },
-  { slug: 'terms', label: 'Terms of Service' },
-  { slug: 'refund-policy', label: 'Refund Policy' },
-  { slug: 'shipping-policy', label: 'Shipping Policy' },
-]
-
 export default function FooterEdit({ storeId, storeName, onPreviewChange, onSaveSuccess, theme, updateTheme, onBack, pages = [], onAddPage }: FooterEditProps) {
-  const have = new Set(pages.map(p => p.slug))
-  const missing = EXPECTED_PAGES.filter(p => !have.has(p.slug))
   const [nameInput, setNameInput] = useState('')
   const [savedName, setSavedName] = useState('')
   const [nameSaving, setNameSaving] = useState(false)
@@ -245,11 +237,18 @@ export default function FooterEdit({ storeId, storeName, onPreviewChange, onSave
               </div>
             )}
 
-            {missing.length > 0 && (
-              <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-2">
-                Not made yet: {missing.map(m => m.label).join(', ')}
-              </p>
-            )}
+            {/* Policies are not pages any more. They are written in Settings,
+                where the checkout and this footer both read them from. */}
+            <p className="text-[10px] text-zinc-500 mt-2">
+              Refund, privacy, terms and shipping policies are written in{' '}
+              <Link
+                href={`/dashboard/stores/${storeId}/settings?section=policies`}
+                className="font-semibold underline underline-offset-2 hover:text-zinc-800 dark:hover:text-zinc-200"
+              >
+                Settings → Policies
+              </Link>
+              {' '}and appear here once written.
+            </p>
 
             {onAddPage && (
               <button

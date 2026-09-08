@@ -283,6 +283,8 @@ export default function StorePageClient({
         )
       }
 
+      case 'refund':
+      case 'policy':
       case 'shipping':
       case 'privacy':
       case 'terms': {
