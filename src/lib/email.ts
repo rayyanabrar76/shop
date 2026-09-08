@@ -149,3 +149,101 @@ export async function sendPasswordReset({
     html,
   })
 }
+
+/**
+ * Asks a shopper what they thought, a few days after they bought.
+ *
+ * This is the email that decides whether reviews exist at all. Left to
+ * themselves almost nobody returns to a product page to write one, so a shop
+ * with no request email has no reviews, which is exactly where this one was.
+ *
+ * The link carries a signed token, so the form opens knowing who they are
+ * and what they bought. They pick stars and press send: no name, no address,
+ * no remembering which of four donuts it was.
+ */
+export async function sendReviewRequest({
+  to, storeName, customerName, items,
+}: {
+  to: string
+  storeName: string
+  customerName?: string | null
+  /** One row per product, each with its own signed link. */
+  items: { title: string; imageUrl: string | null; url: string }[]
+}) {
+  if (items.length === 0) return
+
+  const rows = items.map(i => `
+    <tr>
+      <td style="padding:10px 0;font-size:13px;border-bottom:1px solid #f4f4f5">
+        ${i.imageUrl
+          ? `<img src="${i.imageUrl}" width="40" height="40" alt="" style="border-radius:8px;object-fit:cover;vertical-align:middle;margin-right:10px">`
+          : ''}
+        ${i.title}
+      </td>
+      <td style="padding:10px 0;text-align:right;border-bottom:1px solid #f4f4f5">
+        <a href="${i.url}" style="font-size:13px;font-weight:700;color:#09090b;text-decoration:none;white-space:nowrap">Rate it →</a>
+      </td>
+    </tr>
+  `).join('')
+
+  const html = base(`
+    <h2>How was it${customerName ? `, ${customerName}` : ''}?</h2>
+    <p>You ordered from <strong>${storeName}</strong> a few days ago. If you have a minute, tell other shoppers what you thought. It takes about ten seconds.</p>
+    <table class="table"><tbody>${rows}</tbody></table>
+    <hr class="divider">
+    <p style="font-size:12px;color:#a1a1aa">Your review is read by the shop before it appears, and your email address is never shown.</p>
+  `)
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: items.length === 1
+      ? `How was your ${items[0].title}?`
+      : `How was your order from ${storeName}?`,
+    html,
+  })
+}
+
+/**
+ * Tells the shop a review is waiting.
+ *
+ * Reviews arrive unpublished and stay invisible until the owner acts, so
+ * without this one could sit for a week and the shopper would think their
+ * review had been thrown away. A low rating is worth knowing about quickly
+ * too, since that is a customer who may still be worth answering.
+ */
+export async function sendNewReviewAlert({
+  to, storeName, storeId, productTitle, authorName, rating, title, body, verified,
+}: {
+  to: string
+  storeName: string
+  storeId: string
+  productTitle: string
+  authorName: string
+  rating: number
+  title?: string | null
+  body?: string | null
+  verified: boolean
+}) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating)
+
+  const html = base(`
+    <h2>${rating} star review</h2>
+    <p><strong>${authorName}</strong>${verified ? ' (verified purchase)' : ''} reviewed <strong>${productTitle}</strong> on ${storeName}.</p>
+    <hr class="divider">
+    <p style="font-size:20px;letter-spacing:2px;color:#f59e0b;margin-bottom:8px">${stars}</p>
+    ${title ? `<p style="font-weight:700">${title}</p>` : ''}
+    ${body ? `<p style="color:#3f3f46">${body}</p>` : ''}
+    <hr class="divider">
+    <p>It is not on your storefront yet. Nothing appears until you publish it.</p>
+    <a class="btn" href="${appUrl}/dashboard/stores/${storeId}/reviews">Read and publish</a>
+  `)
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `${rating}★ review of ${productTitle} – ${storeName}`,
+    html,
+  })
+}

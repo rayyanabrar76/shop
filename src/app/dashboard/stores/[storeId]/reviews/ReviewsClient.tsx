@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Star, Check, EyeOff, Trash2, CheckCircle2, MessageSquare } from 'lucide-react'
+import { Star, Check, EyeOff, Trash2, CheckCircle2, MessageSquare, Reply, Send } from 'lucide-react'
 import PageHeader from '@/components/dashboard/PageHeader'
+import { inputCls } from '@/components/dashboard/field-styles'
 
 type Status = 'PENDING' | 'PUBLISHED' | 'HIDDEN'
 
@@ -15,6 +16,8 @@ export interface AdminReview {
   title: string | null
   body: string | null
   status: Status
+  /** The shop's public answer, rendered under the review on the storefront. */
+  reply: string | null
   verified: boolean
   createdAt: string
   product: { id: string; title: string; imageUrl: string | null }
@@ -58,6 +61,11 @@ export default function ReviewsClient({
     initial.some(r => r.status === 'PENDING') ? 'PENDING' : 'PUBLISHED',
   )
   const [busy, setBusy] = useState<string | null>(null)
+  /** Which review's reply box is open, and what is in it. */
+  const [replying, setReplying] = useState<string | null>(null)
+  const [draft, setDraft] = useState('')
+  const [asking, setAsking] = useState(false)
+  const [asked, setAsked] = useState<string | null>(null)
 
   const shown = reviews.filter(r => r.status === tab)
   const counts = {
@@ -85,6 +93,49 @@ export default function ReviewsClient({
     }
   }
 
+  async function saveReply(id: string) {
+    setBusy(id)
+    try {
+      const res = await fetch(`/api/stores/${storeId}/reviews`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, reply: draft }),
+      })
+      if (res.ok) {
+        const reply = draft.trim() || null
+        setReviews(rs => rs.map(r => (r.id === id ? { ...r, reply } : r)))
+        setReplying(null)
+        setDraft('')
+      }
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  /**
+   * Asks recent buyers what they thought, now rather than on tomorrow's run.
+   *
+   * The same job the daily schedule runs, so an order already asked is not
+   * asked twice however many times this is pressed.
+   */
+  async function askForReviews() {
+    setAsking(true)
+    setAsked(null)
+    try {
+      const res = await fetch(`/api/stores/${storeId}/reviews/request`, { method: 'POST' })
+      const data = await res.json()
+      setAsked(res.ok
+        ? data.sent > 0
+          ? `Asked ${data.sent} customer${data.sent === 1 ? '' : 's'}.`
+          : 'Nobody new to ask right now.'
+        : data.error ?? 'Could not send those')
+    } catch {
+      setAsked('Could not send those')
+    } finally {
+      setAsking(false)
+    }
+  }
+
   async function remove(id: string) {
     setBusy(id)
     try {
@@ -103,6 +154,20 @@ export default function ReviewsClient({
         title="Reviews"
         count={reviews.length}
         meta={published.length ? `${average.toFixed(1)} average from ${published.length} published` : undefined}
+        action={
+          <div className="flex items-center gap-2">
+            {asked && <span className="text-[11.5px] text-zinc-500">{asked}</span>}
+            <button
+              onClick={askForReviews}
+              disabled={asking}
+              title="Email recent buyers and ask them to review what they bought"
+              className="flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-(--admin-border) bg-(--admin-card) px-3 text-[11.5px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors disabled:opacity-50"
+            >
+              <Send className="w-3.5 h-3.5" />
+              {asking ? 'Sending…' : 'Ask for reviews'}
+            </button>
+          </div>
+        }
       />
 
       <div className="max-w-6xl px-6 pb-10">
@@ -185,6 +250,65 @@ export default function ReviewsClient({
                       <p className="text-[13px] text-zinc-600 dark:text-zinc-300 mt-1 leading-relaxed whitespace-pre-line">
                         {r.body}
                       </p>
+                    )}
+
+                    {/* Answering in public is how a shop turns a bad review
+                        into something a reader trusts. Shown indented under
+                        the review it answers, the way it renders on the
+                        storefront, so what is written here is what is seen. */}
+                    {replying === r.id ? (
+                      <div className="mt-3">
+                        <textarea
+                          value={draft}
+                          onChange={e => setDraft(e.target.value)}
+                          rows={3}
+                          autoFocus
+                          maxLength={1000}
+                          placeholder="Thanks for letting us know…"
+                          className={`${inputCls} resize-none`}
+                        />
+                        <div className="flex items-center gap-2 mt-2">
+                          <button
+                            onClick={() => saveReply(r.id)}
+                            disabled={busy === r.id}
+                            className="flex h-8 items-center rounded-lg bg-zinc-900 dark:bg-zinc-50 px-3 text-[11px] font-semibold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white transition-colors disabled:opacity-50"
+                          >
+                            {busy === r.id ? 'Saving…' : r.reply ? 'Update reply' : 'Post reply'}
+                          </button>
+                          <button
+                            onClick={() => { setReplying(null); setDraft('') }}
+                            className="h-8 px-2 text-[11px] font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          {r.reply && (
+                            <button
+                              onClick={() => { setDraft(''); saveReply(r.id) }}
+                              className="h-8 px-2 text-[11px] font-semibold text-zinc-500 hover:text-red-600 transition-colors ml-auto"
+                            >
+                              Remove reply
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ) : r.reply ? (
+                      <div className="mt-3 ml-1 pl-3 border-l-2 border-(--admin-field-border)">
+                        <p className="text-[11px] font-semibold text-zinc-900 dark:text-zinc-50">Your reply</p>
+                        <p className="text-[13px] text-zinc-600 dark:text-zinc-300 mt-0.5 leading-relaxed whitespace-pre-line">{r.reply}</p>
+                        <button
+                          onClick={() => { setReplying(r.id); setDraft(r.reply ?? '') }}
+                          className="mt-1 text-[11px] font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setReplying(r.id); setDraft('') }}
+                        className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                      >
+                        <Reply className="w-3.5 h-3.5" /> Reply publicly
+                      </button>
                     )}
                   </div>
 

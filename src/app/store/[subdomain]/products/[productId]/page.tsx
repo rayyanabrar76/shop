@@ -122,7 +122,7 @@ export default async function StoreProductPage({
     orderBy: { createdAt: 'desc' },
     select: {
       id: true, authorName: true, rating: true, title: true,
-      body: true, verified: true, createdAt: true,
+      body: true, verified: true, createdAt: true, reply: true,
     },
   })
   const ratingCount = reviews.length

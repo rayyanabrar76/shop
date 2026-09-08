@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Star, CheckCircle2 } from 'lucide-react'
 
 export interface PublicReview {
@@ -11,7 +11,14 @@ export interface PublicReview {
   body: string | null
   verified: boolean
   createdAt: string
+  /** The shop's public answer, shown under the review. */
+  reply?: string | null
 }
+
+type Sort = 'recent' | 'highest' | 'lowest'
+
+/** Rendered before "show more". Enough to judge by, short enough to scroll past. */
+const PAGE = 5
 
 /** Five stars, filled to `value`. Half stars are rounded down deliberately:
     a 4.4 average shown as 4.5 stars is a small lie told at scale. */
@@ -51,6 +58,10 @@ export default function ProductReviews({
   theme: { primary: string; radius: string; textColor: string }
 }) {
   const [open, setOpen] = useState(false)
+  const [sort, setSort] = useState<Sort>('recent')
+  const [showAll, setShowAll] = useState(false)
+  /** Carried from a request email. Proves the purchase to the API. */
+  const [token, setToken] = useState<string | null>(null)
   const [rating, setRating] = useState(0)
   const [hovered, setHovered] = useState(0)
   const [name, setName] = useState('')
@@ -61,6 +72,34 @@ export default function ProductReviews({
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
 
+  // Arriving from "how was it?" should land on an open form, not on a page
+  // where the visitor has to find the button again. The token is taken out
+  // of the URL and kept, so it is not left sitting in the address bar to be
+  // copied into a chat or a bookmark.
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    const t = url.searchParams.get('review')
+    if (!t) return
+    // Read after mount rather than during render, on purpose. The server has
+    // no URL to read, so deriving this at render time would open the form on
+    // the client and leave it shut on the server, which is a hydration
+    // mismatch. Syncing from the address bar once is what an effect is for.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setToken(t)
+    setOpen(true)
+    url.searchParams.delete('review')
+    window.history.replaceState(null, '', url.toString() + '#reviews')
+  }, [])
+
+  const ordered = useMemo(() => {
+    const list = [...reviews]
+    if (sort === 'highest') return list.sort((a, b) => b.rating - a.rating)
+    if (sort === 'lowest') return list.sort((a, b) => a.rating - b.rating)
+    return list.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
+  }, [reviews, sort])
+
+  const visible = showAll ? ordered : ordered.slice(0, PAGE)
+
   async function submit() {
     if (sending) return
     setError('')
@@ -69,7 +108,7 @@ export default function ProductReviews({
     setSending(true)
     try {
       const res = await fetch(
-        `/api/storefront/${subdomain}/products/${productSlug}/reviews`,
+        `/api/storefront/${subdomain}/products/${productSlug}/reviews${token ? `?token=${encodeURIComponent(token)}` : ''}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -221,9 +260,25 @@ export default function ProductReviews({
         </div>
       )}
 
+      {reviews.length > 1 && (
+        <div className="flex items-center gap-2 mb-5">
+          <span className="text-xs text-zinc-500">Sort</span>
+          {([['recent', 'Most recent'], ['highest', 'Highest'], ['lowest', 'Lowest']] as [Sort, string][]).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setSort(key)}
+              className={`text-xs px-2 py-1 transition-colors ${sort === key ? 'font-semibold text-zinc-900' : 'text-zinc-500 hover:text-zinc-900'}`}
+              style={{ borderRadius: theme.radius }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {reviews.length > 0 && (
         <ul className="space-y-6">
-          {reviews.map(r => (
+          {visible.map(r => (
             <li key={r.id} className="border-t border-zinc-100 pt-6 first:border-0 first:pt-0">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-1.5">
                 <Stars value={r.rating} />
@@ -239,9 +294,31 @@ export default function ProductReviews({
               </div>
               {r.title && <p className="text-sm font-semibold mb-1">{r.title}</p>}
               {r.body && <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-line">{r.body}</p>}
+
+              {/* The shop answering, indented under the review it answers so
+                  it cannot be mistaken for another shopper's opinion. */}
+              {r.reply && (
+                <div
+                  className="mt-3 ml-4 pl-4 border-l-2 border-zinc-200"
+                  style={{ borderColor: theme.primary }}
+                >
+                  <p className="text-xs font-semibold mb-0.5">Reply from the shop</p>
+                  <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-line">{r.reply}</p>
+                </div>
+              )}
             </li>
           ))}
         </ul>
+      )}
+
+      {!showAll && ordered.length > PAGE && (
+        <button
+          onClick={() => setShowAll(true)}
+          className="mt-6 w-full py-3 text-sm font-semibold border border-zinc-300 hover:border-zinc-900 transition-colors"
+          style={{ borderRadius: theme.radius }}
+        >
+          Show all {ordered.length} reviews
+        </button>
       )}
     </section>
   )

@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * GET   /api/stores/[storeId]/reviews        -> the shop's reviews
- * PATCH /api/stores/[storeId]/reviews        { id, status } -> publish or hide
+ * PATCH /api/stores/[storeId]/reviews        { id, status? , reply? } -> publish, hide or answer
  * DELETE /api/stores/[storeId]/reviews?id=   -> remove one
  *
  * Moderation for the owner. Reviews arrive PENDING from the storefront and
@@ -55,15 +55,23 @@ export async function PATCH(
 
   const body = await req.json().catch(() => null)
   const id = typeof body?.id === 'string' ? body.id : ''
-  const status = body?.status as Status
-  if (!id || !STATUSES.includes(status)) {
+  const status = body?.status as Status | undefined
+  const hasReply = typeof body?.reply === 'string'
+  if (!id || (status !== undefined && !STATUSES.includes(status)) || (status === undefined && !hasReply)) {
     return NextResponse.json({ error: 'Bad request' }, { status: 400 })
   }
+
+  // An empty reply is how a shop takes one back, so it clears the field
+  // rather than saving a blank answer under the review.
+  const reply = hasReply ? (body.reply as string).trim().slice(0, 1000) : undefined
 
   // Scoped by storeId so one shop cannot moderate another's reviews.
   const result = await prisma.productReview.updateMany({
     where: { id, storeId },
-    data: { status },
+    data: {
+      ...(status !== undefined ? { status } : {}),
+      ...(reply !== undefined ? { reply: reply || null, repliedAt: reply ? new Date() : null } : {}),
+    },
   })
   if (result.count === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 

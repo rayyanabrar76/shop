@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/rate-limit'
+import { readReviewToken } from '@/lib/review-token'
+import { sendNewReviewAlert } from '@/lib/email'
 
 /**
  * POST /api/storefront/[subdomain]/products/[productId]/reviews
@@ -31,13 +33,13 @@ export async function POST(
 
     const store = await prisma.store.findUnique({
       where: { subdomain },
-      select: { id: true },
+      select: { id: true, name: true, owner: { select: { email: true } } },
     })
     if (!store) return NextResponse.json({ error: 'Store not found' }, { status: 404 })
 
     const product = await prisma.product.findFirst({
       where: { storeId: store.id, OR: [{ slug: productId }, { id: productId }] },
-      select: { id: true },
+      select: { id: true, title: true },
     })
     if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 })
 
@@ -74,10 +76,29 @@ export async function POST(
       }
     }
 
-    // Verified means this email placed an order in this shop that contained
-    // this product. Checked here rather than trusted from the client.
+    // Verified means this person really bought this thing, proved one of
+    // two ways and never taken on the client's word.
+    //
+    // A token from a review request email is the stronger of the two: it is
+    // signed by us, names one order and one product, and is still checked
+    // against the database in case the order has since been refunded or the
+    // product moved shops. A plain email address is the weaker fallback for
+    // somebody who came back to the page on their own.
     let verified = false
-    if (authorEmail) {
+    const claim = readReviewToken(new URL(req.url).searchParams.get('token'))
+    if (claim && claim.productId === product.id) {
+      const order = await prisma.order.findFirst({
+        where: {
+          id: claim.orderId,
+          storeId: store.id,
+          status: 'PAID',
+          items: { some: { productId: product.id } },
+        },
+        select: { id: true },
+      })
+      verified = Boolean(order)
+    }
+    if (!verified && authorEmail) {
       const order = await prisma.order.findFirst({
         where: {
           storeId: store.id,
@@ -101,6 +122,23 @@ export async function POST(
         verified,
       },
     })
+
+    // Nothing here is visible until the shop publishes it, so the shop has
+    // to be told it is waiting. Best effort: the review is already saved,
+    // and a mail server having a bad day must not read as a failed review.
+    if (store.owner?.email) {
+      sendNewReviewAlert({
+        to: store.owner.email,
+        storeName: store.name,
+        storeId: store.id,
+        productTitle: product.title,
+        authorName,
+        rating,
+        title,
+        body: text,
+        verified,
+      }).catch(err => console.error('[review:alert]', err))
+    }
 
     return NextResponse.json({ ok: true, status: 'PENDING' })
   } catch (err) {
