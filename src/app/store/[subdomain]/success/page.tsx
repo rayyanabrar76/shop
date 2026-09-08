@@ -5,7 +5,7 @@ import StoreBanner from '../StoreBanner'
 import StoreHeader from '../StoreHeader'
 import StoreFooter from '../StoreFooter'
 import CartSidebar from '../cart-sidebar'
-import DarkModeSync from '../DarkModeSync'
+import ThemeSync from '../ThemeSync'
 import { formatPrice } from '@/lib/currency'
 
 export default async function SuccessPage({
@@ -72,8 +72,6 @@ export default async function SuccessPage({
     navFontSize: t?.navFontSize ?? 14,
     navCase:     t?.navCase     ?? 'normal',
     navDividers:     t?.navDividers     ?? false,
-    darkMode:        t?.darkMode        ?? false,
-    showDarkToggle:  t?.showDarkToggle  ?? true,
   }
 
   return (
@@ -85,7 +83,7 @@ export default async function SuccessPage({
         fontFamily: theme.font === 'serif' ? 'serif' : theme.font === 'mono' ? 'monospace' : 'inherit',
       }}
     >
-      <DarkModeSync />
+      <ThemeSync />
       {store && <StoreBanner theme={theme} />}
       {store && <StoreHeader store={store} theme={theme} subdomain={subdomain} />}
 

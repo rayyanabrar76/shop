@@ -1,92 +1,17 @@
 'use client'
 
 import { ThemeState, labelCls, inputCls, sectionLabelCls } from '../types'
-import { Palette, Type, Layers, Moon, Sun } from 'lucide-react'
+import { Palette, Type, Layers } from 'lucide-react'
 
 interface ThemePanelProps {
   theme: ThemeState
   updateTheme: (patch: Partial<ThemeState>) => void
 }
 
-export const DARK_PRESET = {
-  darkMode: true,
-  backgroundColor: '#09090b',
-  textColor: '#fafafa',
-  footerColor: '#09090b',
-  accentColor: '#ffffff',
-  productGridBg: '#09090b',
-}
-
-export const LIGHT_PRESET = {
-  darkMode: false,
-  backgroundColor: '#ffffff',
-  textColor: '#0a0a0a',
-  footerColor: '#ffffff',
-  accentColor: '#000000',
-  productGridBg: '#ffffff',
-}
-
 export default function ThemePanel({ theme, updateTheme }: ThemePanelProps) {
-  function toggleDarkMode() {
-    if (theme.darkMode) {
-      updateTheme(LIGHT_PRESET)
-    } else {
-      updateTheme(DARK_PRESET)
-    }
-  }
 
   return (
     <div className="p-4 space-y-6">
-
-      {/* Dark mode */}
-      <button
-        onClick={toggleDarkMode}
-        className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border-2 transition-all ${
-          theme.darkMode
-            ? 'bg-zinc-900 border-zinc-700 text-white'
-            : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 text-zinc-800 dark:text-zinc-100'
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${theme.darkMode ? 'bg-zinc-700' : 'bg-zinc-100 dark:bg-zinc-700'}`}>
-            {theme.darkMode
-              ? <Moon className="w-4 h-4 text-zinc-200" />
-              : <Sun className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-            }
-          </div>
-          <div className="text-left">
-            <p className="text-xs font-bold">{theme.darkMode ? 'Dark Mode' : 'Light Mode'}</p>
-            <p className={`text-[10px] mt-0.5 ${theme.darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
-              {theme.darkMode ? 'Store uses dark colors' : 'Store uses light colors'}
-            </p>
-          </div>
-        </div>
-        <div
-          className="relative w-10 h-5 rounded-full transition-colors shrink-0"
-          style={{ backgroundColor: theme.darkMode ? '#6c47ff' : '#e4e4e7' }}
-        >
-          <span
-            className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform"
-            style={{ transform: theme.darkMode ? 'translateX(20px)' : 'translateX(0)' }}
-          />
-        </div>
-      </button>
-
-      {/* Show toggle on storefront, simple row toggle */}
-      <div className="flex items-center justify-between px-1 py-0.5">
-        <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Show toggle on store</span>
-        <button
-          onClick={() => updateTheme({ showDarkToggle: !theme.showDarkToggle })}
-          className="relative w-10 h-5 rounded-full transition-colors shrink-0 focus:outline-none"
-          style={{ backgroundColor: theme.showDarkToggle !== false ? '#6c47ff' : '#d4d4d8' }}
-          aria-label="Toggle dark mode button visibility"
-        >
-          <span
-            className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform"
-            style={{ transform: theme.showDarkToggle !== false ? 'translateX(20px)' : 'translateX(0)' }}
-          />
-        </button>
-      </div>
 
       {/* Colors */}
       <div>

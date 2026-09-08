@@ -100,8 +100,6 @@ export async function POST(
     navFontSize: body.navFontSize ?? undefined,
     navCase:     body.navCase     ?? undefined,
     navDividers: body.navDividers ?? undefined,
-    darkMode:       body.darkMode       ?? undefined,
-    showDarkToggle: body.showDarkToggle ?? undefined,
     // Product title block
     productsPageHeading:      body.productsPageHeading      ?? undefined,
     productTitleWidth:        body.productTitleWidth        ?? undefined,

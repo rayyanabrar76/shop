@@ -2,7 +2,7 @@
 
 import { Fragment, useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { Search, X, User, LogOut, ShoppingBag, ChevronDown, Menu, Sun, Moon } from 'lucide-react'
+import { Search, X, User, LogOut, ShoppingBag, ChevronDown, Menu } from 'lucide-react'
 import CartIcon from './cart-icon'
 import { useAuth } from './auth-context'
 import { EditorItem } from './EditorHighlight'
@@ -59,8 +59,6 @@ interface StoreHeaderProps {
     navFontSize?: number | null
     navCase?: string | null
     navDividers?: boolean | null
-    darkMode?: boolean | null
-    showDarkToggle?: boolean | null
     footerColor?: string | null
     productGridBg?: string | null
   } | null
@@ -87,57 +85,6 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
   const notify = onEdit ?? (() => {})
   const { customer, logout } = useAuth()
 
-  // ── Dark mode state (managed here so it works on every page) ──────────────
-  const [customerDark, setCustomerDark] = useState<boolean | null>(null)
-
-  useEffect(() => {
-    if (isEditor) return
-    const stored = localStorage.getItem(`sf-dark-${subdomain}`)
-    if (stored !== null) setCustomerDark(stored === 'true')
-  }, [isEditor, subdomain])
-
-  const themeDark = theme?.darkMode ?? false
-  const isDark = isEditor
-    ? themeDark
-    : (customerDark !== null ? customerDark : themeDark)
-
-  useEffect(() => {
-    const el = document.documentElement
-    if (isDark) {
-      el.setAttribute('data-dark', 'true')
-      el.style.setProperty('--store-bg', '#09090b')
-      el.style.setProperty('--store-text', '#fafafa')
-      el.style.setProperty('--store-footer', '#09090b')
-      el.style.setProperty('--store-pg-bg', '#09090b')
-      el.style.setProperty('--store-divider', 'rgba(255,255,255,0.12)')
-      el.style.setProperty('--store-card-border', 'rgba(255,255,255,0.08)')
-    } else {
-      el.removeAttribute('data-dark')
-      // When darkMode is saved ON in DB, the theme colors are the dark preset colors.
-      // Fall back to light defaults so toggling to light actually shows a light store.
-      const bg     = themeDark ? '#ffffff' : (theme?.backgroundColor ?? '#ffffff')
-      const text   = themeDark ? '#09090b' : (theme?.textColor       ?? '#09090b')
-      const footer = themeDark ? '#f4f4f5' : (theme?.footerColor     ?? '#f4f4f5')
-      const pgBg   = themeDark ? '#ffffff' : (theme?.productGridBg   ?? '#ffffff')
-      el.style.setProperty('--store-bg', bg)
-      el.style.setProperty('--store-text', text)
-      el.style.setProperty('--store-footer', footer)
-      el.style.setProperty('--store-pg-bg', pgBg)
-      el.style.setProperty('--store-divider', 'rgba(0,0,0,0.08)')
-      el.style.setProperty('--store-card-border', '#f1f1f1')
-    }
-  }, [isDark, themeDark, theme?.backgroundColor, theme?.textColor, theme?.footerColor])
-
-  function toggleDarkMode() {
-    const next = !isDark
-    if (isEditor) {
-      window.parent.postMessage({ type: 'theme:dark-toggle', darkMode: next }, '*')
-    } else {
-      setCustomerDark(next)
-      localStorage.setItem(`sf-dark-${subdomain}`, String(next))
-    }
-  }
-  // ─────────────────────────────────────────────────────────────────────────
 
   const [searchOpen, setSearchOpen]     = useState(false)
   const [query, setQuery]               = useState('')
@@ -548,16 +495,6 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
               </Link>
             )}
 
-            {/* Dark / light mode toggle */}
-            {theme?.showDarkToggle !== false && (
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 rounded-xl hover:bg-zinc-100 transition-colors text-zinc-600 hover:text-zinc-900"
-                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              >
-                {isDark ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-              </button>
-            )}
 
             <CartIcon />
           </div>
@@ -618,16 +555,6 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
                 </Link>
               ))}
 
-              {/* Dark / light toggle row */}
-              {theme?.showDarkToggle !== false && (
-                <button
-                  onClick={() => { toggleDarkMode(); setDrawerOpen(false) }}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors w-full text-left"
-                >
-                  {isDark ? <Moon className="w-4 h-4 shrink-0" /> : <Sun className="w-4 h-4 shrink-0" />}
-                  {isDark ? 'Dark Mode' : 'Light Mode'}
-                </button>
-              )}
             </nav>
 
             {/* Categories */}

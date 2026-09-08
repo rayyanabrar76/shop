@@ -8,7 +8,7 @@ import {
   HiArrowLeft, HiCheck, HiCash, HiLockClosed,
   HiCreditCard, HiExclamation, HiShoppingCart, HiTag, HiX,
 } from 'react-icons/hi'
-import DarkModeSync from '../DarkModeSync'
+import ThemeSync from '../ThemeSync'
 import { usePrice } from '@/components/CurrencyProvider'
 import { addressPlaceholders, getCountry } from '@/lib/countries'
 
@@ -199,7 +199,7 @@ export default function CheckoutClient({
   if (items.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-6 bg-zinc-50">
-        <DarkModeSync />
+        <ThemeSync />
         <span
           className="flex h-16 w-16 items-center justify-center rounded-full"
           style={{ backgroundColor: `${t.primary}12`, color: t.primary }}
@@ -255,7 +255,7 @@ export default function CheckoutClient({
 
   return (
     <div className="min-h-screen bg-zinc-50" style={{ color: t.textColor }}>
-      <DarkModeSync />
+      <ThemeSync />
 
       {/* A checkout is its own place. The shop's navigation is deliberately
           not here: every link out of this page is a chance to not buy. */}

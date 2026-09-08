@@ -103,8 +103,6 @@ interface ThemeStyle {
   navFontSize?: number
   navCase?: string
   navDividers?: boolean
-  darkMode?: boolean
-  showDarkToggle?: boolean
 }
 
 interface StorefrontClientProps {
@@ -247,8 +245,6 @@ export default function StorefrontClient({
     navFontSize:    theme.navFontSize,
     navCase:        theme.navCase,
     navDividers:    theme.navDividers,
-    darkMode:       theme.darkMode,
-    showDarkToggle: theme.showDarkToggle,
     productGridBg:  theme.productGridBg,
     productImageRadius: theme.productImageRadius,
     carouselOnMobile: theme.carouselOnMobile,
@@ -270,14 +266,13 @@ export default function StorefrontClient({
     // repaints them, so they have to know which world they are in. Anchored
     // to this object by name: there is a second theme object above with an
     // overlapping shape, and adding it there does nothing at all.
-    darkMode: theme.darkMode ?? false,
     backgroundColor: theme.backgroundColor,
     footerColor: theme.footerColor,
     accentColor: theme.accentColor,
     // Blank means "work it out": the grid has its own background, so falling
     // back to the page text colour put dark text on a dark grid. A colour that
-    // was set is still checked against that background, because turning on
-    // dark mode repaints the grid and leaves the text colour where it was.
+    // was set is still checked against that background, since the two are
+    // chosen separately and nothing else compares them.
     textColor: theme.productGridBg
       ? ensureReadable(theme.productGridTextColor || theme.textColor, theme.productGridBg)
       : (theme.productGridTextColor || theme.textColor),

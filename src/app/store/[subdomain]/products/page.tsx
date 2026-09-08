@@ -108,8 +108,6 @@ export default async function ProductsPage({
     navFontSize:    t?.navFontSize    ?? 14,
     navCase:        t?.navCase        ?? 'normal',
     navDividers:    t?.navDividers    ?? false,
-    darkMode:       t?.darkMode       ?? false,
-    showDarkToggle: t?.showDarkToggle ?? true,
     productGridBg:            t?.productGridBg            ?? '',
     productImageRadius:       t?.productImageRadius       ?? '',
     productGridButtonColor:   t?.productGridButtonColor   ?? '',

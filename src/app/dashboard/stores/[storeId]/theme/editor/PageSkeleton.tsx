@@ -17,7 +17,6 @@ export interface SkeletonTheme {
   navLinks?: { label: string; href: string }[] | null
   navFontSize?: number
   navCase?: string
-  darkMode?: boolean
 }
 
 export interface PageSkeletonProps {
@@ -79,7 +78,7 @@ function Header({ theme, storeName }: { theme: SkeletonTheme; storeName: string 
     : [{ label: 'Home' }, { label: 'Products' }, { label: 'About' }]
   const textCase: React.CSSProperties['textTransform'] =
     theme.navCase === 'upper' ? 'uppercase' : theme.navCase === 'lower' ? 'lowercase' : 'none'
-  const sk = skColors(theme.darkMode)
+  const sk = skColors(false)
 
   return (
     <div style={{
@@ -116,7 +115,7 @@ function Header({ theme, storeName }: { theme: SkeletonTheme; storeName: string 
 function Footer({ theme, storeName }: { theme: SkeletonTheme; storeName: string }) {
   return (
     <div style={{
-      background: theme.footerColor, borderTop: `1px solid ${theme.darkMode ? '#27272a' : '#e4e4e7'}`,
+      background: theme.footerColor, borderTop: `1px solid ${false ? '#27272a' : '#e4e4e7'}`,
       padding: '24px', display: 'flex', justifyContent: 'space-between',
       alignItems: 'center', flexShrink: 0,
     }}>
@@ -183,7 +182,7 @@ function HomeBody({ theme, heroSlides }: { theme: SkeletonTheme; heroSlides?: Pa
       </div>
 
       {/* Divider */}
-      <div style={{ height: 1, background: theme.darkMode ? '#27272a' : '#f1f1f1', margin: '0' }} />
+      <div style={{ height: 1, background: false ? '#27272a' : '#f1f1f1', margin: '0' }} />
 
       {/* Products */}
       <div style={{ padding: '16px 24px 0' }}>
@@ -199,22 +198,22 @@ function HomeBody({ theme, heroSlides }: { theme: SkeletonTheme; heroSlides?: Pa
 
 function ProductCards({ theme, count = 4 }: { theme: SkeletonTheme; count?: number }) {
   const solid = theme.buttonStyle !== 'outline'
-  const sk = skColors(theme.darkMode)
+  const sk = skColors(false)
   return (
     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${count}, 1fr)`, gap: 10 }}>
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} style={{ background: sk.card, border: `1px solid ${sk.border}`, borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <P w="100%" h={110} r={0} d={i * 0.08} dark={theme.darkMode} />
+          <P w="100%" h={110} r={0} d={i * 0.08} dark={false} />
           <div style={{ padding: '9px 9px 8px', display: 'flex', flexDirection: 'column', gap: 7 }}>
-            <P w="72%" h={8} d={i * 0.08} dark={theme.darkMode} />
-            <P w="44%" h={8} d={i * 0.08} dark={theme.darkMode} />
+            <P w="72%" h={8} d={i * 0.08} dark={false} />
+            <P w="44%" h={8} d={i * 0.08} dark={false} />
             <div style={{
               marginTop: 3, padding: '7px 0', textAlign: 'center',
               background: solid ? theme.primaryColor : 'transparent',
               border: `1.5px solid ${theme.primaryColor}`,
               borderRadius: theme.borderRadius,
             }}>
-              <P w="55%" h={7} extra={{ margin: '0 auto', background: solid ? 'rgba(255,255,255,0.35)' : sk.bar }} d={i * 0.08} dark={theme.darkMode} />
+              <P w="55%" h={7} extra={{ margin: '0 auto', background: solid ? 'rgba(255,255,255,0.35)' : sk.bar }} d={i * 0.08} dark={false} />
             </div>
           </div>
         </div>
@@ -356,9 +355,9 @@ function AccountBody({ theme }: { theme: SkeletonTheme }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}><P w={110} h={13} r={5} /><P w={155} h={9} d={0.1} /></div>
       </div>
       {[0, 1, 2, 3].map(i => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 0', borderBottom: `1px solid ${theme.darkMode ? '#27272a' : '#f1f1f1'}` }}>
-          <P w={80} h={9} d={i * 0.08} dark={theme.darkMode} />
-          <P w={130} h={32} r={8} d={i * 0.08} dark={theme.darkMode} />
+        <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 0', borderBottom: `1px solid ${false ? '#27272a' : '#f1f1f1'}` }}>
+          <P w={80} h={9} d={i * 0.08} dark={false} />
+          <P w={130} h={32} r={8} d={i * 0.08} dark={false} />
         </div>
       ))}
     </div>

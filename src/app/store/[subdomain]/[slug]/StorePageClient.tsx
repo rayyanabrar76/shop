@@ -5,7 +5,7 @@ import StoreBanner from '../StoreBanner'
 import StoreHeader from '../StoreHeader'
 import StoreFooter from '../StoreFooter'
 import CartSidebar from '../cart-sidebar'
-import DarkModeSync from '../DarkModeSync'
+import ThemeSync from '../ThemeSync'
 import CustomSectionComponent, { type CustomSectionData } from '../CustomSection'
 import SectionDivider from '../SectionDivider'
 import { EditorItem, EditorSection } from '../EditorHighlight'
@@ -51,8 +51,6 @@ interface ThemeState {
   navFontSize?: number
   navCase?: string
   navDividers?: boolean
-  darkMode?: boolean
-  showDarkToggle?: boolean
 }
 
 interface StorePageClientProps {
@@ -147,7 +145,6 @@ export default function StorePageClient({
     // Custom sections need this to know whether their own background will
     // survive. See CustomSection; without it a page here keeps a white
     // section's black text on the dark theme's black.
-    darkMode: theme.darkMode ?? false,
     backgroundColor: theme.backgroundColor,
   }
 
@@ -345,7 +342,7 @@ export default function StorePageClient({
         fontFamily: theme.font === 'serif' ? 'serif' : theme.font === 'mono' ? 'monospace' : 'inherit',
       }}
     >
-      <DarkModeSync />
+      <ThemeSync />
 
       {isEditor && (
         <style>{`

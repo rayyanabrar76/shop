@@ -96,8 +96,6 @@ export interface ThemeState {
   navCase: string
   navDividers: boolean
   // Dark mode
-  darkMode: boolean
-  showDarkToggle: boolean
   // Category filter / products page
   catBackLabel: string
   catFilterRadius: string

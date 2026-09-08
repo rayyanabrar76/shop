@@ -126,8 +126,6 @@ export default async function StorefrontPage({
     navFontSize:            t?.navFontSize            ?? 14,
     navCase:                t?.navCase                ?? 'normal',
     navDividers:            t?.navDividers            ?? false,
-    darkMode:               t?.darkMode               ?? false,
-    showDarkToggle:         t?.showDarkToggle         ?? true,
   }
 
   // Parse hero slides from the JSON field

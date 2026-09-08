@@ -7,7 +7,7 @@ import StoreHeader from '../StoreHeader'
 import StoreFooter from '../StoreFooter'
 import CartSidebar from '../cart-sidebar'
 import ProductGrid from '../ProductGrid'
-import DarkModeSync from '../DarkModeSync'
+import ThemeSync from '../ThemeSync'
 import { EditorSection, EditorItem } from '../EditorHighlight'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useStoreBase } from '@/components/StoreBaseProvider'
@@ -69,8 +69,6 @@ interface ThemeState {
   navFontSize?: number
   navCase?: string
   navDividers?: boolean
-  darkMode?: boolean
-  showDarkToggle?: boolean
   productGridBg?: string
   productImageRadius?: string
   carouselOnMobile?: boolean
@@ -290,7 +288,7 @@ export default function ProductsPageClient({
         fontFamily: theme.font === 'serif' ? 'serif' : theme.font === 'mono' ? 'monospace' : 'inherit',
       }}
     >
-      <DarkModeSync />
+      <ThemeSync />
 
       {isEditor && (
         <style>{`

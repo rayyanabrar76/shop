@@ -8,7 +8,7 @@ import StoreHeader from '../StoreHeader'
 import StoreFooter from '../StoreFooter'
 import CartSidebar from '../cart-sidebar'
 import AccountClient from './AccountClient'
-import DarkModeSync from '../DarkModeSync'
+import ThemeSync from '../ThemeSync'
 
 export default async function AccountPage({
   params,
@@ -80,8 +80,6 @@ export default async function AccountPage({
     navFontSize: t?.navFontSize ?? 14,
     navCase:     t?.navCase     ?? 'normal',
     navDividers:     t?.navDividers     ?? false,
-    darkMode:        t?.darkMode        ?? false,
-    showDarkToggle:  t?.showDarkToggle  ?? true,
   }
 
   return (
@@ -93,7 +91,7 @@ export default async function AccountPage({
         fontFamily: theme.font === 'serif' ? 'serif' : theme.font === 'mono' ? 'monospace' : 'inherit',
       }}
     >
-      <DarkModeSync />
+      <ThemeSync />
       <StoreBanner theme={theme} />
       <StoreHeader store={store} theme={theme} subdomain={subdomain} />
       <main className="flex-1 px-4 py-12 max-w-2xl mx-auto w-full">

@@ -22,7 +22,7 @@ import FooterEdit from './sections/FooterEdit'
 import CustomSectionsEdit, { type CustomSection } from './sections/CustomSectionsEdit'
 import CustomCodeEdit from './sections/CustomCodeEdit'
 import SeoEdit from './sections/SeoEdit'
-import ThemePanel, { DARK_PRESET, LIGHT_PRESET } from './panels/ThemePanel'
+import ThemePanel from './panels/ThemePanel'
 import PageContentEdit from './sections/PageContentEdit'
 import SystemPageEdit from './sections/SystemPageEdit'
 import ProductTitleEdit from './sections/ProductTitleEdit'
@@ -412,8 +412,6 @@ export default function VisualEditor({
     navFontSize: initialTheme?.navFontSize ?? 14,
     navCase:     initialTheme?.navCase     ?? 'normal',
     navDividers: initialTheme?.navDividers ?? false,
-    darkMode:       initialTheme?.darkMode       ?? false,
-    showDarkToggle: initialTheme?.showDarkToggle ?? true,
     // Category filter
     catBackLabel:          initialTheme?.catBackLabel          ?? 'Back to store',
     catFilterRadius:       initialTheme?.catFilterRadius       ?? '9999px',
@@ -582,15 +580,6 @@ export default function VisualEditor({
     return () => window.removeEventListener('message', handlePageReady)
   }, [])
 
-  // Listen for dark mode toggle from the storefront preview
-  useEffect(() => {
-    function handleDarkToggle(e: MessageEvent) {
-      if (e.data?.type !== 'theme:dark-toggle') return
-      setTheme(prev => ({ ...prev, ...(e.data.darkMode ? DARK_PRESET : LIGHT_PRESET) }))
-    }
-    window.addEventListener('message', handleDarkToggle)
-    return () => window.removeEventListener('message', handleDarkToggle)
-  }, [])
 
   useEffect(() => {
     iframeRef.current?.contentWindow?.postMessage({ type: 'theme:update', theme }, '*')
@@ -1040,7 +1029,7 @@ function handlePageContentChange(content: unknown) {
         </aside>
 
         <main
-          className={`flex-1 bg-zinc-800 flex justify-center overflow-hidden ${
+          className={`flex-1 bg-zinc-100 dark:bg-zinc-800 flex justify-center overflow-hidden ${
             reordering ? 'items-start' : 'items-center'
           } ${device === 'desktop' ? 'p-1.5' : 'p-5'}`}
         >

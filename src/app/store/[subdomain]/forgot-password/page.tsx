@@ -64,8 +64,6 @@ export default async function ForgotPasswordPage({
     navFontSize: t?.navFontSize ?? 14,
     navCase:     t?.navCase     ?? 'normal',
     navDividers:     t?.navDividers     ?? false,
-    darkMode:        t?.darkMode        ?? false,
-    showDarkToggle:  t?.showDarkToggle  ?? true,
   }
 
   return (

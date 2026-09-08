@@ -43,7 +43,6 @@ interface CustomSectionProps {
     buttonStyle: string
     headingFont: string
     /** The shop is running dark. Its own background wins over a section's. */
-    darkMode?: boolean
     /** The page behind this section, for working out what will show on it. */
     backgroundColor?: string
   }
@@ -77,7 +76,7 @@ export default function CustomSection({ section, themeStyle, categories = [], su
   const href = (url: string) => resolveStoreHref(url, storeBase, subdomain)
   if (!section.visible) return null
 
-  const { primaryColor, borderRadius, buttonStyle, headingFont, darkMode, backgroundColor } = themeStyle
+  const { primaryColor, borderRadius, buttonStyle, headingFont, backgroundColor } = themeStyle
   const heading = section.heading?.trim()
   const text = section.text?.trim()
   const notify = onEdit ?? (() => {})
@@ -90,15 +89,14 @@ export default function CustomSection({ section, themeStyle, categories = [], su
   const effectiveColor   = section.buttonColor   ?? primaryColor
   const effectiveFont    = section.buttonFont === 'serif' ? 'serif' : section.buttonFont === 'mono' ? 'monospace' : 'inherit'
 
-  // What this section is actually drawn on. In dark mode the shop's own
-  // background wins, because the dark stylesheet repaints every section
-  // regardless of the colour stored against it.
-  const sectionBg = darkMode ? '#09090b' : (section.bgColor || backgroundColor || '#ffffff')
+  // What this section is actually drawn on: its own colour if it has one,
+  // and the page behind it otherwise.
+  const sectionBg = section.bgColor || backgroundColor || '#ffffff'
 
-  // A brand colour is picked once, against whatever the page looked like that
-  // day. This shop's is near-black, so on a dark page an outline button had
-  // invisible text and a solid one was a black rectangle on black. The colour
-  // is kept whenever it can be seen, and swapped only when it cannot.
+  // A brand colour is picked once, and a section it lands on can be any
+  // colour at all, so a near-black button on a near-black section had
+  // invisible text. The colour is kept whenever it can be seen, and swapped
+  // only when it cannot.
   const buttonColor = ensureReadable(effectiveColor, sectionBg)
 
   const buttonStyleObj: React.CSSProperties = {
@@ -115,12 +113,7 @@ export default function CustomSection({ section, themeStyle, categories = [], su
   // text on near-black. Set here rather than per element, so everything inside
   // inherits it and the opacity-based muted styles come along too.
   //
-  // In dark mode the section's own background is dropped. The dark stylesheet
-  // repaints every section near-black regardless, so keeping the colour meant
-  // a section chosen as white kept its black text and became black on black.
-  // A background picked months ago against a white page cannot be trusted to
-  // still be the background, so the page's colours are used instead.
-  const wrapperStyle: React.CSSProperties = section.bgColor && !darkMode
+  const wrapperStyle: React.CSSProperties = section.bgColor
     ? { backgroundColor: section.bgColor, color: readableText(section.bgColor) }
     : {}
 

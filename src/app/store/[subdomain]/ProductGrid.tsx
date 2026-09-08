@@ -313,7 +313,7 @@ export default function ProductGrid({
                     borderRadius: imageRadius,
                     // A hairline keeps white-background product shots from
                     // floating on a white page. Uses the same var as the rest
-                    // of the storefront so dark mode inverts it.
+                    // of the storefront.
                     border: '1px solid var(--store-card-border, #e7e7e7)',
                     ...shadowStyle,
                     aspectRatio: '1 / 1',

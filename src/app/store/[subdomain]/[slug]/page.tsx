@@ -65,8 +65,6 @@ export default async function StorePageRenderer({
     navFontSize: t?.navFontSize ?? 14,
     navCase:     t?.navCase     ?? 'normal',
     navDividers:     t?.navDividers     ?? false,
-    darkMode:        t?.darkMode        ?? false,
-    showDarkToggle:  t?.showDarkToggle  ?? true,
   }
 
   const customSections = await prisma.customSection.findMany({

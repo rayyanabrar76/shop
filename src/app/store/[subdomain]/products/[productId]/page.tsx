@@ -8,7 +8,7 @@ import CartSidebar from '../../cart-sidebar'
 import ProductDetailClient from './ProductDetailClient'
 import ProductReviews from './ProductReviews'
 import { ArrowLeft, Package } from 'lucide-react'
-import DarkModeSync from '../../DarkModeSync'
+import ThemeSync from '../../ThemeSync'
 import { formatPrice } from '@/lib/currency'
 
 import type { Metadata } from 'next'
@@ -207,7 +207,7 @@ export default async function StoreProductPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
       />
-      <DarkModeSync />
+      <ThemeSync />
       <StoreBanner theme={theme} />
       <StoreHeader store={store} theme={headerTheme} subdomain={subdomain} />
 
