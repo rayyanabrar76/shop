@@ -46,7 +46,7 @@ export default function PageHeader({
   maxWidth?: string
 }) {
   return (
-    <div className={`${maxWidth} px-6 pt-6 pb-4 flex items-center justify-between gap-4`}>
+    <div className={`${maxWidth} px-4 md:px-6 pt-5 md:pt-6 pb-4 flex items-center justify-between gap-3 md:gap-4`}>
       <div className="flex items-center gap-1 min-w-0">
         {/* The icon marks the section either way. What changes is whether it
             is a link: on a sub-page it is the way back to the parent and

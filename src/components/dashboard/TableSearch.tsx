@@ -123,7 +123,7 @@ export default function TableSearch({
 
       {narrowed && (
         <>
-          <span className="shrink-0 text-[11px] tabular-nums text-zinc-500">
+          <span className="hidden sm:inline shrink-0 text-[11px] tabular-nums text-zinc-500">
             {matches} of {total}
           </span>
           <button

@@ -1,6 +1,7 @@
 'use client'
 
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import PageHeader from '@/components/dashboard/PageHeader'
@@ -8,10 +9,116 @@ import TableSearch from '@/components/dashboard/TableSearch'
 import {
   HiPlus, HiTag, HiPencil, HiTrash, HiX,
   HiExclamation, HiChevronDown, HiPhotograph, HiEye,
+  HiDotsHorizontal, HiViewGrid,
 } from 'react-icons/hi'
 import ProductPickerModal from '@/components/ProductPickerModal'
 import { formatPrice } from '@/lib/currency'
 import { storeUrl } from '@/lib/config'
+
+const MENU_WIDTH = 136 // three 40px targets, their gaps and the padding
+
+/**
+ * The three actions a category row cannot fit on a phone. Edit is missing on
+ * purpose: tapping the row already does that.
+ */
+function CategoryRowMenu({
+  href, onPick, onDelete,
+}: {
+  href: string
+  onPick: () => void
+  onDelete: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  function toggle() {
+    if (open) { setOpen(false); return }
+    const r = btnRef.current?.getBoundingClientRect()
+    if (r) {
+      const below = window.innerHeight - r.bottom
+      const flipUp = below < 64 && r.top > below
+      setCoords({
+        top: flipUp ? r.top - 6 - 48 : r.bottom + 6,
+        left: Math.max(8, Math.min(r.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8)),
+      })
+    }
+    setOpen(true)
+  }
+
+  useEffect(() => {
+    if (!open) return
+    function onPointerDown(e: MouseEvent) {
+      const t = e.target as Node
+      if (btnRef.current?.contains(t) || menuRef.current?.contains(t)) return
+      setOpen(false)
+    }
+    function close() { setOpen(false) }
+    document.addEventListener('mousedown', onPointerDown)
+    // Fixed coordinates go stale the moment anything scrolls underneath.
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [open])
+
+  const target = 'flex h-10 w-10 items-center justify-center rounded-lg transition-colors'
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={toggle}
+        className="p-2 text-zinc-500 rounded-lg transition-colors"
+        aria-label="More options"
+      >
+        <HiDotsHorizontal className="w-4 h-4" />
+      </button>
+
+      {open && coords && createPortal(
+        <div
+          ref={menuRef}
+          role="menu"
+          style={{ position: 'fixed', top: coords.top, left: coords.left, width: MENU_WIDTH }}
+          className="flex items-center gap-1 bg-(--admin-card) border border-(--admin-border) rounded-xl z-50 p-1 shadow-lg"
+        >
+          <button
+            onClick={() => { setOpen(false); onPick() }}
+            title="Choose products"
+            aria-label="Choose which products are in this category"
+            className={`${target} text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800`}
+          >
+            <HiViewGrid className="w-4 h-4" />
+          </button>
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => setOpen(false)}
+            title="View on storefront"
+            aria-label="View on storefront"
+            className={`${target} text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800`}
+          >
+            <HiEye className="w-4 h-4" />
+          </a>
+          <button
+            onClick={() => { setOpen(false); onDelete() }}
+            title="Delete category"
+            aria-label="Delete category"
+            className={`${target} text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40`}
+          >
+            <HiTrash className="w-4 h-4" />
+          </button>
+        </div>,
+        document.body,
+      )}
+    </>
+  )
+}
 
 interface ProductRow {
   id: string
@@ -151,7 +258,7 @@ export default function CategoriesClient({
         }
       />
 
-    <div className="max-w-7xl px-6 pb-10">
+    <div className="max-w-7xl px-4 md:px-6 pb-10">
       {/* Only when something is wrong. "8 of 8 products filed" is a line
           that says nothing on the day it is true, and the day it is not true
           the number that matters is the one left over. So the count of filed
@@ -195,7 +302,8 @@ export default function CategoriesClient({
               ],
             }}
           />
-          <div className="overflow-x-auto">
+          {/* The table, from md up. Below that it is the card list. */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-(--admin-edge)">
@@ -376,6 +484,75 @@ export default function CategoriesClient({
             </table>
           </div>
 
+          {/* The same rows on a phone. Two lines: what it is and how big it
+              is, then whether shoppers can see it and what it says. */}
+          <ul className="md:hidden divide-y divide-(--admin-edge)">
+            {shown.map(cat => {
+              const cover = cat.imageUrl || cat.products.find(p => p.imageUrl)?.imageUrl || null
+              return (
+                <li key={cat.id}>
+                  <div
+                    onClick={e => {
+                      const el = e.target as HTMLElement
+                      if (el.closest('a, button, [role="menu"]')) return
+                      if (window.getSelection()?.toString()) return
+                      router.push(`/dashboard/stores/${storeId}/categories/${cat.id}`)
+                    }}
+                    className="flex items-center gap-3 px-4 py-2.5 active:bg-zinc-50 dark:active:bg-zinc-800/40 transition-colors cursor-pointer"
+                  >
+                    <div className="w-11 h-11 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-zinc-200/70 dark:ring-zinc-700/70">
+                      {cover
+                        ? <img src={cover} alt="" className="w-full h-full object-cover" />
+                        : <HiTag className="w-4 h-4 text-zinc-500" />}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <p className="text-[13.5px] font-medium text-zinc-900 dark:text-zinc-50 truncate">
+                          {cat.name}
+                        </p>
+                        <span className={`text-[12px] tabular-nums shrink-0 ${
+                          cat._count.products === 0
+                            ? 'text-amber-600 dark:text-amber-400 font-medium'
+                            : 'text-zinc-500'
+                        }`}>
+                          {cat._count.products === 0
+                            ? 'Empty'
+                            : `${cat._count.products} item${cat._count.products === 1 ? '' : 's'}`}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 mt-0.5 text-[11.5px] text-zinc-500">
+                        <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${cat.visible ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
+                        <span className="truncate">
+                          {cat.description || `/products?category=${cat.slug}`}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* The toggle stays out here: hiding a category from the
+                        shop is the one thing worth doing without opening it. */}
+                    <button
+                      onClick={() => toggleVisible(cat)}
+                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${cat.visible ? 'bg-black dark:bg-white' : 'bg-zinc-200 dark:bg-zinc-700'}`}
+                      aria-label={cat.visible ? 'Hide from store' : 'Show in store'}
+                    >
+                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-(--admin-card) shadow transition-transform ${cat.visible ? 'translate-x-4' : 'translate-x-1'}`} />
+                    </button>
+
+                    <div className="shrink-0 -mr-1.5">
+                      <CategoryRowMenu
+                        href={storeUrl(subdomain, `/categories/${cat.slug}`)}
+                        onPick={() => setPicking(cat)}
+                        onDelete={() => { setDeleteTarget(cat); setDeleteError('') }}
+                      />
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+
           {shown.length === 0 && (
             <div className="py-16 text-center">
               <p className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-50">
@@ -405,8 +582,8 @@ export default function CategoriesClient({
       {/* Delete modal */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm" onClick={() => !deleting && setDeleteTarget(null)} />
-          <div className="relative bg-(--admin-card) rounded-2xl shadow-2xl border border-(--admin-border) w-full max-w-sm p-6 space-y-4">
+          <div className="absolute inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm dialog-dim" onClick={() => !deleting && setDeleteTarget(null)} />
+          <div className="relative bg-(--admin-card) rounded-2xl shadow-2xl border border-(--admin-border) w-full max-w-sm p-5 sm:p-6 space-y-4 dialog-in">
             <button onClick={() => setDeleteTarget(null)} disabled={deleting} className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500"><HiX className="w-4 h-4" /></button>
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/40 flex items-center justify-center shrink-0"><HiExclamation className="w-5 h-5 text-red-500" /></div>

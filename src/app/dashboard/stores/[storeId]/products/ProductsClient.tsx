@@ -26,10 +26,13 @@ interface Product {
 }
 
 const MENU_WIDTH = 176 // matches w-44
+const MENU_WIDTH_COMPACT = 92 // two 40px targets, their gap and the padding
+const PHONE = '(max-width: 767px)' // the md breakpoint, since a portal cannot use one
 
 function RowMenu({ product, storeId, onDelete }: { product: Product; storeId: string; onDelete: (p: Product) => void }) {
   const [open, setOpen] = useState(false)
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null)
+  const [compact, setCompact] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -39,13 +42,17 @@ function RowMenu({ product, storeId, onDelete }: { product: Product; storeId: st
   // scroll, so it is rendered into a portal and positioned against the button.
   function toggle() {
     if (open) { setOpen(false); return }
+    const small = window.matchMedia(PHONE).matches
+    setCompact(small)
+    const width = small ? MENU_WIDTH_COMPACT : MENU_WIDTH
+    const height = small ? 48 : 96
     const r = btnRef.current?.getBoundingClientRect()
     if (r) {
       const below = window.innerHeight - r.bottom
-      const flipUp = below < 140 && r.top > below
+      const flipUp = below < height + 16 && r.top > below
       setCoords({
-        top: flipUp ? r.top - 6 - 96 : r.bottom + 6,
-        left: Math.max(8, Math.min(r.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8)),
+        top: flipUp ? r.top - 6 - height : r.bottom + 6,
+        left: Math.max(8, Math.min(r.right - width, window.innerWidth - width - 8)),
       })
     }
     setOpen(true)
@@ -85,24 +92,39 @@ function RowMenu({ product, storeId, onDelete }: { product: Product; storeId: st
       {open && coords && createPortal(
         <div
           ref={menuRef}
-          style={{ position: 'fixed', top: coords.top, left: coords.left, width: MENU_WIDTH }}
-          className="bg-(--admin-card) border border-(--admin-border) rounded-xl z-50 overflow-hidden py-1 shadow-lg"
+          style={{
+            position: 'fixed',
+            top: coords.top,
+            left: coords.left,
+            width: compact ? MENU_WIDTH_COMPACT : MENU_WIDTH,
+          }}
+          className={compact
+            ? 'flex items-center gap-1 bg-(--admin-card) border border-(--admin-border) rounded-xl z-50 p-1 shadow-lg'
+            : 'bg-(--admin-card) border border-(--admin-border) rounded-xl z-50 overflow-hidden py-1 shadow-lg'}
         >
           <Link
             href={`/dashboard/stores/${storeId}/products/${product.id}`}
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+            title="Edit product"
+            aria-label="Edit product"
+            className={compact
+              ? 'flex h-10 w-10 items-center justify-center rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors'
+              : 'flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors'}
           >
-            <HiPencil className="w-3.5 h-3.5 text-zinc-500" />
-            Edit product
+            <HiPencil className={compact ? 'w-4 h-4' : 'w-3.5 h-3.5 text-zinc-500'} />
+            {!compact && 'Edit product'}
           </Link>
-          <div className="h-px bg-(--admin-edge) mx-2 my-1" />
+          {!compact && <div className="h-px bg-(--admin-edge) mx-2 my-1" />}
           <button
             onClick={() => { setOpen(false); onDelete(product) }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+            title="Delete product"
+            aria-label="Delete product"
+            className={compact
+              ? 'flex h-10 w-10 items-center justify-center rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors'
+              : 'w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors'}
           >
-            <HiTrash className="w-3.5 h-3.5 text-red-500" />
-            Delete product
+            <HiTrash className={compact ? 'w-4 h-4' : 'w-3.5 h-3.5 text-red-500'} />
+            {!compact && 'Delete product'}
           </button>
         </div>,
         document.body,
@@ -174,7 +196,7 @@ export default function ProductsClient({ storeId, products: initial, categories 
         }
       />
 
-    <div className="max-w-7xl px-6 pb-10">
+    <div className="max-w-7xl px-4 md:px-6 pb-10">
       {/* One rounded card holding the list, with the seams between rows kept
           to a whisper: the shape does the containing, so the rules inside
           only need to hint at where one product ends. */}
@@ -195,7 +217,8 @@ export default function ProductsClient({ storeId, products: initial, categories 
             ],
           }}
         />
-        <div className="overflow-x-auto">
+        {/* The table, from md up. Below that it becomes the card list. */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-(--admin-edge)">
@@ -263,6 +286,70 @@ export default function ProductsClient({ storeId, products: initial, categories 
           </table>
         </div>
 
+        {/* The same rows on a phone. A table cannot shrink its columns, so
+            below md each row is two lines: what it is and what it costs, then
+            how it is doing. The status pill becomes a dot, since the colour
+            was carrying the meaning and the word was repeating the list. */}
+        <ul className="md:hidden divide-y divide-(--admin-edge)">
+          {shown.map(p => (
+            <li key={p.id}>
+              <div
+                onClick={e => {
+                  const el = e.target as HTMLElement
+                  if (el.closest('a, button, [role="menu"]')) return
+                  if (window.getSelection()?.toString()) return
+                  router.push(`/dashboard/stores/${storeId}/products/${p.id}`)
+                }}
+                className="flex items-center gap-3 px-4 py-2.5 active:bg-zinc-50 dark:active:bg-zinc-800/40 transition-colors cursor-pointer"
+              >
+                <div className="w-11 h-11 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-zinc-200/70 dark:ring-zinc-700/70">
+                  {p.imageUrl
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={p.imageUrl} alt="" className="w-full h-full object-cover" />
+                    : <HiPhotograph className="w-4 h-4 text-zinc-500" />}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="text-[13.5px] font-medium text-zinc-900 dark:text-zinc-50 truncate">
+                      {p.title}
+                    </p>
+                    <span className="text-[13.5px] font-semibold text-zinc-900 dark:text-zinc-50 tabular-nums shrink-0">
+                      {price(p.price)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 mt-0.5 text-[11.5px] text-zinc-500">
+                    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${statusDot(p.status)}`} />
+                    <span className="truncate">{categoryLabel(p.category) ?? 'No category'}</span>
+                    <span className="opacity-40">·</span>
+                    <span className={`shrink-0 ${p.inventory === 0 ? 'text-red-500 font-medium' : ''}`}>
+                      {p.inventory === 0 ? 'Out of stock' : `${p.inventory} left`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Both controls, kept narrow. Seeing the live page is the
+                    thing a merchant checks most, so it stays a single tap
+                    rather than something behind a menu. */}
+                <div className="flex items-center shrink-0 -mr-1">
+                  <a
+                    href={storeUrl(p.store.subdomain, `/products/${p.slug || p.id}?owner=1`)}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 active:bg-zinc-100 dark:active:bg-zinc-800 transition-colors"
+                    aria-label="View on store"
+                  >
+                    <HiEye className="w-4 h-4" />
+                  </a>
+                  <RowMenu product={p} storeId={storeId} onDelete={(p) => { setDeleteTarget(p); setDeleteError('') }} />
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+
         {shown.length === 0 && products.length > 0 && (
           <div className="py-16 text-center">
             <p className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-50">
@@ -297,8 +384,8 @@ export default function ProductsClient({ storeId, products: initial, categories 
       {/* Delete modal */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm" onClick={() => !deleting && setDeleteTarget(null)} />
-          <div className="relative bg-(--admin-card) rounded-2xl shadow-2xl border border-(--admin-border) w-full max-w-md p-6 space-y-4">
+          <div className="absolute inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm dialog-dim" onClick={() => !deleting && setDeleteTarget(null)} />
+          <div className="relative bg-(--admin-card) rounded-2xl shadow-2xl border border-(--admin-border) w-full max-w-md p-5 sm:p-6 space-y-4 dialog-in">
             <button onClick={() => setDeleteTarget(null)} disabled={deleting} className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-400 disabled:opacity-50">
               <HiX className="w-4 h-4" />
             </button>
@@ -343,6 +430,12 @@ export default function ProductsClient({ storeId, products: initial, categories 
   )
 }
 
+/** The colour a status is shown in, shared by the badge and the phone list. */
+function statusDot(status: string): string {
+  return { PUBLISHED: 'bg-emerald-500', active: 'bg-emerald-500',
+           DRAFT: 'bg-zinc-400', ARCHIVED: 'bg-red-500' }[status] ?? 'bg-zinc-400'
+}
+
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     PUBLISHED: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900',
@@ -356,7 +449,7 @@ function StatusBadge({ status }: { status: string }) {
     DRAFT: 'bg-zinc-400', ARCHIVED: 'bg-red-500',
   }
   return (
-    <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium pl-1.5 pr-2.5 h-[22px] rounded-full border ${styles[status] ?? styles.DRAFT}`}>
+    <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium pl-1.5 pr-2.5 h-5.5 rounded-full border ${styles[status] ?? styles.DRAFT}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${dot[status] ?? dot.DRAFT}`} />
       {label}
     </span>
