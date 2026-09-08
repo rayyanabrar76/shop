@@ -2,6 +2,20 @@ import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import ProductEditClient from './ProductEditClient'
+import type { Metadata } from 'next'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ storeId: string; productId: string }>
+}): Promise<Metadata> {
+  const { storeId, productId } = await params
+  const product = await prisma.product.findFirst({
+    where: { id: productId, storeId },
+    select: { title: true },
+  })
+  return { title: product?.title ?? 'Product' }
+}
 
 export default async function ProductEditPage({
   params,

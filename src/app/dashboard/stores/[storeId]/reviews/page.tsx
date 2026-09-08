@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import ReviewsClient from './ReviewsClient'
 
+export const metadata = { title: 'Reviews' }
+
 export default async function ReviewsPage({
   params,
 }: {

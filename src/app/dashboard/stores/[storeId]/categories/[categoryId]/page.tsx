@@ -2,6 +2,20 @@ import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import CategoryFormPage from '../CategoryFormPage'
+import type { Metadata } from 'next'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ storeId: string; categoryId: string }>
+}): Promise<Metadata> {
+  const { storeId, categoryId } = await params
+  const category = await prisma.category.findFirst({
+    where: { id: categoryId, storeId },
+    select: { name: true },
+  })
+  return { title: category?.name ?? 'Category' }
+}
 
 export default async function EditCategoryPage({
   params,

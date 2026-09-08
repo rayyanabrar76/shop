@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import PaymentSettingsClient from './PaymentSettingsClient'
 
+export const metadata = { title: 'Payments' }
+
 export default async function PaymentSettingsPage({
   params,
 }: {

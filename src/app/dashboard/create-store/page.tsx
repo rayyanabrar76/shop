@@ -6,6 +6,8 @@ import { Store, ArrowRight, Globe, Check, Loader2 } from 'lucide-react'
 import { APP_DOMAIN } from '@/lib/config'
 import { normalizeSubdomainInput, slugifySubdomain, validateSubdomain } from '@/lib/subdomain'
 
+export const metadata = { title: 'Create a store · Shopflow' }
+
 /** Result of the last completed availability check, tagged with what was checked. */
 type CheckResult = { value: string; error: string | null }
 

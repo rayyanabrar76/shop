@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { Eye, Paintbrush } from 'lucide-react'
 import PageHeader from '@/components/dashboard/PageHeader'
 
+export const metadata = { title: 'Customization' }
+
 export default async function ThemePage({
   params,
 }: {

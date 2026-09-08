@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import CategoriesClient from './CategoriesClient'
 
+export const metadata = { title: 'Categories' }
+
 export default async function CategoriesPage({
   params,
 }: {

@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import VisualEditor from './VisualEditor'
 
+export const metadata = { title: 'Visual editor' }
+
 export default async function VisualEditorPage({
   params,
 }: {

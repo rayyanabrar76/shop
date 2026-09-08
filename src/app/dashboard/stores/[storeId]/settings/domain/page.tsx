@@ -5,6 +5,8 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import DomainSettings from './DomainSettings'
 
+export const metadata = { title: 'Domain' }
+
 export default async function DomainSettingsPage({
   params,
 }: {

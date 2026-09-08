@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import ProductsClient from './ProductsClient'
 
+export const metadata = { title: 'Products' }
+
 export default async function ProductsPage({
   params,
 }: {

@@ -5,6 +5,8 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { Eye, Package, ShoppingCart, Palette, ArrowUpRight, Check, Circle } from 'lucide-react'
 
+export const metadata = { title: 'Home' }
+
 export default async function StoreDashboardPage({
   params,
 }: {

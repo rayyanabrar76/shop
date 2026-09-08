@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import DiscountsClient from './DiscountsClient'
 
+export const metadata = { title: 'Discounts & shipping' }
+
 export default async function DiscountsPage({
   params,
 }: {

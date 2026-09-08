@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import SettingsClient from './SettingsClient'
 
+export const metadata = { title: 'Settings' }
+
 export default async function SettingsPage({
   params,
 }: {

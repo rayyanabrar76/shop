@@ -4,6 +4,23 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { ShoppingBag } from 'lucide-react'
 import OrderDetailClient from './OrderDetailClient'
+import type { Metadata } from 'next'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ storeId: string; orderId: string }>
+}): Promise<Metadata> {
+  const { storeId, orderId } = await params
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, storeId },
+    select: { customerName: true },
+  })
+  // The short id is what the orders list shows, so the tab matches the row
+  // that was clicked to open it.
+  const who = order?.customerName ? ` · ${order.customerName}` : ''
+  return { title: order ? `Order #${orderId.slice(0, 7)}${who}` : 'Order' }
+}
 
 export default async function OrderDetailPage({
   params,

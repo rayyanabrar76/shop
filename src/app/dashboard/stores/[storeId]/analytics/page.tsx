@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import AnalyticsClient from './AnalyticsClient'
 
+export const metadata = { title: 'Analytics' }
+
 export default async function AnalyticsPage({
   params,
 }: {

@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import CustomersClient from './CustomersClient'
 
+export const metadata = { title: 'Customers' }
+
 export default async function CustomersPage({
   params,
   searchParams,

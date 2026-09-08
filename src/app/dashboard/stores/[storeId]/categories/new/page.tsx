@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import CategoryFormPage from '../CategoryFormPage'
 
+export const metadata = { title: 'New category' }
+
 export default async function NewCategoryPage({
   params,
 }: {
