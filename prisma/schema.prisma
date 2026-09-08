@@ -44,6 +44,7 @@ model Store {
   owner           User              @relation(fields: [ownerId], references: [id])
   products        Product[]
   orders          Order[]
+  reviews         ProductReview[]
   customers       Customer[]
   theme           StoreTheme?
   categories      Category[]
@@ -288,6 +289,15 @@ model Product {
   // URL slug, e.g. /products/classic-glazed. Nullable so existing rows stay
   // valid until backfilled; lookups fall back to the id for old links.
   slug        String?
+  // What Google shows. Blank falls back to the title and description, which
+  // is right most of the time: these exist for the cases where the shop
+  // name reads well on the page but badly in a result list.
+  seoTitle       String?
+  seoDescription String?
+  // Describes the main image for screen readers and image search. An
+  // uploaded file is usually called something like 08367.png, which tells
+  // neither a reader nor a crawler anything.
+  imageAlt       String?
   createdAt   DateTime @default(now())
   storeId     String
 
@@ -295,6 +305,7 @@ model Product {
   orderItems OrderItem[]
   images     ProductImage[]
   variants   ProductVariant[]
+  reviews    ProductReview[]
 
   @@unique([storeId, slug])
 }
@@ -354,6 +365,8 @@ model ProductImage {
   id        String   @id @default(cuid())
   productId String
   url       String
+  // Per-image description, same purpose as Product.imageAlt.
+  alt       String?
   position  Int      @default(0)
   createdAt DateTime @default(now())
 
@@ -463,6 +476,48 @@ model ShippingRate {
   createdAt     DateTime @default(now())
 
   store Store @relation(fields: [storeId], references: [id])
+}
+
+/**
+ * A customer's rating of a product.
+ *
+ * Kept as first-party data rather than an embedded widget because the whole
+ * point is the aggregateRating in the page's structured data, and Google only
+ * counts a rating that is actually rendered on the page it marks up.
+ *
+ * Reviews arrive PENDING. An open form on the public internet collects spam,
+ * and a shop cannot un-publish something a crawler has already read, so the
+ * merchant sees it before anyone else does.
+ */
+model ProductReview {
+  id          String       @id @default(cuid())
+  productId   String
+  storeId     String
+  authorName  String
+  /** Never shown publicly. Used to match the review to an order. */
+  authorEmail String?
+  /** 1 to 5. Validated at the API, since Prisma has no range constraint. */
+  rating      Int
+  title       String?
+  body        String?
+  status      ReviewStatus @default(PENDING)
+  /** The email placed an order in this shop containing this product. */
+  verified    Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  store   Store   @relation(fields: [storeId], references: [id])
+
+  // The storefront always asks for one product's published reviews, and the
+  // admin always asks for one store's pending ones.
+  @@index([productId, status])
+  @@index([storeId, status])
+}
+
+enum ReviewStatus {
+  PENDING
+  PUBLISHED
+  HIDDEN
 }
 
 enum OrderStatus {

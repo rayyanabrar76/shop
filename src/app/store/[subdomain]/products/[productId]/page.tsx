@@ -6,6 +6,7 @@ import StoreHeader from '../../StoreHeader'
 import StoreFooter from '../../StoreFooter'
 import CartSidebar from '../../cart-sidebar'
 import ProductDetailClient from './ProductDetailClient'
+import ProductReviews from './ProductReviews'
 import { ArrowLeft, Package } from 'lucide-react'
 import DarkModeSync from '../../DarkModeSync'
 import { formatPrice } from '@/lib/currency'
@@ -36,23 +37,31 @@ export async function generateMetadata({
 
   const product = await prisma.product.findFirst({
     where: { storeId: store.id, OR: [{ slug: productId }, { id: productId }] },
-    select: { title: true, description: true, imageUrl: true, slug: true, id: true, tags: true },
+    select: {
+      title: true, description: true, imageUrl: true, slug: true, id: true, tags: true,
+      seoTitle: true, seoDescription: true, imageAlt: true,
+    },
   })
   if (!product) return { title: 'Product not found' }
 
+  // The overrides win where set; otherwise the page's own copy stands in.
+  // A merchant writes a product title for the page, not for a result list,
+  // and the two are not always the same sentence.
+  const seoTitle = product.seoTitle?.trim() || product.title
   const description =
+    product.seoDescription?.trim() ||
     product.description?.trim().slice(0, 160) ||
     `Buy ${product.title} from ${store.name}.`
   const canonical = storeUrl(subdomain, `/products/${product.slug || product.id}`)
 
   return {
     // The layout's title template appends the store name.
-    title: product.title,
+    title: seoTitle,
     description,
     ...(product.tags.length > 0 ? { keywords: product.tags } : {}),
     alternates: { canonical },
     openGraph: {
-      title: product.title,
+      title: seoTitle,
       description,
       url: canonical,
       type: 'website',
@@ -61,7 +70,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: product.imageUrl ? 'summary_large_image' : 'summary',
-      title: product.title,
+      title: seoTitle,
       description,
       ...(product.imageUrl ? { images: [product.imageUrl] } : {}),
     },
@@ -106,15 +115,35 @@ export default async function StoreProductPage({
   const textColor = theme?.textColor ?? '#09090b'
   const font = theme?.font ?? 'sans'
 
+  // Published only. A pending review is not visible to shoppers, so it must
+  // not count toward the rating Google is shown either.
+  const reviews = await prisma.productReview.findMany({
+    where: { productId: product.id, status: 'PUBLISHED' },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true, authorName: true, rating: true, title: true,
+      body: true, verified: true, createdAt: true,
+    },
+  })
+  const ratingCount = reviews.length
+  const ratingAverage = ratingCount
+    ? reviews.reduce((sum, r) => sum + r.rating, 0) / ratingCount
+    : 0
+
   const related = await prisma.product.findMany({
     where: { storeId: store.id, status: 'active', NOT: { id: productId } },
     take: 4,
     orderBy: { createdAt: 'desc' },
   })
 
+  // Each image travels with its own description. Where none was written,
+  // the product title is a better fallback than nothing at all, though it
+  // is the alt field that actually helps image search.
   const allImages = [
-    ...(product.imageUrl ? [product.imageUrl] : []),
-    ...product.images.map(i => i.url).filter(u => u !== product.imageUrl),
+    ...(product.imageUrl ? [{ url: product.imageUrl, alt: product.imageAlt || product.title }] : []),
+    ...product.images
+      .filter(i => i.url !== product.imageUrl)
+      .map(i => ({ url: i.url, alt: i.alt || product.title })),
   ]
 
   // Product structured data — what puts price and availability into a Google
@@ -127,10 +156,32 @@ export default async function StoreProductPage({
     ...(product.description ? { description: product.description } : {}),
     // schema.org needs absolute URLs; uploads are stored as site-relative paths.
     ...(allImages.length
-      ? { image: allImages.map(u => (u.startsWith('http') ? u : storeUrl(subdomain, u))) }
+      ? { image: allImages.map(i => (i.url.startsWith('http') ? i.url : storeUrl(subdomain, i.url))) }
       : {}),
     ...(product.sku ? { sku: product.sku } : {}),
     brand: { '@type': 'Brand', name: store.name },
+    // Only when there are real, published reviews rendered on this page.
+    // Marking up a rating a visitor cannot see is a structured data
+    // violation, and an invented one is worse than none.
+    ...(ratingCount > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: (Math.round(ratingAverage * 10) / 10).toFixed(1),
+            reviewCount: ratingCount,
+            bestRating: 5,
+            worstRating: 1,
+          },
+          review: reviews.slice(0, 10).map(r => ({
+            '@type': 'Review',
+            author: { '@type': 'Person', name: r.authorName },
+            datePublished: r.createdAt.toISOString().slice(0, 10),
+            reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5, worstRating: 1 },
+            ...(r.title ? { name: r.title } : {}),
+            ...(r.body ? { reviewBody: r.body } : {}),
+          })),
+        }
+      : {}),
     offers: {
       '@type': 'Offer',
       price: (product.price / 100).toFixed(2),
@@ -194,6 +245,14 @@ export default async function StoreProductPage({
             })),
           }}
           theme={{ primary, radius, buttonStyle, textColor }}
+        />
+
+        <ProductReviews
+          subdomain={subdomain}
+          productSlug={product.slug || product.id}
+          average={ratingAverage}
+          theme={{ primary, radius, textColor }}
+          reviews={reviews.map(r => ({ ...r, createdAt: r.createdAt.toISOString() }))}
         />
 
         {related.length > 0 && (
