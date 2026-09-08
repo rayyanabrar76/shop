@@ -148,6 +148,7 @@ export default function StorePageClient({
     // survive. See CustomSection; without it a page here keeps a white
     // section's black text on the dark theme's black.
     darkMode: theme.darkMode ?? false,
+    backgroundColor: theme.backgroundColor,
   }
 
   const headingStyle: React.CSSProperties = {

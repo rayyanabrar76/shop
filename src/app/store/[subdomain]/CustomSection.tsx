@@ -1,7 +1,7 @@
 'use client'
 
 import { ImageOff } from 'lucide-react'
-import { readableText } from '@/lib/contrast'
+import { ensureReadable, readableText } from '@/lib/contrast'
 import { EditorItem } from './EditorHighlight'
 import { useStoreBase, resolveStoreHref } from '@/components/StoreBaseProvider'
 
@@ -44,6 +44,8 @@ interface CustomSectionProps {
     headingFont: string
     /** The shop is running dark. Its own background wins over a section's. */
     darkMode?: boolean
+    /** The page behind this section, for working out what will show on it. */
+    backgroundColor?: string
   }
   isEditor?: boolean
   onEdit?: (s: string) => void
@@ -75,7 +77,7 @@ export default function CustomSection({ section, themeStyle, categories = [], su
   const href = (url: string) => resolveStoreHref(url, storeBase, subdomain)
   if (!section.visible) return null
 
-  const { primaryColor, borderRadius, buttonStyle, headingFont, darkMode } = themeStyle
+  const { primaryColor, borderRadius, buttonStyle, headingFont, darkMode, backgroundColor } = themeStyle
   const heading = section.heading?.trim()
   const text = section.text?.trim()
   const notify = onEdit ?? (() => {})
@@ -88,10 +90,22 @@ export default function CustomSection({ section, themeStyle, categories = [], su
   const effectiveColor   = section.buttonColor   ?? primaryColor
   const effectiveFont    = section.buttonFont === 'serif' ? 'serif' : section.buttonFont === 'mono' ? 'monospace' : 'inherit'
 
+  // What this section is actually drawn on. In dark mode the shop's own
+  // background wins, because the dark stylesheet repaints every section
+  // regardless of the colour stored against it.
+  const sectionBg = darkMode ? '#09090b' : (section.bgColor || backgroundColor || '#ffffff')
+
+  // A brand colour is picked once, against whatever the page looked like that
+  // day. This shop's is near-black, so on a dark page an outline button had
+  // invisible text and a solid one was a black rectangle on black. The colour
+  // is kept whenever it can be seen, and swapped only when it cannot.
+  const buttonColor = ensureReadable(effectiveColor, sectionBg)
+
   const buttonStyleObj: React.CSSProperties = {
-    backgroundColor: effectiveVariant === 'solid' ? effectiveColor : 'transparent',
-    color: effectiveVariant === 'solid' ? '#fff' : effectiveColor,
-    border: effectiveVariant === 'ghost' ? 'none' : `1.5px solid ${effectiveColor}`,
+    backgroundColor: effectiveVariant === 'solid' ? buttonColor : 'transparent',
+    // Not always white: a solid button in a pale colour needs dark text on it.
+    color: effectiveVariant === 'solid' ? readableText(buttonColor) : buttonColor,
+    border: effectiveVariant === 'ghost' ? 'none' : `1.5px solid ${buttonColor}`,
     borderRadius: effectiveRadius,
     fontFamily: effectiveFont,
   }
@@ -186,7 +200,7 @@ export default function CustomSection({ section, themeStyle, categories = [], su
                   <div className="pt-3.5">
                     <p className="text-[13px] font-bold uppercase tracking-[0.08em] leading-snug">{cat.name}</p>
                     {section.showCount && typeof cat.count === 'number' && (
-                      <p className="text-[11px] tracking-[0.1em] opacity-50 mt-1">
+                      <p className="text-[11px] tracking-widest opacity-50 mt-1">
                         {cat.count} {cat.count === 1 ? 'product' : 'products'}
                       </p>
                     )}
