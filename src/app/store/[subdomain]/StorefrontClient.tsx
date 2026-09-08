@@ -11,7 +11,7 @@ import SectionDivider from './SectionDivider'
 import CustomSection, { type CustomSectionData, type StoreCategory } from './CustomSection'
 import { EditorSection, EditorItem, AddSectionSlot } from './EditorHighlight'
 import { resolveSectionOrder, isCustomKey, customIdFromKey } from '@/lib/section-order'
-import { readableText } from '@/lib/contrast'
+import { ensureReadable, readableText } from '@/lib/contrast'
 import { useStoreBase } from '@/components/StoreBaseProvider'
 
 interface ThemeStyle {
@@ -270,9 +270,12 @@ export default function StorefrontClient({
     footerColor: theme.footerColor,
     accentColor: theme.accentColor,
     // Blank means "work it out": the grid has its own background, so falling
-    // back to the page text colour put dark text on a dark grid.
-    textColor: theme.productGridTextColor
-      || (theme.productGridBg ? readableText(theme.productGridBg, '#ffffff', theme.textColor) : theme.textColor),
+    // back to the page text colour put dark text on a dark grid. A colour that
+    // was set is still checked against that background, because turning on
+    // dark mode repaints the grid and leaves the text colour where it was.
+    textColor: theme.productGridBg
+      ? ensureReadable(theme.productGridTextColor || theme.textColor, theme.productGridBg)
+      : (theme.productGridTextColor || theme.textColor),
     borderRadius: theme.borderRadius,
     buttonStyle: theme.buttonStyle,
     font: theme.productGridFont || theme.font,

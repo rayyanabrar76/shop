@@ -74,3 +74,45 @@ export function readableBorder(background: string): string {
 export function readableMuted(background: string): string {
   return isDark(background) ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.55)'
 }
+
+/**
+ * How far apart two colours are, per WCAG. 1 is identical, 21 is black on
+ * white. Body text wants 4.5 and large text wants 3.
+ */
+export function contrastRatio(a: string, b: string): number | null {
+  const la = luminance(a)
+  const lb = luminance(b)
+  if (la === null || lb === null) return null
+  const [hi, lo] = la > lb ? [la, lb] : [lb, la]
+  return (hi + 0.05) / (lo + 0.05)
+}
+
+/**
+ * Keeps a chosen colour if it can actually be read, and replaces it if not.
+ *
+ * A merchant picks colours one at a time, so a value chosen against a white
+ * page is still sitting there when the page turns dark. That is how a grid
+ * ends up with #454545 text on #09090b, or a heading in near-black on a
+ * section the dark theme has just repainted black: every value was reasonable
+ * when it was set, and nothing rechecked them together.
+ *
+ * So the pair is checked rather than trusted. Anything that clears the bar is
+ * left exactly as the merchant set it, and only a genuinely unreadable pairing
+ * is overridden.
+ *
+ * The bar is 3, not 4.5. This mostly guards headings and prices, which are
+ * large, and a stricter test would start overriding deliberate choices like
+ * grey captions that are perfectly legible.
+ */
+export function ensureReadable(
+  color: string | null | undefined,
+  background: string,
+  minimum = 3,
+): string {
+  if (!color) return readableText(background)
+  const ratio = contrastRatio(color, background)
+  // Unreadable pairs get a computed colour; anything unparseable is left
+  // alone, since guessing at a colour we cannot measure is worse.
+  if (ratio === null) return color
+  return ratio >= minimum ? color : readableText(background)
+}

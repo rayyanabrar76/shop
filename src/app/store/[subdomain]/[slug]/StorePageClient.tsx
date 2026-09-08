@@ -144,6 +144,10 @@ export default function StorePageClient({
     buttonStyle: theme.buttonStyle,
     headingFont: theme.headingFont,
     cardShadow: theme.cardShadow,
+    // Custom sections need this to know whether their own background will
+    // survive. See CustomSection; without it a page here keeps a white
+    // section's black text on the dark theme's black.
+    darkMode: theme.darkMode ?? false,
   }
 
   const headingStyle: React.CSSProperties = {

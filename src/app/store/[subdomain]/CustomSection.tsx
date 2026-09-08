@@ -42,6 +42,8 @@ interface CustomSectionProps {
     borderRadius: string
     buttonStyle: string
     headingFont: string
+    /** The shop is running dark. Its own background wins over a section's. */
+    darkMode?: boolean
   }
   isEditor?: boolean
   onEdit?: (s: string) => void
@@ -73,7 +75,7 @@ export default function CustomSection({ section, themeStyle, categories = [], su
   const href = (url: string) => resolveStoreHref(url, storeBase, subdomain)
   if (!section.visible) return null
 
-  const { primaryColor, borderRadius, buttonStyle, headingFont } = themeStyle
+  const { primaryColor, borderRadius, buttonStyle, headingFont, darkMode } = themeStyle
   const heading = section.heading?.trim()
   const text = section.text?.trim()
   const notify = onEdit ?? (() => {})
@@ -95,10 +97,16 @@ export default function CustomSection({ section, themeStyle, categories = [], su
   }
 
   // A section can be given any background, so the page's own text colour is no
-  // guarantee of contrast — a dark section on a light theme left near-black
-  // text on near-black. Set here rather than per element: everything inside
-  // inherits, and the opacity-based muted styles come along with it.
-  const wrapperStyle: React.CSSProperties = section.bgColor
+  // guarantee of contrast: a dark section on a light theme left near-black
+  // text on near-black. Set here rather than per element, so everything inside
+  // inherits it and the opacity-based muted styles come along too.
+  //
+  // In dark mode the section's own background is dropped. The dark stylesheet
+  // repaints every section near-black regardless, so keeping the colour meant
+  // a section chosen as white kept its black text and became black on black.
+  // A background picked months ago against a white page cannot be trusted to
+  // still be the background, so the page's colours are used instead.
+  const wrapperStyle: React.CSSProperties = section.bgColor && !darkMode
     ? { backgroundColor: section.bgColor, color: readableText(section.bgColor) }
     : {}
 
