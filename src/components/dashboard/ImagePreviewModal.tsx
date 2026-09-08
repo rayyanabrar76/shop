@@ -79,10 +79,10 @@ export default function ImagePreviewModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[300] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm dialog-dim"
       onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl bg-(--admin-card) border border-(--admin-border) flex flex-col">
+      <div className="w-full max-w-4xl max-h-[90dvh] overflow-hidden rounded-2xl bg-(--admin-card) border border-(--admin-border) flex flex-col dialog-in">
         <div className="flex items-center justify-between gap-3 px-4 h-14 shrink-0 border-b border-(--admin-edge)">
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">

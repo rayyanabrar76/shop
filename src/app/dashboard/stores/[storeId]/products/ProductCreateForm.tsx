@@ -217,7 +217,7 @@ export default function ProductCreateForm({
 
   return (
     <div className={embedded ? '' : 'min-h-full bg-(--admin-page)'}>
-      <div className={embedded ? 'p-5' : 'max-w-5xl px-6 pt-6 pb-10'}>
+      <div className={embedded ? 'p-4 sm:p-5' : 'max-w-5xl px-4 md:px-6 pt-5 md:pt-6 pb-10'}>
 
         {/* Header, the modal supplies its own title, so only actions there */}
         <div className={`flex items-center justify-between ${embedded ? 'mb-4' : 'mb-5'}`}>
@@ -281,7 +281,7 @@ export default function ProductCreateForm({
           <div className={embedded ? 'space-y-4' : 'lg:col-span-2 space-y-4'}>
 
             {/* Title + Description */}
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5 space-y-4">
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5 space-y-4">
               {/* group/ai: the button inside the label only shows on hover,
                   and the hover target has to be the whole field. */}
               <div className="group/ai">
@@ -320,8 +320,30 @@ export default function ProductCreateForm({
                   className={`${inputCls} resize-none`}
                 />
               </div>
-              <div>
-                <label className={labelCls}>Tags</label>
+              <div className="group/ai">
+                <AiFieldLabel
+                  label="Tags"
+                  storeId={storeId}
+                  kind="keywords"
+                  current={tags.join(', ')}
+                  context={[
+                    `Product title: ${title || '(not written yet)'}`,
+                    description.trim() ? `Product description: ${description.trim()}` : null,
+                    category ? `Category: ${category}` : null,
+                  ].filter(Boolean).join('\n')}
+                  hint={`search keywords for the product "${title || 'a new product'}"`}
+                  onWrite={text => setTags(prev => {
+                    // Added to what is there, not swapped for it: a tag you
+                    // typed yourself is the one you were surest about.
+                    const next = [...prev]
+                    for (const raw of text.split(',')) {
+                      const tag = raw.trim().toLowerCase().replace(/^#/, '')
+                      if (tag && !next.includes(tag) && next.length < 20) next.push(tag)
+                    }
+                    return next
+                  })}
+                  labelClassName={labelCls}
+                />
                 <TagsInput value={tags} onChange={setTags} />
                 <p className="text-[10px] text-zinc-500 mt-1.5">
                   Words shoppers might search for. Used for on-site search and SEO keywords.
@@ -330,7 +352,7 @@ export default function ProductCreateForm({
             </div>
 
             {/* Pricing & Inventory */}
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5">
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5">
               <p className={labelCls}>Pricing &amp; Inventory</p>
               <div className="grid grid-cols-2 gap-4 mt-3">
                 <div>
@@ -371,21 +393,26 @@ export default function ProductCreateForm({
             </div>
 
             {/* Image */}
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5">
-              <div className="flex items-center justify-between mb-2">
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5">
+              {/* The label keeps the first line to itself on a phone and the
+                  two buttons split the next one. Side by side they need about
+                  480px, which is more than the screen has. */}
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                 <label className={labelCls + ' mb-0'}>Product Images</label>
-                <div className="flex items-center gap-1.5">
+                <div className="flex w-full sm:w-auto items-center gap-1.5">
                   <button
                     onClick={() => setLibraryOpen(true)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-(--admin-border) text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-(--admin-field-border) transition-colors"
+                    className="flex flex-1 sm:flex-none h-9 sm:h-auto items-center justify-center gap-1.5 px-2.5 sm:py-1.5 rounded-lg border border-(--admin-border) text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-(--admin-field-border) transition-colors"
                   >
-                    <HiPhotograph className="w-3.5 h-3.5" /> Choose from Library
+                    <HiPhotograph className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate"><span className="sm:hidden">Library</span><span className="hidden sm:inline">Choose from Library</span></span>
                   </button>
                   <button
                     onClick={() => setImageAiOpen(true)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-(--admin-border) text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-(--admin-field-border) transition-colors"
+                    className="flex flex-1 sm:flex-none h-9 sm:h-auto items-center justify-center gap-1.5 px-2.5 sm:py-1.5 rounded-lg border border-(--admin-border) text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-(--admin-field-border) transition-colors"
                   >
-                    <HiPhoto className="w-3.5 h-3.5" /> Generate with AI
+                    <HiPhoto className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">Generate with AI</span>
                   </button>
                 </div>
               </div>
@@ -526,7 +553,7 @@ export default function ProductCreateForm({
           <div className="space-y-4">
 
             {/* Status */}
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5">
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5">
               <label className={labelCls}>Status</label>
               <div className="flex gap-2 mt-2">
                 {(['active', 'DRAFT'] as const).map(s => (
@@ -546,7 +573,7 @@ export default function ProductCreateForm({
             </div>
 
             {/* Category, custom dropdown */}
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5">
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5">
               <div className="flex items-center justify-between mb-3">
                 <label className={labelCls + ' mb-0'}>Category</label>
                 {/* A modal, not a link: leaving the form would lose everything
@@ -615,7 +642,7 @@ export default function ProductCreateForm({
             </div>
 
             {/* SKU */}
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5">
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5">
               <label className={labelCls}>SKU</label>
               <input
                 value={sku}
@@ -628,7 +655,7 @@ export default function ProductCreateForm({
 
             {/* The same search listing the edit form carries, so a product is
                 not created blind and then fixed for search afterwards. */}
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5 space-y-4">
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5 space-y-4">
               <label className={labelCls}>Search engine listing</label>
 
               <div className="rounded-xl border border-(--admin-border) p-3.5">
@@ -740,6 +767,11 @@ export default function ProductCreateForm({
         onClose={() => setImageAiOpen(false)}
         storeId={storeId}
         seed={title}
+        context={[
+          `Product title: ${title || '(not written yet)'}`,
+          description.trim() ? `Product description: ${description.trim()}` : null,
+          category ? `Category: ${category}` : null,
+        ].filter(Boolean).join('\n')}
         onApply={url => {
           setImageFile(null)
           setGeneratedUrl(url)

@@ -29,6 +29,61 @@
   .admin-shake { animation: admin-shake 380ms cubic-bezier(0.36, 0.07, 0.19, 0.97); }
 }
 
+/* ── Dialogs ─────────────────────────────────────────────────────────────
+   A dialog is two things, and they move differently. The ground behind it
+   only dims. The panel also rises a little and settles, so it reads as
+   arriving over the dim rather than with it, which is what makes a dialog
+   feel placed rather than switched on.
+
+   Both are short. Nobody opens a dialog to watch it open. Outside the
+   reduced-motion guard there is nothing to fall back to: with no animation
+   the dialog is simply there, which is the correct behaviour for someone who
+   asked not to be moved. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes dialog-dim {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes dialog-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.985); }
+    to   { opacity: 1; transform: none; }
+  }
+  .dialog-dim { animation: dialog-dim 130ms ease-out; }
+  .dialog-in  { animation: dialog-in 190ms cubic-bezier(0.22, 0.9, 0.3, 1); }
+
+  /* Leaving is the same movement run backwards, and quicker. A dialog opens
+     to be looked at, so it can afford to arrive; it closes because you are
+     already done with it. `forwards` holds the end state for the few frames
+     between the animation finishing and the element being unmounted. */
+  @keyframes dialog-dim-out {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+  }
+  @keyframes dialog-out {
+    from { opacity: 1; transform: none; }
+    to   { opacity: 0; transform: translateY(6px) scale(0.985); }
+  }
+  .dialog-dim-out { animation: dialog-dim-out 140ms ease-in forwards; }
+  .dialog-out     { animation: dialog-out 140ms ease-in forwards; }
+}
+
+/* ── The editor's phone bar, catching the eye ────────────────────────────
+   Tapping a section in the preview names it on the bar at the bottom of the
+   screen. That is the whole report, and a change of text at the far edge of
+   a phone is easy to miss, so the bar hops once to say it changed.
+
+   Small and once. It is an answer to "did that do anything", not a thing to
+   watch, and it fires on every tap in the preview, so anything longer would
+   become the most annoying part of the editor within a minute. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes sheet-nudge {
+    0%, 100% { transform: translateY(0); }
+    35%      { transform: translateY(-7px); }
+    70%      { transform: translateY(-2px); }
+  }
+  .sheet-nudge { animation: sheet-nudge 420ms cubic-bezier(0.22, 0.9, 0.3, 1); }
+}
+
 /* ── Touch: a device with no hover to reveal anything with ───────────────
    A control that only appears on hover is invisible on a phone, and an
    element at zero opacity still takes taps, so it can be pressed by

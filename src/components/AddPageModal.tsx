@@ -80,8 +80,8 @@ export default function AddPageModal({ storeId, subdomain, existingPages, onCrea
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}>
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-5 max-h-[90vh] overflow-y-auto thin-scrollbar">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 dialog-dim" style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}>
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-sm p-5 sm:p-6 space-y-5 max-h-[90dvh] overflow-y-auto thin-scrollbar dialog-in">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-50">Add New Page</h3>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">

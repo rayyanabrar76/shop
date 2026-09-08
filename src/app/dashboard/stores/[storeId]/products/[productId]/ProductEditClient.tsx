@@ -420,9 +420,9 @@ export default function ProductEditClient({ storeId, product, categories, embedd
 
   return (
     <div className={embedded ? '' : 'min-h-full bg-(--admin-page)'}>
-      <div className={embedded ? 'p-5' : 'max-w-5xl px-6 pt-6 pb-10'}>
+      <div className={embedded ? 'p-4 sm:p-5' : 'max-w-5xl px-4 md:px-6 pt-5 md:pt-6 pb-10'}>
         {/* Header, the modal supplies its own title, so only actions there */}
-        <div className={`flex items-center justify-between ${embedded ? 'mb-4' : 'mb-5'}`}>
+        <div className={`flex items-center justify-between gap-3 ${embedded ? 'mb-4' : 'mb-5'}`}>
           {embedded ? <div /> : (
             <div className="flex items-center gap-1.5 min-w-0">
               <button
@@ -433,20 +433,22 @@ export default function ProductEditClient({ storeId, product, categories, embedd
                 <HiCube className="w-4 h-4" />
               </button>
               <HiChevronRight className="w-3.5 h-3.5 shrink-0 text-zinc-300 dark:text-zinc-600" />
-              <h1 className="truncate text-[15px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50">{product.title}</h1>
+              <h1 className="truncate text-[13px] md:text-[15px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50">{product.title}</h1>
             </div>
           )}
-          <div className="flex items-center gap-2">
-            {error
-              ? <span className="text-[11.5px] text-red-500 font-medium">{error}</span>
-              : flash === 'nudge'
-                ? <span className="text-[11.5px] font-medium text-amber-600 dark:text-amber-400">Save your changes first</span>
-                : dirty
-                  ? <span className="text-[11.5px] text-zinc-500">Unsaved changes</span>
-                  : null}
+          <div className="flex items-center justify-end gap-2">
+            <span className="hidden sm:inline min-w-0 truncate text-[11.5px]">
+              {error
+                ? <span className="text-red-500 font-medium">{error}</span>
+                : flash === 'nudge'
+                  ? <span className="font-medium text-amber-600 dark:text-amber-400">Save your changes first</span>
+                  : dirty
+                    ? <span className="text-zinc-500">Unsaved changes</span>
+                    : null}
+            </span>
             <Link href={storeUrl(product.store.subdomain, `/products/${product.slug || product.id}?owner=1`)} target="_blank"
               className="flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-(--admin-border) bg-(--admin-card) px-3 text-[11.5px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-50 hover:border-(--admin-field-border) transition-colors">
-              <HiEye className="w-3.5 h-3.5" /> View live
+              <HiEye className="w-3.5 h-3.5" /> <span className="hidden sm:inline">View live</span>
             </Link>
             {dirty && (
               <button
@@ -469,7 +471,7 @@ export default function ProductEditClient({ storeId, product, categories, embedd
                   : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500'
               } ${flash === 'ok' ? 'admin-pop' : flash ? 'admin-shake' : ''}`}>
               <HiCheck className="w-3.5 h-3.5" />
-              {saving ? 'Saving…' : 'Save changes'}
+              {saving ? 'Saving…' : <><span className="sm:hidden">Save</span><span className="hidden sm:inline">Save changes</span></>}
             </button>
           </div>
         </div>
@@ -480,7 +482,7 @@ export default function ProductEditClient({ storeId, product, categories, embedd
           <div className={embedded ? 'space-y-4' : 'lg:col-span-2 space-y-4'}>
 
             {/* Title + Description */}
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5 space-y-4">
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5 space-y-4">
               {/* group/ai has to sit on the field, not on the row above it:
                   the button reveals on group-hover/ai, so with the group any
                   higher it appeared while the pointer was nowhere near the
@@ -508,8 +510,30 @@ export default function ProductEditClient({ storeId, product, categories, embedd
                 />
                 <textarea rows={5} value={description} onChange={e => setDescription(e.target.value)} className={`${inputCls} resize-none`} />
               </div>
-              <div>
-                <label className={labelCls}>Tags</label>
+              <div className="group/ai">
+                <AiFieldLabel
+                  label="Tags"
+                  storeId={storeId}
+                  kind="keywords"
+                  current={tags.join(', ')}
+                  context={[
+                    `Product title: ${title || '(not written yet)'}`,
+                    description.trim() ? `Product description: ${description.trim()}` : null,
+                    category ? `Category: ${category}` : null,
+                  ].filter(Boolean).join('\n')}
+                  hint={`search keywords for the product "${title || 'this product'}"`}
+                  onWrite={text => setTags(prev => {
+                    // Added to what is there, not swapped for it: a tag you
+                    // typed yourself is the one you were surest about.
+                    const next = [...prev]
+                    for (const raw of text.split(',')) {
+                      const tag = raw.trim().toLowerCase().replace(/^#/, '')
+                      if (tag && !next.includes(tag) && next.length < 20) next.push(tag)
+                    }
+                    return next
+                  })}
+                  labelClassName={labelCls}
+                />
                 <TagsInput value={tags} onChange={setTags} />
                 <p className="text-[10px] text-zinc-500 mt-1.5">
                   Words shoppers might search for. Used for on-site search and SEO keywords.
@@ -518,7 +542,7 @@ export default function ProductEditClient({ storeId, product, categories, embedd
             </div>
 
             {/* Pricing & Inventory */}
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5">
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5">
               <p className={labelCls}>Pricing & Inventory</p>
               <div className="grid grid-cols-2 gap-4 mt-3">
                 <div>
@@ -552,14 +576,14 @@ export default function ProductEditClient({ storeId, product, categories, embedd
             </div>
 
             {/* Images */}
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <label className={labelCls + ' mb-0'}>Product Images</label>
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5 space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <label className={labelCls + ' mb-0 min-w-0 truncate'}>Product Images</label>
                 <button
                   onClick={() => setImageAiOpen(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-(--admin-border) text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-(--admin-field-border) transition-colors"
+                  className="flex shrink-0 h-9 sm:h-auto items-center gap-1.5 px-2.5 sm:py-1.5 rounded-lg border border-(--admin-border) text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-(--admin-field-border) transition-colors"
                 >
-                  <HiPhoto className="w-3.5 h-3.5" /> Generate with AI
+                  <HiPhoto className="w-3.5 h-3.5 shrink-0" /> Generate with AI
                 </button>
               </div>
               <div>
@@ -644,7 +668,7 @@ export default function ProductEditClient({ storeId, product, categories, embedd
             </div>
 
             {/* Variants */}
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5 space-y-4">
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <label className={labelCls + ' mb-0'}>Variants</label>
@@ -716,14 +740,14 @@ export default function ProductEditClient({ storeId, product, categories, embedd
 
           {/* ── Right ── */}
           <div className="space-y-4">
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5">
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5">
               <label className={labelCls}>Status</label>
               <div className="mt-2">
                 <CustomDropdown options={statusOptions} value={status} onChange={setStatus} />
               </div>
             </div>
 
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5">
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5">
               <div className="flex items-center justify-between mb-3">
                 <label className={labelCls + ' mb-0'}>Category</label>
                 {/* A modal, not a link: leaving would drop unsaved edits, and
@@ -752,7 +776,7 @@ export default function ProductEditClient({ storeId, product, categories, embedd
               )}
             </div>
 
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5">
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5">
               <label className={labelCls}>SKU</label>
               <input value={sku} onChange={e => setSku(e.target.value)} placeholder="e.g. SHIRT-001" className={`${inputCls} font-mono`} />
               <p className="text-[10px] text-zinc-500 mt-1.5">Stock Keeping Unit, optional</p>
@@ -761,7 +785,7 @@ export default function ProductEditClient({ storeId, product, categories, embedd
             {/* What a search result will look like. The old card in this slot
                 showed the product's database id and its creation date, which
                 is the one pair of facts a merchant can do nothing with. */}
-            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5 space-y-4">
+            <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-4 md:p-5 space-y-4">
               <label className={labelCls}>Search engine listing</label>
 
               <div className="rounded-xl border border-(--admin-border) p-3.5">
@@ -863,6 +887,11 @@ export default function ProductEditClient({ storeId, product, categories, embedd
         onClose={() => setImageAiOpen(false)}
         storeId={storeId}
         seed={title}
+        context={[
+          `Product title: ${title || '(not written yet)'}`,
+          description.trim() ? `Product description: ${description.trim()}` : null,
+          category ? `Category: ${category}` : null,
+        ].filter(Boolean).join('\n')}
         onApply={url => {
           // An existing main image is kept as a gallery shot rather than lost.
           if (imageUrl && imageUrl !== url) {
