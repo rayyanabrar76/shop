@@ -45,7 +45,11 @@ export interface StorePage {
 
 type DeviceMode = 'desktop' | 'tablet' | 'mobile'
 type Tab = 'sections' | 'theme'
-type SectionView = 'list' | 'banner' | 'header' | 'hero' | 'products' | 'footer' | 'custom' | 'code' | 'seo' | 'product-title' | 'product-price' | 'product-cart' | 'nav-menu' | 'category-filter'
+const SECTION_VIEWS = [
+  'list', 'banner', 'header', 'hero', 'products', 'footer', 'custom', 'code',
+  'seo', 'product-title', 'product-price', 'product-cart', 'nav-menu', 'category-filter',
+] as const
+type SectionView = (typeof SECTION_VIEWS)[number]
 
 /** Never shrink past this, however long the page is — below it nothing is
  *  recognisable and the zoom stops helping. */
@@ -287,6 +291,32 @@ export default function VisualEditor({
     if (window.matchMedia('(min-width: 1024px)').matches) setPanelCollapsed(v => !v)
     else setPanelOpen(v => !v)
   }
+  // Deep link in from elsewhere in the admin. Settings points here for the
+  // logo, and dropping someone on the section list would leave them to hunt
+  // for it -- so ?section=header&field=header-logo opens that panel and blinks
+  // the field, the same treatment as clicking the logo in the preview.
+  //
+  // Read from location rather than useSearchParams: this only needs to happen
+  // once on mount, and useSearchParams drags a Suspense requirement with it.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const section = params.get('section')
+    if (!section || !(SECTION_VIEWS as readonly string[]).includes(section)) return
+    const field = params.get('field')
+
+    setSectionView(section as SectionView)
+    setPanelOpen(true)
+    // A frame is not enough: the panel has to actually render before it can be
+    // pulsed, and setSectionView has only just been queued.
+    setTimeout(() => {
+      triggerSidebarPulse()
+      if (field) setTimeout(() => pulseField(field), 220)
+    }, 80)
+
+    // Drop the params so a refresh does not replay the animation.
+    window.history.replaceState(null, '', window.location.pathname)
+  }, [])
+
   const [customSectionFocus, setCustomSectionFocus] = useState<{ id: string; ts: number } | null>(null)
   const [pageContentNav, setPageContentNav] = useState<{ section: string; ts: number } | null>(null)
 
@@ -673,6 +703,10 @@ function handlePageContentChange(content: unknown) {
       })
       if (!res.ok) throw new Error('Save failed')
       setSaved(true)
+      // The sidebar's store chip is rendered on the server from this theme,
+      // so without this a saved logo or favicon does not appear until a full
+      // page load -- which reads as the save having done nothing.
+      router.refresh()
       setTimeout(() => setSaved(false), 2500)
     } finally {
       setSaving(false)
@@ -783,17 +817,17 @@ function handlePageContentChange(content: unknown) {
           //
           // Below lg it is still a drawer flush to the edge, where a rounded
           // floating panel would just waste the little width a phone has.
-          className={`w-72 bg-white dark:bg-zinc-900 flex flex-col shrink-0 max-lg:transition-transform max-lg:duration-300 max-lg:ease-[cubic-bezier(0.32,0.72,0,1)] max-lg:will-change-transform lg:transition-[width,opacity,margin] lg:duration-300 lg:ease-out max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:border-r max-lg:border-zinc-200 dark:max-lg:border-zinc-800 lg:transform-none lg:mt-0 lg:mb-1.5 lg:ml-1.5 lg:mr-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-zinc-200/80 dark:lg:border-zinc-800 lg:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] ${panelCollapsed ? 'lg:w-0 lg:ml-0 lg:mb-0 lg:border-0 lg:opacity-0 lg:pointer-events-none' : ''} ${
+          className={`w-72 bg-(--admin-card) flex flex-col shrink-0 max-lg:transition-transform max-lg:duration-300 max-lg:ease-[cubic-bezier(0.32,0.72,0,1)] max-lg:will-change-transform lg:transition-[width,opacity,margin] lg:duration-300 lg:ease-out max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:border-r max-lg:border-(--admin-border) lg:transform-none lg:mt-0 lg:mb-1.5 lg:ml-1.5 lg:mr-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-(--admin-border) lg:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] ${panelCollapsed ? 'lg:w-0 lg:ml-0 lg:mb-0 lg:border-0 lg:opacity-0 lg:pointer-events-none' : ''} ${
             panelOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'
           }`}
         >
 
           {/* ── Page picker ── */}
-          <div ref={pickerRef} className="px-3 pt-3 pb-2.5 border-b border-zinc-100 dark:border-zinc-800 shrink-0 relative">
-            <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1.5">Editing Page</p>
+          <div ref={pickerRef} className="px-3 pt-3 pb-2.5 border-b border-(--admin-edge) shrink-0 relative">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">Editing Page</p>
             <button
               onClick={() => setPickerOpen(o => !o)}
-              className="w-full flex items-center justify-between gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-semibold text-zinc-800 dark:text-zinc-100 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
+              className="w-full flex items-center justify-between gap-2 rounded-xl border border-(--admin-border) bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-semibold text-zinc-800 dark:text-zinc-100 hover:border-(--admin-field-border) transition-colors"
             >
               <span className="flex items-center gap-2 min-w-0">
                 {activePage
@@ -811,20 +845,20 @@ function handlePageContentChange(content: unknown) {
               <>
                 {/* Click-away overlay */}
                 <div className="fixed inset-0 z-10" onClick={() => setPickerOpen(false)} />
-                <div className="absolute left-3 right-3 top-full mt-1 z-20 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-xl overflow-hidden max-h-64 overflow-y-auto thin-scrollbar">
+                <div className="absolute left-3 right-3 top-full mt-1 z-20 bg-(--admin-card) rounded-xl border border-(--admin-border) shadow-xl overflow-hidden max-h-64 overflow-y-auto thin-scrollbar">
                   {/* Home */}
                   <button
                     onClick={() => handlePageSelect('__home__')}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left"
                   >
-                    <Home className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
+                    <Home className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                     <span className={`flex-1 ${!activePage && !systemPageSlug ? 'font-bold text-zinc-900 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'}`}>Home</span>
                     {!activePage && !systemPageSlug && <Check className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100 shrink-0" />}
                   </button>
 
                   {/* System / built-in pages */}
-                  <div className="border-t border-zinc-100 dark:border-zinc-800" />
-                  <p className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Built-in Pages</p>
+                  <div className="border-t border-(--admin-edge)" />
+                  <p className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Built-in Pages</p>
                   {SYSTEM_PAGES.map(p => {
                     const Icon = p.icon
                     const isActive = systemPageSlug === p.slug && !activePage
@@ -834,7 +868,7 @@ function handlePageContentChange(content: unknown) {
                         onClick={() => handleSystemPageSelect(p.slug)}
                         className="w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left"
                       >
-                        <Icon className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
+                        <Icon className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                         <span className={`flex-1 ${isActive ? 'font-bold text-zinc-900 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'}`}>{p.name}</span>
                         {isActive && <Check className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100 shrink-0" />}
                       </button>
@@ -844,15 +878,15 @@ function handlePageContentChange(content: unknown) {
                   {/* Custom pages */}
                   {storePages.length > 0 && (
                     <>
-                      <div className="border-t border-zinc-100 dark:border-zinc-800" />
-                      <p className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Your Pages</p>
+                      <div className="border-t border-(--admin-edge)" />
+                      <p className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Your Pages</p>
                       {storePages.map(p => (
                         <button
                           key={p.id}
                           onClick={() => handlePageSelect(p.id)}
                           className="w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left"
                         >
-                          <Globe className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
+                          <Globe className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                           <span className={`flex-1 truncate ${activePage?.id === p.id ? 'font-bold text-zinc-900 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'}`}>{p.name}</span>
                           {activePage?.id === p.id && <Check className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100 shrink-0" />}
                         </button>
@@ -861,7 +895,7 @@ function handlePageContentChange(content: unknown) {
                   )}
 
                   {/* Add New Page */}
-                  <div className="border-t border-zinc-100 dark:border-zinc-800" />
+                  <div className="border-t border-(--admin-edge)" />
                   <button
                     onClick={() => { setPickerOpen(false); setAddPageOrigin('picker'); setShowAddPageModal(true) }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
@@ -876,10 +910,10 @@ function handlePageContentChange(content: unknown) {
             )}
           </div>
 
-          {/* ── Sections / Theme tabs — shown for all pages ── */}
+          {/* ── Sections / Theme tabs, shown for all pages ── */}
           {/* For home & system pages: hide tabs when drilling into a section editor */}
           {(activePage || sectionView === 'list') && (
-            <div className="flex border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+            <div className="flex border-b border-(--admin-edge) shrink-0">
               {TABS.map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
@@ -887,7 +921,7 @@ function handlePageContentChange(content: unknown) {
                   className={`flex-1 flex flex-col items-center gap-1 py-3 text-[10px] font-bold uppercase tracking-wider transition-colors border-b-2 ${
                     tab === id
                       ? 'border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-zinc-50'
-                      : 'border-transparent text-zinc-400 dark:text-zinc-500'
+                      : 'border-transparent text-zinc-500'
                   }`}
                 >
                   <Icon className="w-4 h-4" />

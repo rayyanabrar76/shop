@@ -2,7 +2,7 @@ import { Sk } from '@/components/ui/Skeleton'
 
 function SettingsSection({ rows = 3, label = true }: { rows?: number; label?: boolean }) {
   return (
-    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 space-y-5">
+    <div className="rounded-2xl border border-(--admin-border) bg-(--admin-card) p-6 space-y-5">
       {label && <Sk className="h-5 w-32 mb-2" />}
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="space-y-1.5">
@@ -17,7 +17,7 @@ function SettingsSection({ rows = 3, label = true }: { rows?: number; label?: bo
 
 export default function SettingsLoading() {
   return (
-    <div className="p-5 pt-16 md:p-10 md:pt-10 max-w-2xl mx-auto space-y-6">
+    <div className="px-6 pt-8 pb-10 max-w-2xl mx-auto space-y-6">
       <div className="space-y-2 mb-2">
         <Sk className="h-7 w-28" />
         <Sk className="h-4 w-56" />

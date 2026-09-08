@@ -49,7 +49,7 @@ const PRODUCT_SCHEMA = {
 const CATEGORY_SYSTEM = `You help shopkeepers tidy their catalogue. You are given a shop's products and the categories it already has, and you propose ONE new category.
 
 Rules:
-- Only group products from the UNCATEGORISED list. Products already in a category are shown for context only — never put one in your suggestion.
+- Only group products from the UNCATEGORISED list. Products already in a category are shown for context only, never put one in your suggestion.
 - Never propose a category whose name means the same as one that already exists. If the existing categories already cover everything sensible, say so in "reason" and return an empty productNumbers with an empty title.
 - Title: 1-3 words, the label a shopper would click. No quotes, no ALL CAPS.
 - Description: ONE short sentence, at most about 20 words.
@@ -140,7 +140,7 @@ export async function POST(
     if (products.length === 0) {
       return NextResponse.json({
         empty: true,
-        reason: 'Add a product or two first — there is nothing to go on yet.',
+        reason: 'Add a product or two first, there is nothing to go on yet.',
       })
     }
 
@@ -152,7 +152,7 @@ export async function POST(
     if (isCategory && uncategorised.length === 0) {
       return NextResponse.json(await remember({
         empty: true,
-        reason: 'Every product is already in a category — nothing left to group.',
+        reason: 'Every product is already in a category, nothing left to group.',
       }))
     }
 
@@ -164,10 +164,10 @@ export async function POST(
             ? `Categories that already exist (do not duplicate these):\n${categories.map(c => `- ${c.name}`).join('\n')}`
             : 'This shop has no categories yet.',
           '',
-          `UNCATEGORISED products — group only from this list:\n${uncategorised.map((p, i) => `${i + 1}. ${p.title}`).join('\n')}`,
+          `UNCATEGORISED products, group only from this list:\n${uncategorised.map((p, i) => `${i + 1}. ${p.title}`).join('\n')}`,
           '',
           filed.length > 0
-            ? `Already filed elsewhere, for context only — never include these:\n${filed.map(p => `- ${p.title}`).join('\n')}`
+            ? `Already filed elsewhere, for context only, never include these:\n${filed.map(p => `- ${p.title}`).join('\n')}`
             : null,
           '',
           'Propose one new category.',

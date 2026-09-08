@@ -86,17 +86,17 @@ export default function CategoryPicker({
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-left hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
+        className="w-full flex items-center justify-between gap-2 rounded-xl border border-(--admin-border) bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-left hover:border-(--admin-field-border) transition-colors"
       >
-        <span className={liveSelected.length ? 'text-zinc-800 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500'}>
+        <span className={liveSelected.length ? 'text-zinc-800 dark:text-zinc-100' : 'text-zinc-500'}>
           {summary}
         </span>
         <ChevronDown className={`w-4 h-4 shrink-0 text-zinc-400 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="absolute z-50 left-0 right-0 mt-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl overflow-hidden">
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="absolute z-50 left-0 right-0 mt-1.5 rounded-xl border border-(--admin-border) bg-(--admin-card) shadow-xl overflow-hidden">
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-(--admin-edge)">
             <Search className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
             <input
               autoFocus
@@ -126,7 +126,7 @@ export default function CategoryPicker({
                     className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
                       on
                         ? 'bg-zinc-900 border-zinc-900 dark:bg-zinc-100 dark:border-zinc-100'
-                        : 'border-zinc-300 dark:border-zinc-600'
+                        : 'border-(--admin-field-border)'
                     }`}
                   >
                     {on && <Check className="w-3 h-3 text-white dark:text-zinc-900" />}
@@ -140,7 +140,7 @@ export default function CategoryPicker({
           <button
             type="button"
             onClick={() => { setCreating(true); setOpen(false) }}
-            className="w-full flex items-center gap-2 px-3.5 py-2.5 text-sm font-medium border-t border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-zinc-700 dark:text-zinc-200"
+            className="w-full flex items-center gap-2 px-3.5 py-2.5 text-sm font-medium border-t border-(--admin-edge) hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-zinc-700 dark:text-zinc-200"
           >
             <Plus className="w-3.5 h-3.5" /> Create category
           </button>

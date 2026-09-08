@@ -43,8 +43,8 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
           onChange={v => updateTheme({ productGridFont: v })}
           options={[
             { value: '',      label: 'Global font' },
-            { value: 'sans',  label: 'Inter — Sans' },
-            { value: 'serif', label: 'Playfair — Serif' },
+            { value: 'sans',  label: 'Inter, Sans' },
+            { value: 'serif', label: 'Playfair, Serif' },
             { value: 'mono',  label: 'Roboto Mono' },
           ]}
         />
@@ -93,7 +93,7 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
             {/* Shows the value rather than describing it: the swatch carries
                 whatever radius the slider is on. */}
             <div
-              className="h-5 w-5 shrink-0 border-2 border-zinc-300 transition-[border-radius] dark:border-zinc-600"
+              className="h-5 w-5 shrink-0 border-2 border-(--admin-field-border) transition-[border-radius]"
               style={{ borderRadius: theme.borderRadius }}
             />
             <input
@@ -114,7 +114,7 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
               }}
               className="flex-1 h-1.5 cursor-pointer rounded-full accent-zinc-900 dark:accent-zinc-100"
             />
-            <div className="w-5 h-5 border-2 border-zinc-300 dark:border-zinc-600 shrink-0 rounded-full" />
+            <div className="w-5 h-5 border-2 border-(--admin-field-border) shrink-0 rounded-full" />
           </div>
         </div>
 
@@ -128,7 +128,7 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
             onChange={v => updateTheme({ productImageRadius: v })}
             options={[
               { value: '',       label: 'Follow theme curvature' },
-              { value: '0px',    label: 'Box — square' },
+              { value: '0px',    label: 'Box, square' },
               { value: '0.5rem', label: 'Soft' },
               { value: '1rem',   label: 'Round' },
             ]}
@@ -146,7 +146,7 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
           ]}
         />
 
-        {/* Products page heading — products page only */}
+        {/* Products page heading, products page only */}
         {isProductsPage && (
           <div data-field="products-heading" className="group/ai">
             <AiFieldLabel
@@ -174,7 +174,7 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
           value={theme.featuredLabelLevel ?? ''}
           onChange={v => updateTheme({ featuredLabelLevel: v })}
           options={[
-            { value: '',   label: 'Default — small caps' },
+            { value: '',   label: 'Default, small caps' },
             { value: 'h1', label: 'Heading 1' },
             { value: 'h2', label: 'Heading 2' },
             { value: 'h3', label: 'Heading 3' },
@@ -196,7 +196,7 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
           />
         </div>
 
-        {/* Shop All Button Label — home page only */}
+        {/* Shop All Button Label, home page only */}
         {!isProductsPage && (
           <div data-field="shop-all">
             <label className={labelCls}>&quot;Shop All&quot; Button Label</label>
@@ -226,11 +226,11 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
           />
         </div>
 
-        <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="pt-4 border-t border-(--admin-edge)">
           <Link
             href={`/dashboard/stores/${storeId}/products`}
             target="_blank"
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-(--admin-border) text-zinc-600 dark:text-zinc-300 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             See All Products

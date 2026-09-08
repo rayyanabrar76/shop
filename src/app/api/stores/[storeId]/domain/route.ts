@@ -49,7 +49,7 @@ export async function POST(
         vercelReason = 'Vercel API error'
       }
     } else {
-      vercelReason = 'VC_API_TOKEN not configured — domain stored but SSL not auto-provisioned'
+      vercelReason = 'VC_API_TOKEN not configured, domain stored but SSL not auto-provisioned'
     }
 
     // Verify CNAME points at our platform (defense-in-depth on top of Vercel's check)

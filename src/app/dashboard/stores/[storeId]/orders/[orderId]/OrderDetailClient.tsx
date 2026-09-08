@@ -77,11 +77,12 @@ export default function OrderDetailClient({ order, storeId }: { order: Order; st
             <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
               Order #{order.id.slice(-8).toUpperCase()}
             </h1>
-            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${StatusBadge.bg} ${StatusBadge.text}`}>
-              <StatusIcon className="w-3 h-3" /> {order.status}
+            <span className={`inline-flex items-center gap-1.5 pl-2 pr-2.5 h-[22px] rounded-full text-[11px] font-medium ${StatusBadge.bg} ${StatusBadge.text}`}>
+              <StatusIcon className="w-3 h-3" />
+              {order.status.charAt(0) + order.status.slice(1).toLowerCase()}
             </span>
           </div>
-          <p className="text-sm text-zinc-500">
+          <p className="text-[13px] text-zinc-500 dark:text-zinc-400">
             {new Date(order.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
             {' · '}
             {order.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Card payment'}
@@ -106,11 +107,11 @@ export default function OrderDetailClient({ order, storeId }: { order: Order; st
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Items */}
-        <div className="md:col-span-2 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-          <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-50 px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="md:col-span-2 rounded-2xl border border-(--admin-border) bg-(--admin-card)">
+          <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-50 px-5 py-4 border-b border-(--admin-edge)">
             Items
           </h2>
-          <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <ul className="divide-y divide-(--admin-edge)">
             {order.items.map(item => (
               <li key={item.id} className="px-5 py-4 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-lg bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex items-center justify-center shrink-0">
@@ -133,7 +134,7 @@ export default function OrderDetailClient({ order, storeId }: { order: Order; st
               </li>
             ))}
           </ul>
-          <div className="px-5 py-4 border-t border-zinc-100 dark:border-zinc-800 space-y-1.5 text-sm">
+          <div className="px-5 py-4 border-t border-(--admin-edge) space-y-1.5 text-sm">
             <Row label="Subtotal" value={fmtMoney(subtotal)} />
             {order.discountAmount > 0 && (
               <Row label={`Discount${order.discountCode ? ` (${order.discountCode})` : ''}`} value={`-${fmtMoney(order.discountAmount)}`} accent="emerald" />
@@ -148,9 +149,9 @@ export default function OrderDetailClient({ order, storeId }: { order: Order; st
 
         {/* Customer */}
         <div className="space-y-4">
-          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+          <div className="rounded-2xl border border-(--admin-border) bg-(--admin-card) p-5">
             <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-50 mb-3">Customer</h2>
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{order.customerName ?? '—'}</p>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{order.customerName ?? '-'}</p>
             {order.customerEmail && (
               <p className="text-xs text-zinc-500 mt-1.5 flex items-center gap-1.5">
                 <Mail className="w-3 h-3" /> {order.customerEmail}
@@ -164,7 +165,7 @@ export default function OrderDetailClient({ order, storeId }: { order: Order; st
           </div>
 
           {(order.customerAddress || order.customerCity) && (
-            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+            <div className="rounded-2xl border border-(--admin-border) bg-(--admin-card) p-5">
               <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-50 mb-3 flex items-center gap-2">
                 <MapPin className="w-4 h-4" /> Shipping to
               </h2>
@@ -176,7 +177,7 @@ export default function OrderDetailClient({ order, storeId }: { order: Order; st
           )}
 
           {order.notes && (
-            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+            <div className="rounded-2xl border border-(--admin-border) bg-(--admin-card) p-5">
               <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-50 mb-2">Notes</h2>
               <p className="text-xs text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">{order.notes}</p>
             </div>

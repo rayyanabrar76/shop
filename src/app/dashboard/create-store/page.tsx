@@ -94,7 +94,7 @@ export default function CreateStorePage() {
       router.push(`/dashboard/stores/${data.id}`)
       router.refresh()
     } catch {
-      setError('Network error — please check your connection and try again.')
+      setError('Network error, please check your connection and try again.')
       setLoading(false)
     }
   }
@@ -103,35 +103,35 @@ export default function CreateStorePage() {
   const hint = formatError ?? takenError
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center p-6">
+    <div className="min-h-full bg-(--admin-page) flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center mx-auto mb-4 shadow-lg">
             <Store className="w-7 h-7 text-white dark:text-zinc-900" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Create your store</h1>
-          <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-1.5">Set up your online store in seconds</p>
+          <p className="text-sm text-zinc-500 mt-1.5">Set up your online store in seconds</p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-sm p-6 space-y-5">
+        <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) shadow-sm p-6 space-y-5">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block">Store Name</label>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 block">Store Name</label>
             <input
               value={name}
               onChange={e => handleNameChange(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && isValid && !loading) onCreate() }}
               placeholder="My Awesome Store"
               maxLength={100}
-              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-all bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 font-medium"
+              className="w-full rounded-xl border border-(--admin-field-border) px-4 py-3 text-sm outline-none focus:border-(--admin-field-border-focus) transition-all bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 font-medium"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block">Subdomain</label>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 block">Subdomain</label>
             <div className={`flex items-center rounded-xl border transition-all bg-white dark:bg-zinc-800 overflow-hidden ${
               hint
                 ? 'border-red-300 dark:border-red-800'
-                : 'border-zinc-200 dark:border-zinc-700 focus-within:border-zinc-400 dark:focus-within:border-zinc-500'
+                : 'border-(--admin-border) focus-within:border-(--admin-field-border-focus)'
             }`}>
               <div className="flex items-center gap-1.5 pl-3 pr-2 shrink-0">
                 <Globe className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600" />
@@ -144,7 +144,7 @@ export default function CreateStorePage() {
                 placeholder="my-store"
                 className="flex-1 min-w-0 py-3 text-sm outline-none bg-transparent text-zinc-900 dark:text-zinc-50 font-medium placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
               />
-              <span className="pr-3 pl-1 text-sm text-zinc-400 dark:text-zinc-500 shrink-0 select-none">.{APP_DOMAIN}</span>
+              <span className="pr-3 pl-1 text-sm text-zinc-500 shrink-0 select-none">.{APP_DOMAIN}</span>
               {checking && (
                 <Loader2 className="w-3.5 h-3.5 mr-3 shrink-0 animate-spin text-zinc-300 dark:text-zinc-600" />
               )}
@@ -155,7 +155,7 @@ export default function CreateStorePage() {
             {hint ? (
               <p className="text-[11px] text-red-500 dark:text-red-400 font-medium pt-0.5">{hint}</p>
             ) : (
-              <p className="text-[11px] text-zinc-400 dark:text-zinc-500 pt-0.5">
+              <p className="text-[11px] text-zinc-500 pt-0.5">
                 Lowercase letters, numbers and hyphens. This is your store&apos;s web address.
               </p>
             )}
@@ -183,7 +183,7 @@ export default function CreateStorePage() {
           </button>
         </div>
 
-        <p className="text-center text-[11px] text-zinc-400 dark:text-zinc-500 mt-5">
+        <p className="text-center text-[11px] text-zinc-500 mt-5">
           You can change your store name and settings anytime.
         </p>
       </div>

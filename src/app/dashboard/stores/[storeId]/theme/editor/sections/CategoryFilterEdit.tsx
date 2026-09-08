@@ -12,7 +12,7 @@ interface Props {
   storeId: string
 }
 
-const inactiveBtnCls = 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-600 dark:text-zinc-300'
+const inactiveBtnCls = 'border-(--admin-border) hover:border-(--admin-field-border-hover) text-zinc-600 dark:text-zinc-300'
 const activeBtnCls = 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
 
 function ColorRow({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
@@ -20,19 +20,19 @@ function ColorRow({ label, value, onChange, placeholder }: { label: string; valu
     <div className="flex items-center gap-2">
       <input
         type="color"
-        className="w-7 h-7 rounded-md border dark:border-zinc-700 cursor-pointer shrink-0 p-0.5"
+        className="w-7 h-7 rounded-md border border-(--admin-border) cursor-pointer shrink-0 p-0.5"
         value={value || '#ffffff'}
         onChange={e => onChange(e.target.value)}
       />
       <span className="flex-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-300">{label}</span>
       <input
-        className="w-20 text-[10px] font-mono border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+        className="w-20 text-[10px] font-mono border border-(--admin-field-border) rounded-lg px-2 py-1 focus:outline-none focus:border-(--admin-field-border-focus) bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder ?? 'Default'}
       />
       {value && (
-        <button onClick={() => onChange('')} className="text-[9px] text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 shrink-0">Reset</button>
+        <button onClick={() => onChange('')} className="text-[9px] text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 shrink-0">Reset</button>
       )}
     </div>
   )
@@ -48,7 +48,7 @@ export default function CategoryFilterEdit({ theme, updateTheme, onBack, storeId
         <div className="space-y-3" data-field="cat-back-label">
           <p className={labelCls}>Back Link</p>
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1 block">Label Text</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-1 block">Label Text</label>
             <input
               className={inputCls}
               value={theme.catBackLabel ?? 'Back to store'}
@@ -57,15 +57,15 @@ export default function CategoryFilterEdit({ theme, updateTheme, onBack, storeId
             />
           </div>
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1 block">Font</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-1 block">Font</label>
             <select
               value={theme.catBackFont || ''}
               onChange={e => updateTheme({ catBackFont: e.target.value })}
               className={inputCls}
             >
               <option value="">(Global font)</option>
-              <option value="sans">Inter — Sans</option>
-              <option value="serif">Playfair — Serif</option>
+              <option value="sans">Inter, Sans</option>
+              <option value="serif">Playfair, Serif</option>
               <option value="mono">Roboto Mono</option>
             </select>
           </div>
@@ -77,7 +77,7 @@ export default function CategoryFilterEdit({ theme, updateTheme, onBack, storeId
 
           {/* Curvature */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1.5 block">Curvature</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-1.5 block">Curvature</label>
             <div className="grid grid-cols-4 gap-1.5">
               {[
                 { label: 'Sharp', value: '0px' },
@@ -101,22 +101,22 @@ export default function CategoryFilterEdit({ theme, updateTheme, onBack, storeId
 
           {/* Font */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1 block">Font</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-1 block">Font</label>
             <select
               value={theme.catFilterFont || ''}
               onChange={e => updateTheme({ catFilterFont: e.target.value })}
               className={inputCls}
             >
               <option value="">(Global font)</option>
-              <option value="sans">Inter — Sans</option>
-              <option value="serif">Playfair — Serif</option>
+              <option value="sans">Inter, Sans</option>
+              <option value="serif">Playfair, Serif</option>
               <option value="mono">Roboto Mono</option>
             </select>
           </div>
 
           {/* Font size */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1 block">Font Size (px)</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-1 block">Font Size (px)</label>
             <input
               type="number"
               min={8} max={24}
@@ -129,7 +129,7 @@ export default function CategoryFilterEdit({ theme, updateTheme, onBack, storeId
 
           {/* Font weight */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1.5 block">Font Weight</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-1.5 block">Font Weight</label>
             <div className="grid grid-cols-4 gap-1.5">
               {[
                 { label: 'Light',  value: '300' },
@@ -153,7 +153,7 @@ export default function CategoryFilterEdit({ theme, updateTheme, onBack, storeId
 
           {/* Text case */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1.5 block">Text Case</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-1.5 block">Text Case</label>
             <div className="grid grid-cols-3 gap-2">
               {[
                 { label: 'AA', value: 'uppercase' },
@@ -175,25 +175,25 @@ export default function CategoryFilterEdit({ theme, updateTheme, onBack, storeId
 
           {/* Padding */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1.5 block">Padding (px)</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-1.5 block">Padding (px)</label>
             <div className="grid grid-cols-2 gap-2">
               <div className="text-center">
                 <input
                   type="number" min={0}
-                  className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-xs text-center outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+                  className="w-full rounded-lg border border-(--admin-field-border) px-2 py-1.5 text-xs text-center outline-none focus:border-(--admin-field-border-focus) bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
                   value={theme.catFilterPaddingX ?? 16}
                   onChange={e => updateTheme({ catFilterPaddingX: parseInt(e.target.value) || 0 })}
                 />
-                <span className="text-[9px] text-zinc-400 dark:text-zinc-500 mt-0.5 block">Horizontal</span>
+                <span className="text-[9px] text-zinc-500 mt-0.5 block">Horizontal</span>
               </div>
               <div className="text-center">
                 <input
                   type="number" min={0}
-                  className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-xs text-center outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+                  className="w-full rounded-lg border border-(--admin-field-border) px-2 py-1.5 text-xs text-center outline-none focus:border-(--admin-field-border-focus) bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
                   value={theme.catFilterPaddingY ?? 6}
                   onChange={e => updateTheme({ catFilterPaddingY: parseInt(e.target.value) || 0 })}
                 />
-                <span className="text-[9px] text-zinc-400 dark:text-zinc-500 mt-0.5 block">Vertical</span>
+                <span className="text-[9px] text-zinc-500 mt-0.5 block">Vertical</span>
               </div>
             </div>
           </div>
@@ -235,11 +235,11 @@ export default function CategoryFilterEdit({ theme, updateTheme, onBack, storeId
         </div>
 
         {/* Edit categories link */}
-        <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="pt-4 border-t border-(--admin-edge)">
           <Link
             href={`/dashboard/stores/${storeId}/categories`}
             target="_blank"
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-(--admin-border) text-zinc-600 dark:text-zinc-300 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             Edit Categories

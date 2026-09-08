@@ -47,7 +47,7 @@ function Preview({ kind, active }: { kind: string; active: boolean }) {
   const paper = active ? 'bg-zinc-200 dark:bg-zinc-700' : 'bg-zinc-100 dark:bg-zinc-800'
 
   return (
-    <div className="w-full rounded-md bg-white dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 p-1.5">
+    <div className="w-full rounded-md bg-white dark:bg-zinc-950 border border-(--admin-edge) p-1.5">
       <div className={`relative w-full h-7 rounded ${paper}`}>
         {kind === 'icon' && (
           <span className={`absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full ${ink}`} />
@@ -97,7 +97,7 @@ export default function ProductCartButtonEdit({ theme, updateTheme, onBack, stor
                   className={`group relative flex flex-col gap-2 p-2.5 rounded-xl border text-left transition-all ${
                     active
                       ? 'border-zinc-900 dark:border-zinc-100 bg-zinc-50 dark:bg-zinc-800 shadow-[0_1px_2px_rgba(9,9,11,0.05)]'
-                      : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-600'
+                      : 'border-(--admin-border) bg-(--admin-card) hover:border-(--admin-field-border)'
                   }`}
                 >
                   <Preview kind={opt.value} active={active} />
@@ -111,7 +111,7 @@ export default function ProductCartButtonEdit({ theme, updateTheme, onBack, stor
                     >
                       {opt.label}
                     </span>
-                    <span className="mt-1 block text-[9px] leading-tight text-zinc-400 dark:text-zinc-500">
+                    <span className="mt-1 block text-[9px] leading-tight text-zinc-500">
                       {opt.hint}
                     </span>
                   </div>
@@ -124,24 +124,24 @@ export default function ProductCartButtonEdit({ theme, updateTheme, onBack, stor
         {/* Blank inherits the grid Button Color, which inherits Primary. */}
         <div data-field="cart-btn-colors">
           <label className={labelCls}>
-            Background <span className="normal-case font-normal opacity-60">— blank uses the theme button colour</span>
+            Background <span className="normal-case font-normal opacity-60">blank uses the theme button colour</span>
           </label>
           <div className="flex items-center gap-3">
             <input
               type="color"
               value={theme.cartBtnBgColor || theme.primaryColor}
               onChange={e => updateTheme({ cartBtnBgColor: e.target.value })}
-              className="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5 cursor-pointer shrink-0"
+              className="w-8 h-8 rounded-lg border border-(--admin-border) p-0.5 cursor-pointer shrink-0"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">{theme.cartBtnBgColor || '(theme colour)'}</p>
+              <p className="text-[10px] font-mono text-zinc-500">{theme.cartBtnBgColor || '(theme colour)'}</p>
             </div>
             <input
               type="text"
               value={theme.cartBtnBgColor ?? ''}
               onChange={e => updateTheme({ cartBtnBgColor: e.target.value })}
               placeholder={theme.primaryColor}
-              className="w-24 text-[10px] font-mono border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:outline-none focus:border-zinc-400 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+              className="w-24 text-[10px] font-mono border border-(--admin-border) rounded-lg px-2 py-1 focus:outline-none focus:border-(--admin-field-border-focus) bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
             />
           </div>
           {theme.cartBtnBgColor && (
@@ -153,24 +153,24 @@ export default function ProductCartButtonEdit({ theme, updateTheme, onBack, stor
 
         <div>
           <label className={labelCls}>
-            Text Color <span className="normal-case font-normal opacity-60">— blank uses white</span>
+            Text Color <span className="normal-case font-normal opacity-60">blank uses white</span>
           </label>
           <div className="flex items-center gap-3">
             <input
               type="color"
               value={theme.cartBtnTextColor || '#ffffff'}
               onChange={e => updateTheme({ cartBtnTextColor: e.target.value })}
-              className="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5 cursor-pointer shrink-0"
+              className="w-8 h-8 rounded-lg border border-(--admin-border) p-0.5 cursor-pointer shrink-0"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">{theme.cartBtnTextColor || '(white)'}</p>
+              <p className="text-[10px] font-mono text-zinc-500">{theme.cartBtnTextColor || '(white)'}</p>
             </div>
             <input
               type="text"
               value={theme.cartBtnTextColor ?? ''}
               onChange={e => updateTheme({ cartBtnTextColor: e.target.value })}
               placeholder="#ffffff"
-              className="w-24 text-[10px] font-mono border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:outline-none focus:border-zinc-400 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+              className="w-24 text-[10px] font-mono border border-(--admin-border) rounded-lg px-2 py-1 focus:outline-none focus:border-(--admin-field-border-focus) bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
             />
           </div>
           {theme.cartBtnTextColor && (
@@ -212,7 +212,7 @@ export default function ProductCartButtonEdit({ theme, updateTheme, onBack, stor
         </div>
 
         {/* Width used to sit here. It only ever applied to the full-width
-            button under the card, which no longer exists — the setting stayed
+            button under the card, which no longer exists, the setting stayed
             in the panel doing nothing, which is worse than not offering it.
             The column is kept on the model so old rows still load. */}
 
@@ -243,11 +243,11 @@ export default function ProductCartButtonEdit({ theme, updateTheme, onBack, stor
               <div key={field} className="text-center">
                 <input
                   type="number" min={0}
-                  className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-xs text-center outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+                  className="w-full rounded-lg border border-(--admin-field-border) px-2 py-1.5 text-xs text-center outline-none focus:border-(--admin-field-border-focus) bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
                   value={(theme[field] as number) ?? def}
                   onChange={padChange(field)}
                 />
-                <span className="text-[9px] text-zinc-400 dark:text-zinc-500 mt-0.5 block">{label}</span>
+                <span className="text-[9px] text-zinc-500 mt-0.5 block">{label}</span>
               </div>
             ))}
           </div>

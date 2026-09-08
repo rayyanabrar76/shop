@@ -14,7 +14,7 @@ export default function TemplatesPanel({ applyTemplate }: TemplatesPanelProps) {
       <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-3">Choose a Template</p>
       {templates.map((t: Template) => (
         <button key={t.id} onClick={() => applyTemplate(t.id)} className="w-full text-left group">
-          <div className="rounded-2xl border border-zinc-200 overflow-hidden hover:border-zinc-400 transition-all hover:shadow-md">
+          <div className="rounded-2xl border border-(--admin-edge) overflow-hidden hover:border-(--admin-field-border) transition-all hover:shadow-md">
             <div className="h-28 relative overflow-hidden" style={{ backgroundColor: t.theme.backgroundColor }}>
               {t.theme.showBanner && (
                 <div className="py-1 text-center text-[8px] font-bold text-white" style={{ backgroundColor: t.theme.primaryColor }}>

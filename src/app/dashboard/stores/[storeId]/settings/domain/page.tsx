@@ -1,4 +1,6 @@
 import { prisma } from '@/lib/prisma'
+import PageHeader from '@/components/dashboard/PageHeader'
+import { Globe } from 'lucide-react'
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import DomainSettings from './DomainSettings'
@@ -17,11 +19,16 @@ export default async function DomainSettingsPage({
   if (!store) notFound()
 
   return (
-    <div className="p-5 pt-16 md:p-8 md:pt-8 max-w-3xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-xl font-bold tracking-tight">Custom Domain</h1>
-        <p className="text-xs text-zinc-400 mt-0.5">Connect your own domain to your store</p>
-      </div>
+    <>
+      <PageHeader
+        storeId={storeId}
+        backHref={`/dashboard/stores/${storeId}/settings`}
+        maxWidth="max-w-3xl"
+        icon={<Globe className="w-5 h-5" />}
+        title="Custom domain"
+      />
+
+    <div className="max-w-3xl mx-auto px-6 pb-10">
 
       <DomainSettings
         storeId={storeId}
@@ -30,5 +37,6 @@ export default async function DomainSettingsPage({
         subdomain={store.subdomain}
       />
     </div>
+    </>
   )
 }

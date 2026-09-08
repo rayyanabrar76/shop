@@ -178,7 +178,7 @@ export default function DomainSettings({
               </div>
             </div>
 
-            <p className="text-[10px] text-zinc-400 text-center">— or if using an apex domain —</p>
+            <p className="text-[10px] text-zinc-400 text-center">or if using an apex domain</p>
 
             {/* A record */}
             <div className="rounded-xl bg-zinc-50 border border-zinc-200 overflow-hidden">

@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import PageHeader from '@/components/dashboard/PageHeader'
 import {
-  HiArrowLeft, HiShoppingBag, HiCheckCircle,
+  HiShoppingBag, HiCheckCircle,
   HiClock, HiXCircle, HiRefresh, HiCheck,
 } from 'react-icons/hi'
 import { useDashboardPrice } from '@/components/CurrencyProvider'
@@ -64,28 +65,25 @@ export default function OrdersClient({ storeId, orders: initial, stats }: {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-full bg-(--admin-page)">
       {/* Header */}
-      <div className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 sticky top-0 z-20">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href={`/dashboard/stores/${storeId}`} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200">
-              <HiArrowLeft className="w-4 h-4" />
-            </Link>
-            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
-            <div className="flex items-center gap-2">
-              <HiShoppingBag className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
-              <span className="font-semibold text-sm text-zinc-800 dark:text-zinc-100">Orders</span>
-            </div>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">{orders.length}</span>
-          </div>
-          <a href={`/api/stores/${storeId}/orders/export`} download className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+      <PageHeader
+        storeId={storeId}
+        icon={<HiShoppingBag className="w-5 h-5" />}
+        title="Orders"
+        count={orders.length}
+        action={
+          <a
+            href={`/api/stores/${storeId}/orders/export`}
+            download
+            className="flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-(--admin-border) bg-(--admin-card) px-3 text-[11.5px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-50 hover:border-(--admin-field-border) transition-colors"
+          >
             Export CSV
           </a>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-6xl mx-auto px-6 pb-10 space-y-6">
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
@@ -94,18 +92,18 @@ export default function OrdersClient({ storeId, orders: initial, stats }: {
             { label: 'Pending',      value: stats.pending,                                color: '#f59e0b' },
             { label: 'Revenue',      value: price(stats.revenue),       color: '#3b82f6' },
           ].map(stat => (
-            <div key={stat.label} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 px-5 py-4">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1">{stat.label}</p>
+            <div key={stat.label} className="bg-(--admin-card) rounded-2xl border border-(--admin-border) px-5 py-4">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1">{stat.label}</p>
               <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{stat.value}</p>
             </div>
           ))}
         </div>
 
         {/* Table */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-          <div className="grid grid-cols-12 px-5 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/60">
+        <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) overflow-hidden">
+          <div className="grid grid-cols-12 px-5 py-3 border-b border-(--admin-edge) bg-zinc-50/60 dark:bg-zinc-800/60">
             {['Order', 'Customer', 'Items', 'Total', 'Status', 'Action'].map((h, i) => (
-              <div key={h} className={`${i === 0 ? 'col-span-2' : i === 1 ? 'col-span-3' : i === 2 ? 'col-span-2' : i === 3 ? 'col-span-1' : i === 4 ? 'col-span-2' : 'col-span-2'} text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500`}>{h}</div>
+              <div key={h} className={`${i === 0 ? 'col-span-2' : i === 1 ? 'col-span-3' : i === 2 ? 'col-span-2' : i === 3 ? 'col-span-1' : i === 4 ? 'col-span-2' : 'col-span-2'} text-[11px] font-bold uppercase tracking-widest text-zinc-500`}>{h}</div>
             ))}
           </div>
 
@@ -115,22 +113,22 @@ export default function OrdersClient({ storeId, orders: initial, stats }: {
                 <HiShoppingBag className="w-5 h-5 text-zinc-300 dark:text-zinc-600" />
               </div>
               <p className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">No orders yet</p>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">Orders will appear here when customers purchase.</p>
+              <p className="text-xs text-zinc-500">Orders will appear here when customers purchase.</p>
             </div>
           ) : (
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <div className="divide-y divide-(--admin-edge)">
               {orders.map(order => (
                 <div key={order.id} className="grid grid-cols-12 items-center px-5 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <Link href={`/dashboard/stores/${storeId}/orders/${order.id}`} className="col-span-2 -my-4 py-4 hover:underline">
                     <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
                       {order.id.slice(0, 10)}...
                     </span>
-                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1 capitalize">{order.paymentMethod ?? '—'}</p>
+                    <p className="text-[10px] text-zinc-500 mt-1 capitalize">{order.paymentMethod ?? '-'}</p>
                   </Link>
                   <div className="col-span-3 min-w-0">
-                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate">{order.customerName ?? '—'}</p>
-                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">{order.customerEmail ?? ''}</p>
-                    {order.customerCity && <p className="text-[10px] text-zinc-400 dark:text-zinc-500">{order.customerCity}</p>}
+                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate">{order.customerName ?? '-'}</p>
+                    <p className="text-[10px] text-zinc-500 truncate">{order.customerEmail ?? ''}</p>
+                    {order.customerCity && <p className="text-[10px] text-zinc-500">{order.customerCity}</p>}
                   </div>
                   <div className="col-span-2">
                     <p className="text-sm text-zinc-600 dark:text-zinc-300">
@@ -142,7 +140,7 @@ export default function OrdersClient({ storeId, orders: initial, stats }: {
                   </div>
                   <div className="col-span-2">
                     <StatusBadge status={order.status} />
-                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">
+                    <p className="text-[10px] text-zinc-500 mt-1">
                       {new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </p>
                   </div>
@@ -157,7 +155,7 @@ export default function OrdersClient({ storeId, orders: initial, stats }: {
                         {markingPaid === order.id ? 'Saving...' : 'Mark Paid'}
                       </button>
                     ) : (
-                      <span className="text-xs text-zinc-300 dark:text-zinc-600">—</span>
+                      <span className="text-xs text-zinc-300 dark:text-zinc-600">-</span>
                     )}
                   </div>
                 </div>
@@ -166,8 +164,8 @@ export default function OrdersClient({ storeId, orders: initial, stats }: {
           )}
 
           {orders.length > 0 && (
-            <div className="px-5 py-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/60">
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">{orders.length} order{orders.length !== 1 ? 's' : ''}</p>
+            <div className="px-5 py-3 border-t border-(--admin-edge) bg-zinc-50/60 dark:bg-zinc-800/60">
+              <p className="text-xs text-zinc-500">{orders.length} order{orders.length !== 1 ? 's' : ''}</p>
             </div>
           )}
         </div>

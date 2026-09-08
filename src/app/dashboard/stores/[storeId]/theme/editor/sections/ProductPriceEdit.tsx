@@ -20,7 +20,7 @@ const PRESETS = [
   { value: 'default',label: 'Default' },
 ]
 
-const inactiveBtnCls = 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-600 dark:text-zinc-300'
+const inactiveBtnCls = 'border-(--admin-border) hover:border-(--admin-field-border-hover) text-zinc-600 dark:text-zinc-300'
 const activeBtnCls = 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
 
 function ColorRow({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
@@ -28,19 +28,19 @@ function ColorRow({ label, value, onChange }: { label: string; value: string; on
     <div className="flex items-center gap-2">
       <input
         type="color"
-        className="w-7 h-7 rounded-md border dark:border-zinc-700 cursor-pointer shrink-0 p-0.5"
+        className="w-7 h-7 rounded-md border border-(--admin-border) cursor-pointer shrink-0 p-0.5"
         value={value || '#09090b'}
         onChange={e => onChange(e.target.value)}
       />
       <span className="flex-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-300">{label}</span>
       <input
-        className="w-20 text-[10px] font-mono border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+        className="w-20 text-[10px] font-mono border border-(--admin-field-border) rounded-lg px-2 py-1 focus:outline-none focus:border-(--admin-field-border-focus) bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder="Default"
       />
       {value && (
-        <button onClick={() => onChange('')} className="text-[9px] text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 shrink-0">Reset</button>
+        <button onClick={() => onChange('')} className="text-[9px] text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 shrink-0">Reset</button>
       )}
     </div>
   )
@@ -62,7 +62,7 @@ export default function ProductPriceEdit({ theme, updateTheme, onBack }: Product
         <div className="space-y-3">
           <p className={labelCls}>Typography</p>
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1 block">Preset</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-1 block">Preset</label>
             <select
               value={theme.productPricePreset || 'h6'}
               onChange={e => updateTheme({ productPricePreset: e.target.value })}
@@ -74,7 +74,7 @@ export default function ProductPriceEdit({ theme, updateTheme, onBack }: Product
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1 block">Width</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-1 block">Width</label>
             <div className="grid grid-cols-2 gap-2">
               {(['fit', 'fill'] as const).map(v => (
                 <button
@@ -91,7 +91,7 @@ export default function ProductPriceEdit({ theme, updateTheme, onBack }: Product
           </div>
 
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1 block">Alignment</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-1 block">Alignment</label>
             <div className="grid grid-cols-3 gap-2">
               {[
                 { value: 'left',   Icon: AlignLeft },
@@ -131,11 +131,11 @@ export default function ProductPriceEdit({ theme, updateTheme, onBack }: Product
               <div key={field} className="text-center">
                 <input
                   type="number" min={0}
-                  className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-xs text-center outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+                  className="w-full rounded-lg border border-(--admin-field-border) px-2 py-1.5 text-xs text-center outline-none focus:border-(--admin-field-border-focus) bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
                   value={(theme[field] as number) ?? 0}
                   onChange={padChange(field)}
                 />
-                <span className="text-[9px] text-zinc-400 dark:text-zinc-500 mt-0.5 block">{label}</span>
+                <span className="text-[9px] text-zinc-500 mt-0.5 block">{label}</span>
               </div>
             ))}
           </div>

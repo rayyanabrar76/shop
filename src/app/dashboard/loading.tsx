@@ -2,7 +2,7 @@ import { Sk } from '@/components/ui/Skeleton'
 
 export default function DashboardLoading() {
   return (
-    <div className="p-5 pt-16 md:p-10 md:pt-10">
+    <div className="px-6 pt-8 pb-10">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <Sk className="h-7 w-36" />
@@ -12,7 +12,7 @@ export default function DashboardLoading() {
       </div>
       <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 space-y-4">
+          <div key={i} className="rounded-2xl border border-(--admin-border) bg-(--admin-card) p-5 space-y-4">
             <Sk className="h-10 w-10 rounded-lg" />
             <div className="space-y-2">
               <Sk className="h-5 w-32" />

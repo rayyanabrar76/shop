@@ -26,7 +26,7 @@ export default async function StoreDashboardPage({
   // Onboarding state
   const onboarding = [
     { id: 'product',  label: 'Add your first product',     done: store._count.products > 0,                     href: `/dashboard/stores/${storeId}/products` },
-    { id: 'theme',    label: 'Customize your storefront',  done: false, /* hard to detect — surface it always */href: `/dashboard/stores/${storeId}/theme` },
+    { id: 'theme',    label: 'Customize your storefront',  done: false, /* hard to detect, surface it always */href: `/dashboard/stores/${storeId}/theme` },
     { id: 'payment',  label: 'Connect Stripe to take card payments', done: !!store.payment?.stripeEnabled,      href: `/dashboard/stores/${storeId}/settings/payments` },
     { id: 'domain',   label: 'Connect a custom domain (optional)',   done: !!store.customDomain,                href: `/dashboard/stores/${storeId}/settings/domain` },
     { id: 'launch',   label: 'Share your store link',                done: store._count.orders > 0,             href: storeUrl(store.subdomain) },
@@ -48,10 +48,7 @@ export default async function StoreDashboardPage({
         <Link
           target="_blank"
           aria-label="View storefront"
-          // Hidden on mobile: the admin header above already carries an
-          // eye, and that header is itself md:hidden, so on desktop this
-          // is the one that shows.
-          className="hidden md:flex shrink-0 items-center gap-2 rounded-xl bg-black dark:bg-white px-3 md:px-4 py-2.5 text-sm font-semibold text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-all shadow-sm w-fit"
+          className="hidden shrink-0 items-center gap-2 rounded-xl bg-black dark:bg-white px-3 md:px-4 py-2.5 text-sm font-semibold text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-all shadow-sm w-fit"
           href={storeUrl(store.subdomain, '?owner=1')}
         >
           <Eye className="w-4 h-4" />
@@ -60,7 +57,7 @@ export default async function StoreDashboardPage({
       </div>
 
       {showOnboarding && (
-        <div className="mb-10 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6">
+        <div className="mb-10 rounded-2xl border border-(--admin-border) bg-(--admin-card) p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Get your store ready</h2>
@@ -103,7 +100,7 @@ export default async function StoreDashboardPage({
       )}
 
       {/* Three stacked cards pushed everything else off a phone screen, so
-          below md they swipe instead — 78% wide, which leaves the edge of the
+          below md they swipe instead, 78% wide, which leaves the edge of the
           next one showing as the cue that there is more. */}
       <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 [&>*]:snap-start [&>*]:shrink-0 [&>*]:w-[78%] mb-6 md:mb-10 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:[&>*]:w-auto">
         <StatCard title="Total Products" value={store._count.products} icon={<Package className="w-4 h-4 md:w-5 md:h-5 text-zinc-500 dark:text-zinc-400" />} />
@@ -122,7 +119,7 @@ export default async function StoreDashboardPage({
 
 function StatCard({ title, value, icon }: { title: string; value: string | number; icon: React.ReactNode }) {
   return (
-    <div className="bg-white dark:bg-zinc-900 p-4 md:p-6 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
+    <div className="bg-(--admin-card) p-4 md:p-6 rounded-2xl border border-(--admin-border) shadow-sm">
       <div className="flex items-center justify-between mb-3 md:mb-4">
         <div className="p-1.5 md:p-2 bg-zinc-50 dark:bg-zinc-800 rounded-lg">{icon}</div>
       </div>
@@ -134,7 +131,7 @@ function StatCard({ title, value, icon }: { title: string; value: string | numbe
 
 function DashboardLink({ href, title, description }: { href: string; title: string; description: string }) {
   return (
-    <Link href={href} className="group p-4 md:p-5 rounded-2xl border border-zinc-200 dark:border-zinc-700 hover:border-black dark:hover:border-zinc-400 transition-all bg-white dark:bg-zinc-900 flex flex-col justify-between">
+    <Link href={href} className="group p-4 md:p-5 rounded-2xl border border-(--admin-border) hover:border-black dark:hover:border-(--admin-field-border) transition-all bg-(--admin-card) flex flex-col justify-between">
       <div>
         <div className="flex items-center justify-between">
           <h4 className="text-[15px] md:text-base font-bold text-zinc-900 dark:text-zinc-50">{title}</h4>

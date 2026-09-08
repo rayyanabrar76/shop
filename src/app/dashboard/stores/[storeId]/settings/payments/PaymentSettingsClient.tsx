@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import PageHeader from '@/components/dashboard/PageHeader'
 import {
   HiArrowLeft, HiCheck, HiCash, HiCreditCard,
   HiExclamation, HiCheckCircle, HiClock, HiRefresh,
@@ -24,7 +25,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
       className={`shrink-0 w-10 h-6 rounded-full transition-colors relative ${on ? 'bg-zinc-900 dark:bg-white' : 'bg-zinc-300 dark:bg-zinc-600'}`}
     >
       <span
-        className="absolute top-1 w-4 h-4 bg-white dark:bg-zinc-900 rounded-full shadow transition-all duration-200"
+        className="absolute top-1 w-4 h-4 bg-(--admin-card) rounded-full shadow transition-all duration-200"
         style={{ left: on ? '1.25rem' : '0.25rem' }}
       />
     </button>
@@ -59,7 +60,7 @@ export default function PaymentSettingsClient({
       setStripeEnabled(true)
       router.replace(`/dashboard/stores/${storeId}/settings/payments`)
     } else if (stripe === 'pending') {
-      setError('Stripe setup incomplete — please finish onboarding.')
+      setError('Stripe setup incomplete, please finish onboarding.')
       router.replace(`/dashboard/stores/${storeId}/settings/payments`)
     } else if (stripe === 'error') {
       setError('Stripe connection failed. Please try again.')
@@ -121,34 +122,35 @@ export default function PaymentSettingsClient({
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <div className="p-5 pt-16 md:p-8 md:pt-8 max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <Link href={`/dashboard/stores/${storeId}/settings`} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200">
-              <HiArrowLeft className="w-4 h-4" />
-            </Link>
-            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Payment Methods</h1>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Configure how customers can pay</p>
-            </div>
-          </div>
+    <div className="min-h-full bg-(--admin-page)">
+      <PageHeader
+        storeId={storeId}
+        backHref={`/dashboard/stores/${storeId}/settings`}
+        maxWidth="max-w-3xl"
+        icon={<HiCreditCard className="w-5 h-5" />}
+        title="Payments"
+        action={
           <div className="flex items-center gap-2">
-            {saved && <span className="text-xs text-emerald-600 font-medium flex items-center gap-1"><HiCheck className="w-3.5 h-3.5" /> Saved</span>}
-            {error && <span className="text-xs text-red-500 font-medium flex items-center gap-1"><HiExclamation className="w-3.5 h-3.5" /> {error}</span>}
-            <button onClick={handleSaveCOD} disabled={saving} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors disabled:opacity-50">
+            {saved && <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-1"><HiCheck className="w-3.5 h-3.5" /> Saved</span>}
+            {error && <span className="text-[11px] text-red-500 font-medium flex items-center gap-1"><HiExclamation className="w-3.5 h-3.5" /> {error}</span>}
+            <button
+              onClick={handleSaveCOD}
+              disabled={saving}
+              className="flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-50 px-3 text-[11.5px] font-semibold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white transition-colors disabled:opacity-50"
+            >
               <HiCheck className="w-3.5 h-3.5" />
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? 'Saving…' : 'Save'}
             </button>
           </div>
-        </div>
+        }
+      />
+
+      <div className="max-w-3xl mx-auto px-6 pb-10">
 
         <div className="space-y-4">
 
           {/* COD */}
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-5">
+          <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center">
@@ -156,13 +158,13 @@ export default function PaymentSettingsClient({
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Cash on Delivery</p>
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Customer pays when the order arrives</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Customer pays when the order arrives</p>
                 </div>
               </div>
               <Toggle on={codEnabled} onChange={() => setCodEnabled(v => !v)} />
             </div>
             {codEnabled && (
-              <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="mt-4 pt-4 border-t border-(--admin-edge)">
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl px-3 py-2">
                   Orders placed with COD will appear as <strong>PENDING</strong>. Mark them as <strong>PAID</strong> once you receive the cash.
                 </p>
@@ -171,7 +173,7 @@ export default function PaymentSettingsClient({
           </div>
 
           {/* Stripe Connect */}
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-5 space-y-4">
+          <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-950/30 flex items-center justify-center">
@@ -179,7 +181,7 @@ export default function PaymentSettingsClient({
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Card Payments</p>
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Accept cards globally — powered by Stripe</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Accept cards globally, powered by Stripe</p>
                 </div>
               </div>
 
@@ -192,14 +194,14 @@ export default function PaymentSettingsClient({
                   <HiClock className="w-3.5 h-3.5" /> Pending
                 </span>
               ) : (
-                <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 dark:text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-full">
+                <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-full">
                   Not connected
                 </span>
               )}
             </div>
 
             {stripeEnabled ? (
-              <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
+              <div className="pt-4 border-t border-(--admin-edge) space-y-3">
                 <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
                   <HiCheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
                   <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
@@ -211,23 +213,23 @@ export default function PaymentSettingsClient({
                 </button>
               </div>
             ) : stripeAccountId ? (
-              <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
+              <div className="pt-4 border-t border-(--admin-edge) space-y-3">
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl px-3 py-2">
                   Your Stripe account setup is incomplete. Please finish onboarding to accept card payments.
                 </p>
                 <button
                   onClick={handleConnectStripe}
                   disabled={connecting}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-(--admin-border) text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
                 >
                   <HiRefresh className={`w-3.5 h-3.5 ${connecting ? 'animate-spin' : ''}`} />
                   {connecting ? 'Redirecting...' : 'Continue Stripe Setup'}
                 </button>
               </div>
             ) : (
-              <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
-                <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                  Connect your account to accept card payments. No Stripe account? You can create one during setup — it only takes a few minutes.
+              <div className="pt-4 border-t border-(--admin-edge) space-y-3">
+                <p className="text-xs text-zinc-500">
+                  Connect your account to accept card payments. No Stripe account? You can create one during setup, it only takes a few minutes.
                 </p>
                 <button
                   onClick={handleConnectStripe}
@@ -237,7 +239,7 @@ export default function PaymentSettingsClient({
                   <HiCreditCard className="w-3.5 h-3.5" />
                   {connecting ? 'Redirecting to Stripe...' : 'Connect Stripe Account'}
                 </button>
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                <p className="text-[10px] text-zinc-500">
                   Powered by Stripe · Secure · Takes 2 minutes
                 </p>
               </div>
@@ -245,7 +247,7 @@ export default function PaymentSettingsClient({
           </div>
 
           {/* Tax */}
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-5 space-y-4">
+          <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center">
@@ -253,24 +255,24 @@ export default function PaymentSettingsClient({
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Tax / VAT</p>
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Automatically calculate tax on orders</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Automatically calculate tax on orders</p>
                 </div>
               </div>
               <Toggle on={taxEnabled} onChange={() => setTaxEnabled(v => !v)} />
             </div>
             {taxEnabled && (
-              <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 grid grid-cols-2 gap-3">
+              <div className="pt-4 border-t border-(--admin-edge) grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1.5 block">Tax Name</label>
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5 block">Tax Name</label>
                   <input
                     value={taxName}
                     onChange={e => setTaxName(e.target.value)}
                     placeholder="Tax / VAT / GST"
-                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-colors bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+                    className="w-full rounded-xl border border-(--admin-field-border) px-3 py-2 text-sm outline-none focus:border-(--admin-field-border-focus) transition-colors bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1.5 block">Rate (%)</label>
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5 block">Rate (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -279,7 +281,7 @@ export default function PaymentSettingsClient({
                     value={taxRate}
                     onChange={e => setTaxRate(e.target.value)}
                     placeholder="e.g. 8.5"
-                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-colors bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+                    className="w-full rounded-xl border border-(--admin-field-border) px-3 py-2 text-sm outline-none focus:border-(--admin-field-border-focus) transition-colors bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
                   />
                 </div>
               </div>

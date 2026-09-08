@@ -18,10 +18,10 @@ export default function BannerEdit({ theme, updateTheme, onBack, storeId }: Bann
       <div className="p-4 space-y-4">
 
         {/* Show banner toggle */}
-        <div className="flex items-center justify-between p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+        <div className="flex items-center justify-between p-3 rounded-xl border border-(--admin-border) bg-(--admin-card)">
           <div>
             <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Show Banner</p>
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">Display the announcement bar</p>
+            <p className="text-[10px] text-zinc-500 mt-0.5">Display the announcement bar</p>
           </div>
           <button
             onClick={() => updateTheme({ showBanner: !theme.showBanner })}

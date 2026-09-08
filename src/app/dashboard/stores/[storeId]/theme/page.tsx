@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
 import { Eye, Paintbrush } from 'lucide-react'
+import PageHeader from '@/components/dashboard/PageHeader'
 
 export default async function ThemePage({
   params,
@@ -33,23 +34,24 @@ export default async function ThemePage({
   const iconColor = luminance > 0.6 ? 'text-black' : 'text-white'
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center px-6">
-      <div className="w-full max-w-md space-y-6 text-center">
+    <div className="min-h-full bg-(--admin-page)">
+      <PageHeader
+        storeId={storeId}
+        maxWidth="max-w-2xl"
+        icon={<Paintbrush className="w-5 h-5" />}
+        title="Customization"
+      />
 
-        <div className="space-y-2">
-          <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center bg-zinc-100 dark:bg-zinc-800">
-            <Paintbrush className="w-6 h-6 text-zinc-700 dark:text-zinc-300" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Storefront</h1>
-          <p className="text-sm text-zinc-400 dark:text-zinc-500">Manage how your store looks to customers</p>
-        </div>
+      {/* Left-aligned like every other section now, rather than a centred
+          card floating in the middle of the page. */}
+      <div className="w-full max-w-2xl mx-auto px-6 pb-10 space-y-4">
 
         <div className="space-y-3">
           {/* View Live Store */}
           <Link
             href={storeUrl(store.subdomain, '?customerView=1')}
             target="_blank"
-            className="flex items-center justify-between w-full px-5 py-4 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all group"
+            className="flex items-center justify-between w-full px-5 py-4 bg-(--admin-card) rounded-2xl border border-(--admin-border) hover:border-(--admin-border) hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all group"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center group-hover:bg-zinc-200 dark:group-hover:bg-zinc-700 transition-colors">
@@ -57,20 +59,20 @@ export default async function ThemePage({
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">View Live Store</p>
-                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">See your store as customers see it</p>
+                <p className="text-xs text-zinc-500 mt-0.5">See your store as customers see it</p>
               </div>
             </div>
             <span className="text-zinc-300 dark:text-zinc-600 text-lg">→</span>
           </Link>
 
-          {/* Customize — goes to full visual editor.
+          {/* Customize, goes to full visual editor.
               The border is deliberately not the primary colour: this card is
               filled with the store's own colour, so a black theme on the dark
               admin page gave a black card a black border and the edge vanished.
               A theme-derived hairline always has something to contrast with. */}
           <Link
             href={`/dashboard/stores/${storeId}/theme/editor`}
-            className="flex items-center justify-between w-full px-5 py-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-md transition-all group"
+            className="flex items-center justify-between w-full px-5 py-4 rounded-2xl border border-(--admin-border) shadow-sm hover:shadow-md transition-all group"
             style={{ backgroundColor: primary }}
           >
             <div className="flex items-center gap-3">
@@ -86,7 +88,7 @@ export default async function ThemePage({
           </Link>
         </div>
 
-        <p className="text-xs text-zinc-400 dark:text-zinc-600 font-mono">{storeUrl(store.subdomain).replace(/^https?:\/\//, '')}</p>
+        <p className="text-[11px] text-zinc-400 dark:text-zinc-600 font-mono">{storeUrl(store.subdomain).replace(/^https?:\/\//, '')}</p>
       </div>
     </div>
   )

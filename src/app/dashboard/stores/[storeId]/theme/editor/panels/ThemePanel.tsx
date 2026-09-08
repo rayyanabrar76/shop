@@ -44,7 +44,7 @@ export default function ThemePanel({ theme, updateTheme }: ThemePanelProps) {
         className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border-2 transition-all ${
           theme.darkMode
             ? 'bg-zinc-900 border-zinc-700 text-white'
-            : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 text-zinc-800 dark:text-zinc-100'
+            : 'bg-white dark:bg-zinc-800 border-(--admin-border) hover:border-(--admin-field-border) text-zinc-800 dark:text-zinc-100'
         }`}
       >
         <div className="flex items-center gap-3">
@@ -56,7 +56,7 @@ export default function ThemePanel({ theme, updateTheme }: ThemePanelProps) {
           </div>
           <div className="text-left">
             <p className="text-xs font-bold">{theme.darkMode ? 'Dark Mode' : 'Light Mode'}</p>
-            <p className={`text-[10px] mt-0.5 ${theme.darkMode ? 'text-zinc-400' : 'text-zinc-400 dark:text-zinc-500'}`}>
+            <p className={`text-[10px] mt-0.5 ${theme.darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
               {theme.darkMode ? 'Store uses dark colors' : 'Store uses light colors'}
             </p>
           </div>
@@ -72,7 +72,7 @@ export default function ThemePanel({ theme, updateTheme }: ThemePanelProps) {
         </div>
       </button>
 
-      {/* Show toggle on storefront — simple row toggle */}
+      {/* Show toggle on storefront, simple row toggle */}
       <div className="flex items-center justify-between px-1 py-0.5">
         <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Show toggle on store</span>
         <button
@@ -119,7 +119,7 @@ export default function ThemePanel({ theme, updateTheme }: ThemePanelProps) {
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-xs font-medium transition-all ${
                   theme.dividerStyle === opt.value
                     ? 'border-zinc-900 bg-zinc-900 text-white'
-                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800'
+                    : 'border-(--admin-border) hover:border-(--admin-field-border-hover) text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800'
                 }`}
               >
                 <div className="flex-1 h-0.5 rounded-full overflow-hidden">
@@ -146,16 +146,16 @@ export default function ThemePanel({ theme, updateTheme }: ThemePanelProps) {
           <div>
             <label className={labelCls}>Body Font</label>
             <select value={theme.font} onChange={e => updateTheme({ font: e.target.value })} className={inputCls}>
-              <option value="sans">Inter — Sans</option>
-              <option value="serif">Playfair — Serif</option>
+              <option value="sans">Inter, Sans</option>
+              <option value="serif">Playfair, Serif</option>
               <option value="mono">Roboto Mono</option>
             </select>
           </div>
           <div>
             <label className={labelCls}>Heading Font</label>
             <select value={theme.headingFont} onChange={e => updateTheme({ headingFont: e.target.value })} className={inputCls}>
-              <option value="sans">Inter — Sans</option>
-              <option value="serif">Playfair — Serif</option>
+              <option value="sans">Inter, Sans</option>
+              <option value="serif">Playfair, Serif</option>
               <option value="mono">Roboto Mono</option>
             </select>
           </div>
@@ -168,12 +168,12 @@ export default function ThemePanel({ theme, updateTheme }: ThemePanelProps) {
 function ColorRow({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div className="flex items-center gap-3">
-      <input type="color" value={value} onChange={e => onChange(e.target.value)} className="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5 cursor-pointer shrink-0" />
+      <input type="color" value={value} onChange={e => onChange(e.target.value)} className="w-8 h-8 rounded-lg border border-(--admin-border) p-0.5 cursor-pointer shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{label}</p>
-        <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">{value}</p>
+        <p className="text-[10px] font-mono text-zinc-500">{value}</p>
       </div>
-      <input type="text" value={value} onChange={e => onChange(e.target.value)} className="w-20 text-[10px] font-mono border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50" />
+      <input type="text" value={value} onChange={e => onChange(e.target.value)} className="w-20 text-[10px] font-mono border border-(--admin-field-border) rounded-lg px-2 py-1 focus:outline-none focus:border-(--admin-field-border-focus) bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50" />
     </div>
   )
 }

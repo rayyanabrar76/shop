@@ -59,7 +59,7 @@ Rules:
 - Title: 1-3 words. What a shopper would expect on a nav link or a browse tile, e.g. "Chocolate", "Gift Boxes", "Summer Drinks". Not a sentence, no quotes, no ALL CAPS.
 - Description: ONE short sentence, at most about 20 words, saying what is in this group.
 - Never invent a price, a discount, or a shipping promise.
-- productNumbers: the numbers of the listed products that genuinely belong in this category. Judge only from the titles you are given. Return an empty array if none clearly fit — a wrong guess is worse than no guess, and never include a product just to fill the list.
+- productNumbers: the numbers of the listed products that genuinely belong in this category. Judge only from the titles you are given. Return an empty array if none clearly fit, a wrong guess is worse than no guess, and never include a product just to fill the list.
 - Write in the language the seller used.`
 
 export async function POST(

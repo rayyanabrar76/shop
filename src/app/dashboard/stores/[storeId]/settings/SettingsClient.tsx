@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   Store, Globe, Trash2, Save, ArrowLeft,
   CheckCircle2, AlertCircle, ExternalLink,
   Copy, ShieldAlert, Settings, RefreshCw, Palette,
-  Sun, Moon, Monitor,
+  Sun, Moon, Monitor, ChevronRight,
 } from 'lucide-react'
 import {
   HiCheck, HiX, HiCheckCircle, HiClock,
@@ -16,7 +16,11 @@ import {
 import { useAdminTheme, type AdminThemeMode } from '@/components/dashboard/AdminThemeProvider'
 import { storeUrl as buildStoreUrl } from '@/lib/config'
 import { normalizeSubdomainInput, slugifySubdomain, validateSubdomain } from '@/lib/subdomain'
-import { CURRENCIES, formatPrice } from '@/lib/currency'
+import { CURRENCIES, currencySymbol } from '@/lib/currency'
+import Select from '@/components/dashboard/Select'
+import PageHeader from '@/components/dashboard/PageHeader'
+import { inputCls } from '@/components/dashboard/field-styles'
+import { storeInitials } from '@/lib/store-initials'
 import { COUNTRIES } from '@/lib/countries'
 
 interface StoreData {
@@ -40,6 +44,27 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
   const [currency, setCurrency] = useState(store.currency)
   const [country, setCountry] = useState(store.country ?? '')
   const [activeSection, setActiveSection] = useState<'general' | 'appearance' | 'domain' | 'danger'>('general')
+  /** A theme card to ring briefly, when the search sent someone here for it. */
+  const [focusPulse, setFocusPulse] = useState<string | null>(null)
+
+  // Deep link from the admin search: ?section=appearance opens that tab,
+  // and ?focus=dark rings the matching card for a moment so the eye lands
+  // on the thing that was searched for rather than on the page in general.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const section = params.get('section')
+    const focus = params.get('focus')
+    if (section && ['general', 'appearance', 'domain', 'danger'].includes(section)) {
+      setActiveSection(section as typeof activeSection)
+    }
+    if (focus) {
+      setFocusPulse(focus)
+      const t = setTimeout(() => setFocusPulse(null), 1800)
+      return () => clearTimeout(t)
+    }
+    if (section || focus) window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
@@ -148,41 +173,34 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
   ] as const
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      {/* Top bar */}
-      <div className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href={`/dashboard/stores/${store.id}`} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200">
-              <ArrowLeft size={17} />
-            </Link>
-            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: primary }}>
-                <Store size={12} className="text-white" />
-              </div>
-              <span className="font-semibold text-sm text-zinc-800 dark:text-zinc-100">{store.name}</span>
-              <span className="text-zinc-400 dark:text-zinc-600 text-sm">/</span>
-              <span className="text-zinc-500 dark:text-zinc-400 text-sm">Settings</span>
-            </div>
-          </div>
-          <Link href={buildStoreUrl(store.subdomain)} target="_blank" className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 transition-colors">
+    <div className="min-h-full bg-(--admin-page)">
+      <PageHeader
+        storeId={store.id}
+        maxWidth="max-w-5xl"
+        icon={<Store size={20} strokeWidth={1.75} />}
+        title="Settings"
+        action={
+          <Link
+            href={buildStoreUrl(store.subdomain)}
+            target="_blank"
+            className="flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-(--admin-border) bg-(--admin-card) px-3 text-[11.5px] font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-50 hover:border-(--admin-field-border) transition-colors"
+          >
             <ExternalLink size={13} /> View Store
           </Link>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="max-w-5xl mx-auto px-6 py-10 flex gap-8">
+      <div className="max-w-5xl mx-auto px-6 pb-10 flex gap-8">
         {/* Sidebar nav */}
         <aside className="w-48 shrink-0">
-          <nav className="flex flex-col gap-1 sticky top-24">
+          <nav className="flex flex-col gap-1 sticky top-6">
             {NAV.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 onClick={() => setActiveSection(id)}
                 className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-left transition-all
                   ${activeSection === id
-                    ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-zinc-50 border border-zinc-200 dark:border-zinc-700'
+                    ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-zinc-50 border border-(--admin-border)'
                     : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-white/60 dark:hover:bg-zinc-800/60'}
                   ${id === 'danger' && activeSection !== 'danger' ? 'text-red-500! hover:text-red-600!' : ''}`}
               >
@@ -201,62 +219,92 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
               <div className="space-y-5">
                 <Field label="Store Name" hint="Displayed in your header and browser tab.">
                   <input
-                    className="w-full border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1 dark:focus:ring-offset-zinc-900 focus:ring-black/10 dark:focus:ring-white/10 transition-shadow bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+                    className={inputCls}
                     value={name} onChange={e => setName(e.target.value)}
                   />
                 </Field>
+                {/* Not a second place to set the logo -- one setting living in
+                    two screens drifts, and neither screen wins. This is a
+                    signpost, because Store Name says "displayed in your
+                    header" and the very next thought is "so where is my
+                    logo?", which sends people looking here first. */}
+                {/* Only the favicon is signposted from here. The store logo
+                    lives with the rest of the storefront design and is found
+                    on the way to it; the favicon is the one people hunt for in
+                    Settings, because it reads as a store-level detail rather
+                    than a design choice. */}
+                <Link
+                  href={`/dashboard/stores/${store.id}/theme/editor?section=seo&field=favicon`}
+                  className="group flex items-center gap-3 rounded-xl border border-(--admin-border) px-4 py-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                    <Globe className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">Favicon</span>
+                    <span className="block text-[11px] text-zinc-500 dark:text-zinc-400">
+                      The square mark in the browser tab, in Google results, and
+                      in place of {storeInitials(store.name)} in the top bar.
+                    </span>
+                  </span>
+                  <ExternalLink className="w-3.5 h-3.5 shrink-0 text-zinc-500 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+
                 <Field
                   label="Store Currency"
                   hint={
                     orderCount > 0
-                      ? 'Locked — this store has orders. Existing prices are stored as plain numbers, so switching now would relabel them rather than convert them.'
+                      ? 'Locked, this store has orders. Existing prices are stored as plain numbers, so switching now would relabel them rather than convert them.'
                       : 'Used for every price on your storefront and for the actual charge at checkout.'
                   }
                 >
-                  <select
-                    className="w-full border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1 dark:focus:ring-offset-zinc-900 focus:ring-black/10 dark:focus:ring-white/10 transition-shadow bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 disabled:bg-zinc-50 dark:disabled:bg-zinc-800/50 disabled:text-zinc-400 dark:disabled:text-zinc-500 disabled:cursor-not-allowed"
+                  <Select
+                    ariaLabel="Store currency"
                     value={currency}
                     disabled={orderCount > 0}
-                    onChange={e => setCurrency(e.target.value)}
-                  >
-                    {CURRENCIES.map(c => (
-                      <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
-                    ))}
-                  </select>
-                  <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1.5">
-                    Prices will display as {formatPrice(129900, currency)}
-                  </p>
+                    onChange={setCurrency}
+                    options={CURRENCIES.map(c => {
+                      // "Pakistani Rupee (PKR Rs.)" -- name first, because that
+                      // is what someone scans for. The symbol is dropped when
+                      // it is just the code repeated.
+                      const sym = currencySymbol(c.code)
+                      return {
+                        value: c.code,
+                        label: sym === c.code ? `${c.name} (${c.code})` : `${c.name} (${c.code} ${sym})`,
+                      }
+                    })}
+                  />
                 </Field>
                 <Field
                   label="Country"
                   hint="Where you trade from. Sets the address examples your customers see at checkout."
                 >
-                  <select
-                    className="w-full border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1 dark:focus:ring-offset-zinc-900 focus:ring-black/10 dark:focus:ring-white/10 transition-shadow bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+                  <Select
+                    ariaLabel="Country"
                     value={country}
-                    onChange={e => setCountry(e.target.value)}
-                  >
-                    <option value="">Not set</option>
-                    {COUNTRIES.map(c => (
-                      <option key={c.code} value={c.code}>{c.name}</option>
-                    ))}
-                  </select>
+                    onChange={setCountry}
+                    placeholder="Not set"
+                    options={[
+                      { value: '', label: 'Not set' },
+                      ...COUNTRIES.map(c => ({ value: c.code, label: c.name })),
+                    ]}
+                  />
                   {!country && (
                     <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1.5">
                       Until this is set, checkout shows American examples.
                     </p>
                   )}
                 </Field>
-                <Field label="Store ID" hint="Read-only. Used in API calls.">
+                <Field label="Store ID" hint="Read-only. Quote this if you contact support.">
                   <div className="flex gap-2">
-                    <input readOnly className="flex-1 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 dark:text-zinc-500 font-mono cursor-not-allowed" value={store.id} />
-                    <button onClick={() => navigator.clipboard.writeText(store.id)} className="p-2.5 border border-zinc-200 dark:border-zinc-700 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200">
+                    <input readOnly className="flex-1 border border-(--admin-border) rounded-xl px-4 py-2.5 text-sm bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 font-mono cursor-not-allowed" value={store.id} />
+                    <button onClick={() => navigator.clipboard.writeText(store.id)} className="p-2.5 border border-(--admin-border) rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200">
                       <Copy size={14} />
                     </button>
                   </div>
                 </Field>
                 <Field label="Created">
-                  <input readOnly className="w-full border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 dark:text-zinc-500 cursor-not-allowed"
+                  <input readOnly className="w-full border border-(--admin-border) rounded-xl px-4 py-2.5 text-sm bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 cursor-not-allowed"
                     value={new Date(store.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                   />
                 </Field>
@@ -288,13 +336,13 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                       <button
                         key={opt.id}
                         onClick={() => setAdminThemeMode(opt.id)}
-                        className={`relative flex flex-col gap-3 p-4 rounded-2xl border-2 transition-all text-left ${
+                        className={`relative flex flex-col gap-3 p-4 rounded-2xl border-2 transition-all text-left ${focusPulse === opt.id ? 'ring-4 ring-violet-500/30 ' : ''}${
                           isActive
                             ? 'border-violet-500 bg-violet-50/40 dark:bg-violet-950/30'
-                            : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
+                            : 'border-(--admin-border) hover:border-(--admin-field-border)'
                         }`}
                       >
-                        <div className="w-full h-16 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 flex" style={{ background: opt.preview.bg }}>
+                        <div className="w-full h-16 rounded-xl overflow-hidden border border-(--admin-border) flex" style={{ background: opt.preview.bg }}>
                           <div className="w-7 h-full shrink-0" style={{ backgroundColor: opt.preview.sidebar }} />
                           <div className="flex-1 p-1.5 flex flex-col gap-1">
                             <div className="h-1.5 w-8 rounded-full opacity-30" style={{ backgroundColor: opt.preview.text }} />
@@ -303,7 +351,7 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-violet-600' : 'text-zinc-400 dark:text-zinc-500'}`} />
+                          <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-violet-600' : 'text-zinc-500'}`} />
                           <span className={`text-xs font-semibold ${isActive ? 'text-violet-700 dark:text-violet-400' : 'text-zinc-600 dark:text-zinc-300'}`}>{opt.label}</span>
                         </div>
                         {isActive && (
@@ -325,10 +373,10 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
               <Card title="Domain & URL" description="Manage your store's public address.">
                 <div className="space-y-5">
                   <Field label="Subdomain" hint="Lowercase letters, numbers, and hyphens only.">
-                    <div className={`flex items-center border rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-offset-1 dark:focus-within:ring-offset-zinc-900 focus-within:ring-black/10 dark:focus-within:ring-white/10 transition-shadow ${subdomainError ? 'border-red-300 dark:border-red-800' : 'border-zinc-200 dark:border-zinc-700'}`}>
-                      <span className="px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 text-sm border-r border-zinc-200 dark:border-zinc-700 shrink-0">/store/</span>
+                    <div className={`flex items-center border rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-offset-1 dark:focus-within:ring-offset-zinc-900 focus-within:ring-black/10 dark:focus-within:ring-white/10 transition-shadow ${subdomainError ? 'border-red-300 dark:border-red-800' : 'border-(--admin-border)'}`}>
+                      <span className="px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 text-zinc-500 text-sm border-r border-(--admin-border) shrink-0">/store/</span>
                       <input
-                        className="flex-1 px-3 py-2.5 text-sm focus:outline-none bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50"
+                        className="flex-1 px-3 py-2.5 text-sm focus:outline-none bg-(--admin-card) text-zinc-900 dark:text-zinc-50"
                         value={subdomain}
                         onChange={e => setSubdomain(normalizeSubdomainInput(e.target.value))}
                         onBlur={() => setSubdomain(s => slugifySubdomain(s))}
@@ -338,16 +386,16 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                       <p className="text-[11px] text-red-500 dark:text-red-400 font-medium mt-1.5">{subdomainError}</p>
                     )}
                   </Field>
-                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-4 flex items-center justify-between gap-3">
+                  <div className="rounded-xl border border-(--admin-border) bg-zinc-50 dark:bg-zinc-800/50 p-4 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Store URL</p>
                       <p className="text-sm font-mono text-zinc-700 dark:text-zinc-200 truncate">{storeUrlDisplay}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <button onClick={copyUrl} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-white dark:hover:bg-zinc-800 transition-colors text-zinc-600 dark:text-zinc-300">
+                      <button onClick={copyUrl} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 border border-(--admin-border) rounded-lg hover:bg-white dark:hover:bg-zinc-800 transition-colors text-zinc-600 dark:text-zinc-300">
                         <Copy size={12} />{copied ? 'Copied!' : 'Copy'}
                       </button>
-                      <Link href={buildStoreUrl(store.subdomain)} target="_blank" className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-white dark:hover:bg-zinc-800 transition-colors text-zinc-600 dark:text-zinc-300">
+                      <Link href={buildStoreUrl(store.subdomain)} target="_blank" className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 border border-(--admin-border) rounded-lg hover:bg-white dark:hover:bg-zinc-800 transition-colors text-zinc-600 dark:text-zinc-300">
                         <ExternalLink size={12} />Open
                       </Link>
                     </div>
@@ -367,7 +415,7 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                       value={customDomain}
                       onChange={e => setCustomDomain(e.target.value)}
                       placeholder="mystore.com"
-                      className="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-sm outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-all bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 font-mono placeholder:text-zinc-300 dark:placeholder:text-zinc-600 placeholder:font-sans"
+                      className="flex-1 rounded-xl border border-(--admin-field-border) px-3 py-2.5 text-sm outline-none focus:border-(--admin-field-border-focus) transition-all bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 font-mono placeholder:text-zinc-300 dark:placeholder:text-zinc-600 placeholder:font-sans"
                     />
                     <button
                       onClick={handleSaveAndVerifyDomain}
@@ -396,7 +444,7 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                           <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono mt-0.5">{store.customDomain}</p>
                         </div>
                       </div>
-                      <button onClick={handleRemoveDomain} className="p-1.5 rounded-lg text-zinc-400 dark:text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all">
+                      <button onClick={handleRemoveDomain} className="p-1.5 rounded-lg text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all">
                         <HiX className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -417,9 +465,9 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                   {customDomain && !domainVerified && (
                     <div className="space-y-3 pt-2">
                       <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">DNS Setup</p>
-                      <p className="text-xs text-zinc-400 dark:text-zinc-500">Add these records in your domain registrar:</p>
-                      <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-                        <div className="grid grid-cols-3 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/60 border-b border-zinc-200 dark:border-zinc-700">
+                      <p className="text-xs text-zinc-500">Add these records in your domain registrar:</p>
+                      <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-(--admin-border) overflow-hidden">
+                        <div className="grid grid-cols-3 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/60 border-b border-(--admin-border)">
                           <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Type</span>
                           <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Name</span>
                           <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Value</span>
@@ -430,7 +478,7 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                           <span className="text-xs font-mono text-violet-600 dark:text-violet-400">cname.vercel-dns.com</span>
                         </div>
                       </div>
-                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500">DNS changes can take up to 48 hours. Click &quot;Save &amp; Verify&quot; again after adding records.</p>
+                      <p className="text-[10px] text-zinc-500">DNS changes can take up to 48 hours. Click &quot;Save &amp; Verify&quot; again after adding records.</p>
                     </div>
                   )}
                 </div>
@@ -477,7 +525,7 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                         <Trash2 size={13} />
                         {deleting ? 'Deleting everything...' : 'Yes, delete permanently'}
                       </button>
-                      <button onClick={() => { setShowDeleteInput(false); setDeleteConfirm(''); setDeleteError('') }} disabled={deleting} className="px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50">
+                      <button onClick={() => { setShowDeleteInput(false); setDeleteConfirm(''); setDeleteError('') }} disabled={deleting} className="px-4 py-2 rounded-lg border border-(--admin-border) text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50">
                         Cancel
                       </button>
                     </div>
@@ -494,10 +542,10 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
 
 function Card({ title, description, children, danger = false }: { title: string; description?: string; children: React.ReactNode; danger?: boolean }) {
   return (
-    <div className={`bg-white dark:bg-zinc-900 rounded-2xl border shadow-sm overflow-hidden ${danger ? 'border-red-200 dark:border-red-900/50' : 'border-zinc-200 dark:border-zinc-700'}`}>
-      <div className={`px-6 py-4 border-b ${danger ? 'border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-950/20' : 'border-zinc-100 dark:border-zinc-800'}`}>
+    <div className={`bg-(--admin-card) rounded-2xl border shadow-sm overflow-hidden ${danger ? 'border-red-200 dark:border-red-900/50' : 'border-(--admin-border)'}`}>
+      <div className={`px-6 py-4 border-b ${danger ? 'border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-950/20' : 'border-(--admin-edge)'}`}>
         <h2 className={`font-semibold text-sm ${danger ? 'text-red-700 dark:text-red-400' : 'text-zinc-800 dark:text-zinc-100'}`}>{title}</h2>
-        {description && <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">{description}</p>}
+        {description && <p className="text-xs text-zinc-500 mt-0.5">{description}</p>}
       </div>
       <div className="px-6 py-5">{children}</div>
     </div>
@@ -508,8 +556,8 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   return (
     <div className="space-y-1.5">
       <div>
-        <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-200 uppercase tracking-wider">{label}</label>
-        {hint && <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">{hint}</p>}
+        <label className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-zinc-500">{label}</label>
+        {hint && <p className="text-[11px] text-zinc-500 mt-0.5">{hint}</p>}
       </div>
       {children}
     </div>

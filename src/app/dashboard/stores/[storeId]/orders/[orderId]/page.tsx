@@ -1,8 +1,8 @@
-import Link from 'next/link'
+import PageHeader from '@/components/dashboard/PageHeader'
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
-import { ArrowLeft } from 'lucide-react'
+import { ShoppingBag } from 'lucide-react'
 import OrderDetailClient from './OrderDetailClient'
 
 export default async function OrderDetailPage({
@@ -27,13 +27,16 @@ export default async function OrderDetailPage({
   if (!order) notFound()
 
   return (
-    <div className="p-5 pt-16 md:p-10 md:pt-10 max-w-5xl">
-      <Link
-        href={`/dashboard/stores/${storeId}/orders`}
-        className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50 mb-4"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" /> All orders
-      </Link>
+    <>
+      <PageHeader
+        storeId={storeId}
+        backHref={`/dashboard/stores/${storeId}/orders`}
+        maxWidth="max-w-5xl"
+        icon={<ShoppingBag className="w-5 h-5" />}
+        title="Order"
+      />
+
+    <div className="max-w-5xl mx-auto px-6 pb-10">
 
       <OrderDetailClient
         storeId={storeId}
@@ -66,5 +69,6 @@ export default async function OrderDetailPage({
         }}
       />
     </div>
+    </>
   )
 }

@@ -93,7 +93,7 @@ export default function FooterEdit({ storeId, storeName, onPreviewChange, onSave
           />
         </div>
 
-        {/* Same theme field the global Theme panel exposes — surfaced here too,
+        {/* Same theme field the global Theme panel exposes, surfaced here too,
             because this is where people look for it. */}
         <div data-field="footer-bg">
           <label className={labelCls}>Background Color</label>
@@ -102,18 +102,18 @@ export default function FooterEdit({ storeId, storeName, onPreviewChange, onSave
               type="color"
               value={theme.footerColor || '#ffffff'}
               onChange={e => updateTheme({ footerColor: e.target.value })}
-              className="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5 cursor-pointer shrink-0"
+              className="w-8 h-8 rounded-lg border border-(--admin-border) p-0.5 cursor-pointer shrink-0"
             />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Footer Background</p>
-              <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">{theme.footerColor || '#ffffff'}</p>
+              <p className="text-[10px] font-mono text-zinc-500">{theme.footerColor || '#ffffff'}</p>
             </div>
             <input
               type="text"
               value={theme.footerColor || ''}
               onChange={e => updateTheme({ footerColor: e.target.value })}
               placeholder="#ffffff"
-              className="w-20 text-[10px] font-mono border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+              className="w-20 text-[10px] font-mono border border-(--admin-field-border) rounded-lg px-2 py-1 focus:outline-none focus:border-(--admin-field-border-focus) bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
             />
           </div>
           <div className="flex gap-2 mt-2">
@@ -129,7 +129,7 @@ export default function FooterEdit({ storeId, storeName, onPreviewChange, onSave
                 className={`flex-1 flex flex-col items-center gap-1 py-1.5 rounded-lg border text-[9px] font-bold transition-all ${
                   (theme.footerColor || '').toLowerCase() === opt.value
                     ? 'border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-zinc-100'
-                    : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:border-zinc-400'
+                    : 'border-(--admin-border) text-zinc-500 dark:text-zinc-400 hover:border-(--admin-field-border-hover)'
                 }`}
               >
                 <span className="w-full h-3 rounded border border-black/10" style={{ backgroundColor: opt.value }} />
@@ -155,7 +155,7 @@ export default function FooterEdit({ storeId, storeName, onPreviewChange, onSave
               ? 'Overrides the header logo in the footer.'
               : theme.logoUrl
               ? 'Using your header logo. Upload here only to show a different one.'
-              : 'No logo set — the footer shows your store name as text.'}
+              : 'No logo set, the footer shows your store name as text.'}
           </p>
         </div>
 
@@ -210,30 +210,30 @@ export default function FooterEdit({ storeId, storeName, onPreviewChange, onSave
         </div>
 
         {/* Link columns */}
-        <div className="flex items-center justify-between p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+        <div className="flex items-center justify-between p-3 rounded-xl border border-(--admin-border) bg-(--admin-card)">
           <div className="min-w-0 pr-3">
             <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">Link columns</p>
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
-              Shop links and your own pages — policies, about, contact
+            <p className="text-[10px] text-zinc-500 mt-0.5">
+              Shop links and your own pages, policies, about, contact
             </p>
           </div>
           <button
             onClick={() => updateTheme({ footerShowLinks: !theme.footerShowLinks })}
             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${theme.footerShowLinks ? 'bg-zinc-900 dark:bg-zinc-100' : 'bg-zinc-200 dark:bg-zinc-700'}`}
           >
-            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white dark:bg-zinc-900 shadow transition-transform ${theme.footerShowLinks ? 'translate-x-4' : 'translate-x-1'}`} />
+            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-(--admin-card) shadow transition-transform ${theme.footerShowLinks ? 'translate-x-4' : 'translate-x-1'}`} />
           </button>
         </div>
 
         {theme.footerShowLinks && (
-          <div className="-mt-1 rounded-xl border border-zinc-200 dark:border-zinc-700 p-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-2">
+          <div className="-mt-1 rounded-xl border border-(--admin-border) p-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2">
               Pages in the footer
             </p>
 
             {pages.length === 0 ? (
-              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                No pages yet — the Information column is empty until you make one.
+              <p className="text-[11px] text-zinc-500">
+                No pages yet, the Information column is empty until you make one.
               </p>
             ) : (
               <div className="flex flex-wrap gap-1.5 mb-2">
@@ -254,7 +254,7 @@ export default function FooterEdit({ storeId, storeName, onPreviewChange, onSave
             {onAddPage && (
               <button
                 onClick={onAddPage}
-                className="mt-2.5 w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
+                className="mt-2.5 w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-(--admin-border) text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-(--admin-field-border) transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" /> Add a page
               </button>
@@ -263,10 +263,10 @@ export default function FooterEdit({ storeId, storeName, onPreviewChange, onSave
         )}
 
         {/* Newsletter */}
-        <div className="flex items-center justify-between p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+        <div className="flex items-center justify-between p-3 rounded-xl border border-(--admin-border) bg-(--admin-card)">
           <div className="min-w-0 pr-3">
             <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">Newsletter signup</p>
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+            <p className="text-[10px] text-zinc-500 mt-0.5">
               Collects emails in Customers &rarr; Subscribers
             </p>
           </div>
@@ -274,7 +274,7 @@ export default function FooterEdit({ storeId, storeName, onPreviewChange, onSave
             onClick={() => updateTheme({ footerNewsletter: !theme.footerNewsletter })}
             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${theme.footerNewsletter ? 'bg-zinc-900 dark:bg-zinc-100' : 'bg-zinc-200 dark:bg-zinc-700'}`}
           >
-            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white dark:bg-zinc-900 shadow transition-transform ${theme.footerNewsletter ? 'translate-x-4' : 'translate-x-1'}`} />
+            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-(--admin-card) shadow transition-transform ${theme.footerNewsletter ? 'translate-x-4' : 'translate-x-1'}`} />
           </button>
         </div>
 
@@ -343,7 +343,7 @@ export default function FooterEdit({ storeId, storeName, onPreviewChange, onSave
               placeholder="yourpage"
             />
           </div>
-          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2">Enter only your handle — no @ or full URL needed.</p>
+          <p className="text-[10px] text-zinc-500 mt-2">Enter only your handle, no @ or full URL needed.</p>
         </div>
       </div>
     </div>
@@ -360,14 +360,14 @@ function SocialInput({
   placeholder: string
 }) {
   return (
-    <div className="flex items-center border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden focus-within:border-zinc-400 dark:focus-within:border-zinc-500 transition-all bg-white dark:bg-zinc-900">
-      <div className="px-2.5 py-2 bg-zinc-50 dark:bg-zinc-800 border-r border-zinc-200 dark:border-zinc-700 shrink-0">{icon}</div>
-      <span className="px-2 py-2 bg-zinc-50 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 text-[10px] border-r border-zinc-200 dark:border-zinc-700 shrink-0 font-mono">{prefix}</span>
+    <div className="flex items-center border border-(--admin-border) rounded-xl overflow-hidden focus-within:border-(--admin-field-border-focus) transition-all bg-(--admin-card)">
+      <div className="px-2.5 py-2 bg-zinc-50 dark:bg-zinc-800 border-r border-(--admin-border) shrink-0">{icon}</div>
+      <span className="px-2 py-2 bg-zinc-50 dark:bg-zinc-800 text-zinc-500 text-[10px] border-r border-(--admin-border) shrink-0 font-mono">{prefix}</span>
       <input
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="flex-1 px-2 py-2 text-sm outline-none bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 min-w-0"
+        className="flex-1 px-2 py-2 text-sm outline-none bg-(--admin-card) text-zinc-900 dark:text-zinc-50 min-w-0"
       />
     </div>
   )

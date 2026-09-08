@@ -160,7 +160,7 @@ function FaqItemsSection({
         </button>
 
         {items.length === 0 && (
-          <div className="text-center py-6 text-xs text-zinc-400 dark:text-zinc-500 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl">
+          <div className="text-center py-6 text-xs text-zinc-500 border-2 border-dashed border-(--admin-border) rounded-xl">
             No FAQ items yet. Add your first question.
           </div>
         )}
@@ -170,7 +170,7 @@ function FaqItemsSection({
           return (
             <div
               key={item.id}
-              className={`rounded-xl border overflow-hidden bg-white dark:bg-zinc-900 transition-all ${isOpen ? 'border-zinc-900 dark:border-zinc-500 ring-2 ring-zinc-900/10 dark:ring-zinc-500/20' : 'border-zinc-200 dark:border-zinc-700'}`}
+              className={`rounded-xl border overflow-hidden bg-(--admin-card) transition-all ${isOpen ? 'border-zinc-900 dark:border-zinc-500 ring-2 ring-zinc-900/10 dark:ring-zinc-500/20' : 'border-(--admin-border)'}`}
             >
               <div
                 className="flex items-center gap-2 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer select-none"
@@ -179,14 +179,14 @@ function FaqItemsSection({
                 <span className="text-sm font-semibold flex-1 truncate text-zinc-800 dark:text-zinc-100">Q{idx + 1}: {item.q}</span>
                 <button
                   onClick={e => { e.stopPropagation(); removeItem(item.id) }}
-                  className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/30 text-zinc-400 dark:text-zinc-500 hover:text-red-500"
+                  className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/30 text-zinc-500 hover:text-red-500"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
-                {isOpen ? <ChevronUp className="w-4 h-4 text-zinc-400 dark:text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-300 dark:text-zinc-600" />}
+                {isOpen ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-300 dark:text-zinc-600" />}
               </div>
               {isOpen && (
-                <div className="px-3 pb-3 space-y-2 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="px-3 pb-3 space-y-2 border-t border-(--admin-edge)">
                   <div data-field="faq-question" className="space-y-1 pt-2">
                     <label className={labelCls}>Question</label>
                     <input
@@ -485,23 +485,23 @@ export default function PageContentEdit({
         onBack={onBack}
       />
       <div className="p-4 space-y-2">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-3">Page Sections</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3">Page Sections</p>
         {sections.map(s => (
           <button
             key={s.id}
             onClick={() => setActiveSection(s.id)}
-            className={`w-full flex items-center justify-between p-3 rounded-xl border bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left ${
-              s.id === 'custom' ? 'border-dashed border-zinc-200 dark:border-zinc-700' : 'border-zinc-200 dark:border-zinc-700'
+            className={`w-full flex items-center justify-between p-3 rounded-xl border bg-(--admin-card) hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left ${
+              s.id === 'custom' ? 'border-dashed border-(--admin-border)' : 'border-(--admin-border)'
             }`}
           >
             <div className="min-w-0 flex items-center gap-2.5">
-              {s.id === 'custom' && <Layers className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />}
+              {s.id === 'custom' && <Layers className="w-3.5 h-3.5 text-zinc-500 shrink-0" />}
               <div>
                 <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{s.label}</p>
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500">{s.description}</p>
+                <p className="text-[10px] text-zinc-500">{s.description}</p>
               </div>
             </div>
-            <Pencil className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0 ml-2" />
+            <Pencil className="w-3.5 h-3.5 text-zinc-500 shrink-0 ml-2" />
           </button>
         ))}
       </div>
