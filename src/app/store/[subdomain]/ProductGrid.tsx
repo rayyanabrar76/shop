@@ -281,7 +281,7 @@ export default function ProductGrid({
             layout === 'carousel'
               // Card widths live on the container via [&>*] so the card markup
               // stays identical across all three layouts.
-              ? 'flex gap-5 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 [&>*]:snap-start [&>*]:shrink-0 [&>*]:w-[82%] sm:[&>*]:w-[45%] lg:[&>*]:w-[23%]'
+              ? 'flex gap-5 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 *:snap-start *:shrink-0 *:w-[82%] sm:*:w-[45%] lg:*:w-[23%]'
               : isEditorial
               // One product a screen, with room to breathe between them. The
               // column is capped: card images are square, so at full container
@@ -292,7 +292,7 @@ export default function ProductGrid({
               // Swipes below sm, then reverts to a true grid: overflow-visible
               // and w-auto have to be undone explicitly, or the cards keep the
               // fixed width the scroller gave them.
-              ? 'flex gap-5 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 [&>*]:snap-start [&>*]:shrink-0 [&>*]:w-[82%] sm:grid sm:grid-cols-3 lg:grid-cols-4 sm:gap-x-6 sm:gap-y-10 sm:overflow-visible sm:[&>*]:w-auto'
+              ? 'flex gap-5 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 *:snap-start *:shrink-0 *:w-[82%] sm:grid sm:grid-cols-3 lg:grid-cols-4 sm:gap-x-6 sm:gap-y-10 sm:overflow-visible sm:*:w-auto'
               : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-9 sm:gap-x-6 sm:gap-y-10'
           }
         >
@@ -334,12 +334,23 @@ export default function ProductGrid({
                       </svg>
                     </div>
                   )}
+                  {/* A bare pencil, not a chip. This sits on the merchant's
+                      own product photo, and a black pill with a word in it
+                      competes with the thing it is pointing at. The white
+                      drop-shadow is what keeps it legible on a dark image,
+                      since there is no plate behind it to do that job.
+
+                      On a touch screen there is no hover to reveal it with,
+                      so it stays put and shrinks instead. */}
                   {isEditor && (
                     <button
                       onClick={e => { e.stopPropagation(); window.parent.postMessage({ type: 'edit-product', productId: p.id }, '*') }}
-                      className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2 py-1 rounded-lg bg-zinc-900 text-white text-[10px] font-bold hover:bg-zinc-700 transition-colors opacity-0 group-hover:opacity-100"
+                      aria-label="Edit product"
+                      title="Edit product"
+                      className="absolute top-1.5 right-1.5 z-10 p-1.5 touch:p-1 text-zinc-900/75 hover:text-zinc-900 transition-[opacity,color] opacity-0 group-hover:opacity-100 focus-visible:opacity-100 touch:opacity-100"
+                      style={{ filter: 'drop-shadow(0 1px 2px rgba(255,255,255,0.95))' }}
                     >
-                      <Pencil className="w-2.5 h-2.5" /> Edit
+                      <Pencil className="w-3.5 h-3.5 touch:w-2.5 touch:h-2.5" />
                     </button>
                   )}
 
@@ -348,7 +359,7 @@ export default function ProductGrid({
                       where there is no hover, it stays put. */}
                   {cartDisplay === 'icon' && (
                     <div
-                      className="absolute bottom-3 right-3 z-10 transition-[opacity,transform] duration-[260ms] ease-[cubic-bezier(.22,1,.36,1)] md:opacity-0 md:translate-y-1.5 md:group-hover:opacity-100 md:group-hover:translate-y-0"
+                      className="absolute bottom-3 right-3 z-10 transition-[opacity,transform] duration-260 ease-[cubic-bezier(.22,1,.36,1)] md:opacity-0 md:translate-y-1.5 md:group-hover:opacity-100 md:group-hover:translate-y-0"
                       style={cartHighlight}
                       onClick={e => e.stopPropagation()}
                     >
@@ -364,7 +375,7 @@ export default function ProductGrid({
                           // photograph permanently. At the desktop size it
                           // covers too much of a small image, so it shrinks
                           // where it cannot get out of the way.
-                          className="h-9 min-w-9 px-2 sm:h-[42px] sm:min-w-[42px] sm:px-[9.5px]"
+                          className="h-9 min-w-9 px-2 sm:h-10.5 sm:min-w-10.5 sm:px-[9.5px]"
                           isEditor={isEditor}
                           style={{
                             // Deliberately not the theme's cart colour. A solid
@@ -473,7 +484,7 @@ function BagPlus() {
     <svg
       // Sized by class rather than attribute so it can follow the chip
       // across the breakpoint.
-      className="h-[18px] w-[18px] shrink-0 sm:h-[21px] sm:w-[21px]"
+      className="h-4.5 w-4.5 shrink-0 sm:h-5.25 sm:w-5.25"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

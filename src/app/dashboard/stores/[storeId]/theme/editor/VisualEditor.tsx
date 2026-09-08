@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   Save, Monitor, Smartphone, Tablet,
-  Undo2, ChevronLeft, Layers, Palette,
+  Undo2, Redo2, ChevronLeft, Layers, Palette,
   CheckCircle2, Eye, ChevronDown,
   Home, Globe, Plus, Check,
   ShoppingBag, CreditCard, CheckSquare, LogIn, UserCircle, PackageCheck,
-  PanelLeft, X,
+  PanelLeft, X, Pencil,
 } from 'lucide-react'
 import { ThemeState } from './types'
 import SectionsList from './sections/SectionsList'
@@ -70,6 +70,27 @@ const SYSTEM_PAGES = [
   { id: '__account__',      name: 'Account',            slug: 'account',      icon: PackageCheck },
 ]
 
+/**
+ * The names the section panels go by, for the sheet's title row. Same words
+ * the section list uses, so the phone and the desk call things the same thing.
+ */
+const SECTION_LABELS: Record<string, string> = {
+  list: '', // the list itself is the page, so the page name stands
+  banner: 'Announcement Banner',
+  header: 'Header',
+  hero: 'Hero',
+  products: 'Product Grid',
+  footer: 'Footer',
+  custom: 'Sections',
+  code: 'Custom Code',
+  seo: 'SEO & Favicon',
+  'product-title': 'Product Title',
+  'product-price': 'Product Price',
+  'product-cart': 'Add to Cart Button',
+  'nav-menu': 'Menu',
+  'category-filter': 'Category Filter',
+}
+
 const DEFAULT_SLIDES: HeroSlide[] = [
   { id: 'slide-1', heading: 'Welcome to Our Store', subheading: 'Discover products you will love.', ctaLabel: 'Shop Now', ctaUrl: '#products', bgColor: '#f8f7ff' },
   { id: 'slide-2', heading: 'New Arrivals', subheading: 'Fresh drops every week.', ctaLabel: "See What's New", ctaUrl: '#products', bgColor: '#fff7ed' },
@@ -94,6 +115,24 @@ export default function VisualEditor({
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const pickerRef = useRef<HTMLDivElement>(null)
   const sidebarPanelRef = useRef<HTMLDivElement>(null)
+  const peekBarRef = useRef<HTMLDivElement>(null)
+
+  /**
+   * A single hop on the phone bar, for when a tap in the preview has changed
+   * what the bar says. Driven through the class list rather than state: this
+   * fires on every tap, and re-rendering the editor for an animation that
+   * touches one element would be the expensive way to do it. The remove,
+   * reflow, add is what lets it play again while it is still playing.
+   */
+  function nudgePeekBar() {
+    requestAnimationFrame(() => {
+      const el = peekBarRef.current
+      if (!el) return
+      el.classList.remove('sheet-nudge')
+      void el.offsetWidth
+      el.classList.add('sheet-nudge')
+    })
+  }
 
   function triggerSidebarPulse() {
     requestAnimationFrame(() => {
@@ -172,6 +211,139 @@ export default function VisualEditor({
   // Below lg the panel overlays the preview instead of sitting beside it: at
   // 288px wide it left barely a hundred pixels of phone screen for the store.
   const [panelOpen, setPanelOpen] = useState(false)
+
+  /**
+   * How tall the phone sheet is, as a percentage of the area under the
+   * toolbar. Two snap points: PEEK leaves the preview you tapped visible
+   * above it, FULL is for when the panel is the work rather than the check.
+   */
+  const SHEET_PEEK = 66
+  /**
+   * Arriving and leaving, as duration-and-curve pairs. The sheet, the bar it
+   * turns into and the dim behind them all take these, so the three move as
+   * one object rather than three things that happen to start together.
+   *
+   * One curve and one duration for both directions, so leaving really is the
+   * arrival run backwards. A shorter exit sounds right in theory and reads as
+   * a snap in practice: next to a 440ms entry, anything quicker stops looking
+   * decisive and starts looking like the animation failed.
+   *
+   * The sheet needs its own copies carrying `max-lg:`. Its transition-property
+   * is written as `max-lg:transition-[transform,height]`, and a Tailwind
+   * transition utility also emits a default duration and timing function
+   * alongside the property. Those land inside the media query, so an
+   * unprefixed `duration-*` sitting outside one loses to them however specific
+   * it looks, and the sheet quietly ran at the 150ms default.
+   */
+  const SHEET_IN = 'duration-[440ms] ease-[cubic-bezier(0.22,0.32,0.16,1)]'
+  const SHEET_OUT = 'duration-[440ms] ease-[cubic-bezier(0.22,0.32,0.16,1)]'
+  const SHEET_IN_MQ = 'max-lg:duration-[440ms] max-lg:ease-[cubic-bezier(0.22,0.32,0.16,1)]'
+  const SHEET_OUT_MQ = 'max-lg:duration-[440ms] max-lg:ease-[cubic-bezier(0.22,0.32,0.16,1)]'
+  /** In step with SHEET_OUT, so the reset lands after the sheet is gone. */
+  const SHEET_MS = 440
+  const SHEET_FULL = 90
+  /** Drag below this and the gesture means close, not resize. */
+  const SHEET_DISMISS = 38
+  const [sheetPct, setSheetPct] = useState(SHEET_PEEK)
+  const [sheetDragging, setSheetDragging] = useState(false)
+  /**
+   * True for one animation after a drag ends, and only then.
+   *
+   * Height is the expensive thing to transition here: the sheet holds the
+   * whole panel, so an animated height re-lays-out that entire subtree every
+   * frame. It is worth paying for a snap, which is a movement of the height
+   * itself, and it is pure waste on open and close, where the height does not
+   * change and only the transform does.
+   */
+  const [sheetSnapping, setSheetSnapping] = useState(false)
+  const asideRef = useRef<HTMLElement>(null)
+  const sheetDrag = useRef<{ y: number; pct: number; h: number; moved: boolean } | null>(null)
+
+  /**
+   * Send the sheet away, then put it back to its usual size once it is out of
+   * sight. Resizing it on the way out means it shrinks and slides at the same
+   * time, which reads as two movements fighting rather than one leaving.
+   */
+  function closeSheet() {
+    setPanelOpen(false)
+    setTimeout(() => setSheetPct(SHEET_PEEK), SHEET_MS)
+  }
+
+  const peekDrag = useRef<number | null>(null)
+
+  /**
+   * Pull the bar up to open the sheet. A few pixels is enough: this is a
+   * gesture with one destination, so the only question is whether it was a
+   * drag at all.
+   */
+  function peekPointerDown(e: React.PointerEvent) {
+    if ((e.target as HTMLElement).closest('button')) return
+    peekDrag.current = e.clientY
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  function peekPointerMove(e: React.PointerEvent) {
+    if (peekDrag.current === null) return
+    if (peekDrag.current - e.clientY > 8) {
+      peekDrag.current = null
+      setPanelOpen(true)
+    }
+  }
+
+  function peekPointerUp() {
+    peekDrag.current = null
+  }
+
+  function sheetPointerDown(e: React.PointerEvent) {
+    // The Close button lives in this bar too, and a press on it is a press,
+    // not the start of a drag.
+    if ((e.target as HTMLElement).closest('button')) return
+    const area = asideRef.current?.parentElement?.getBoundingClientRect()
+    if (!area) return
+    sheetDrag.current = { y: e.clientY, pct: sheetPct, h: area.height, moved: false }
+    setSheetDragging(true)
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  function sheetPointerMove(e: React.PointerEvent) {
+    const d = sheetDrag.current
+    if (!d) return
+    // Up is taller, so the delta is inverted against screen coordinates.
+    const travel = d.y - e.clientY
+    // A few pixels of slop, so a tap with an unsteady thumb is still a tap.
+    if (Math.abs(travel) > 4) d.moved = true
+    if (!d.moved) return
+    const next = d.pct + (travel / d.h) * 100
+    setSheetPct(Math.min(SHEET_FULL, Math.max(20, next)))
+  }
+
+  function sheetPointerUp() {
+    const d = sheetDrag.current
+    if (!d) return
+    sheetDrag.current = null
+    setSheetDragging(false)
+    setSheetSnapping(true)
+    setTimeout(() => setSheetSnapping(false), SHEET_MS)
+    // Pressed, not dragged: the bar is the sheet's own close button.
+    if (!d.moved) {
+      closeSheet()
+      return
+    }
+    if (sheetPct < SHEET_DISMISS) {
+      closeSheet()
+      return
+    }
+    // Nearest of the two, so it always lands somewhere deliberate.
+    const mid = (SHEET_PEEK + SHEET_FULL) / 2
+    setSheetPct(sheetPct < mid ? SHEET_PEEK : SHEET_FULL)
+  }
+
+  // Steering the panel is not the same as showing it. On a desk the panel is
+  // always there, so navigating it is the whole of the feedback for a click
+  // in the preview; below lg it is a closed sheet, and the same navigation
+  // happens where nobody can see it. So the message handlers below open it,
+  // which is a no-op on a desk because panelOpen only drives the max-lg
+  // transform. setPanelOpen is stable, so they need no dependency for it.
   const [panelCollapsed, setPanelCollapsed] = useState(false)
   const [reordering, setReordering] = useState(false)
   /** Scale that fits the whole page in view, worked out when a drag begins. */
@@ -432,7 +604,22 @@ export default function VisualEditor({
   // previewStoreName = live typing value (used for iframe postMessage only)
   const [dbStoreName, setDbStoreName] = useState(storeName)
   const [previewStoreName, setPreviewStoreName] = useState(storeName)
-  const [history, setHistory] = useState<ThemeState[]>([])
+  /**
+   * One entry is the whole editable document: the theme and the hero slides,
+   * the same pair handleSave writes. Two stacks, so an undo can be taken
+   * back.
+   */
+  type Snapshot = { theme: ThemeState; heroSlides: HeroSlide[] }
+  const [past, setPast] = useState<Snapshot[]>([])
+  const [future, setFuture] = useState<Snapshot[]>([])
+  /**
+   * When the last entry was pushed. Typing in a field fires a change per
+   * keystroke, and an undo stack at that resolution means twenty presses to
+   * take back one word, so changes that arrive within half a second of the
+   * previous one fold into it: the entry already holds the state from before
+   * the burst started, which is the one anybody wants back.
+   */
+  const lastRecordAt = useRef(0)
   const [iframeLoading, setIframeLoading] = useState(false)
 
   // Refs so page:ready handler always has current values without stale closures
@@ -471,6 +658,7 @@ export default function VisualEditor({
       if (e.data?.type !== 'section:edit') return
       setTab('sections')
       setSectionView(e.data.section as SectionView)
+      nudgePeekBar()
       triggerSidebarPulse()
     }
     window.addEventListener('message', handleSectionEdit)
@@ -491,6 +679,7 @@ export default function VisualEditor({
       if (e.data?.type !== 'add-section') return
       setTab('sections')
       setSectionView('custom')
+      nudgePeekBar()
       triggerSidebarPulse()
       // Timestamped so repeated clicks re-open it.
       setOpenAddSection(Date.now())
@@ -522,6 +711,7 @@ export default function VisualEditor({
       if (e.data?.type !== 'field:focus') return
       const { section, field, slideIndex, sectionId } = e.data
       setTab('sections')
+      nudgePeekBar()
 
       if (activePageRef.current) {
         // Viewing a custom page — drive PageContentEdit navigation
@@ -623,16 +813,55 @@ export default function VisualEditor({
     }
   }
 
+  /**
+   * Take a copy of where things stand, before changing them. Redo is dropped
+   * on any new edit, which is the usual rule: once you have gone a different
+   * way, the way you came back from no longer exists.
+   */
+  function record() {
+    const now = Date.now()
+    const burst = now - lastRecordAt.current < 500
+    lastRecordAt.current = now
+    setFuture([])
+    if (burst) return
+    setPast(p => [...p.slice(-40), { theme, heroSlides }])
+  }
+
+  function applySnapshot(s: Snapshot) {
+    setTheme(s.theme)
+    setHeroSlides(s.heroSlides)
+    // Both have an effect watching them that pushes to the preview, so
+    // restoring the state is all it takes to restore what is on screen.
+  }
+
   function updateTheme(patch: Partial<ThemeState>) {
-    setHistory(h => [...h.slice(-20), theme])
+    record()
     setTheme(t => ({ ...t, ...patch }))
   }
 
+  /** Hero slides go through here so they land in the history as well. */
+  function changeHeroSlides(next: HeroSlide[]) {
+    record()
+    setHeroSlides(next)
+  }
+
   function undo() {
-    if (history.length === 0) return
-    const prev = history[history.length - 1]
-    setHistory(h => h.slice(0, -1))
-    setTheme(prev)
+    if (past.length === 0) return
+    const prev = past[past.length - 1]
+    setPast(p => p.slice(0, -1))
+    setFuture(f => [{ theme, heroSlides }, ...f])
+    // A restore is not an edit, so the next real edit must not fold into it.
+    lastRecordAt.current = 0
+    applySnapshot(prev)
+  }
+
+  function redo() {
+    if (future.length === 0) return
+    const next = future[0]
+    setFuture(f => f.slice(1))
+    setPast(p => [...p, { theme, heroSlides }])
+    lastRecordAt.current = 0
+    applySnapshot(next)
   }
 
 function handlePageContentChange(content: unknown) {
@@ -641,6 +870,41 @@ function handlePageContentChange(content: unknown) {
     setActivePage(updated)
     iframeRef.current?.contentWindow?.postMessage({ type: 'page-content:update', content }, '*')
   }
+
+  /**
+   * Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z, plus Ctrl+Y for the Windows habit.
+   *
+   * Skipped while the focus is in a field: there the browser's own undo is
+   * the right one, and stealing it would mean a mistyped heading could only
+   * be fixed by rolling back the whole document.
+   *
+   * Both functions close over the current stacks and are rebuilt every
+   * render, so the listener reads them through a ref rather than depending on
+   * them. Depending on them would rebind the handler on every keystroke in
+   * the editor; capturing them once would leave it undoing its way back to
+   * the same first entry for ever.
+   */
+  const undoRedoRef = useRef({ undo, redo })
+  useEffect(() => { undoRedoRef.current = { undo, redo } })
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (!(e.metaKey || e.ctrlKey)) return
+      const el = e.target as HTMLElement | null
+      if (el?.closest('input, textarea, select, [contenteditable="true"]')) return
+      const k = e.key.toLowerCase()
+      if (k === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) undoRedoRef.current.redo()
+        else undoRedoRef.current.undo()
+      } else if (k === 'y') {
+        e.preventDefault()
+        undoRedoRef.current.redo()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   function handlePageCreated(page: StorePage) {
     setStorePages(prev => {
@@ -719,6 +983,10 @@ function handlePageContentChange(content: unknown) {
 
   const activeSystemPage = systemPageSlug ? SYSTEM_PAGES.find(p => p.slug === systemPageSlug) : null
   const currentPageName = activePage ? activePage.name : activeSystemPage ? activeSystemPage.name : 'Home'
+  // The section wins when there is one: on a phone the sheet is small enough
+  // that "Home" tells you nothing you did not already know from the preview
+  // behind it, while "Hero" is the answer to what you just tapped.
+  const sheetTitle = (tab === 'theme' ? 'Theme' : SECTION_LABELS[sectionView]) || currentPageName
 
   return (
     <div className="fixed inset-0 flex flex-col bg-white dark:bg-zinc-900 z-50">
@@ -767,12 +1035,32 @@ function handlePageContentChange(content: unknown) {
           >
             <PanelLeft className="w-4 h-4" />
           </button>
-          <button onClick={undo} disabled={history.length === 0} className="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-30">
+          <button
+            onClick={undo}
+            disabled={past.length === 0}
+            title="Undo"
+            aria-label="Undo"
+            className="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+          >
             <Undo2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={redo}
+            disabled={future.length === 0}
+            title="Redo"
+            aria-label="Redo"
+            className="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+          >
+            <Redo2 className="w-4 h-4" />
           </button>
           <Link href={storeUrl(subdomain, '?owner=1')} target="_blank" className="group relative p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
             <Eye className="w-4 h-4" />
-            <span className="absolute right-0 top-full mt-1.5 px-2 py-1 bg-zinc-900 dark:bg-zinc-700 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">View Store</span>
+            {/* z-50 because this hangs below the toolbar and into the preview,
+                which is a later sibling: without it the preview paints over
+                the tooltip and the label reads as though it were underneath
+                the page. Colours follow the admin theme like everything else
+                in this file, rather than being dark in both. */}
+            <span className="absolute right-0 top-full mt-1.5 z-50 px-2 py-1 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">View Store</span>
           </Link>
           <button
             onClick={handleSave}
@@ -784,12 +1072,12 @@ function handlePageContentChange(content: unknown) {
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden relative bg-zinc-100 dark:bg-zinc-800">
+      <div className="flex flex-1 overflow-hidden relative bg-zinc-100 dark:bg-zinc-950">
         <div
-          className={`lg:hidden absolute inset-0 z-30 bg-black/40 transition-opacity duration-300 ${
+          className={`lg:hidden absolute inset-0 z-30 bg-black/40 transition-opacity ${panelOpen ? SHEET_IN : SHEET_OUT} ${
             panelOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
-          onClick={() => setPanelOpen(false)}
+          onClick={closeSheet}
           aria-hidden
         />
         <aside
@@ -804,15 +1092,64 @@ function handlePageContentChange(content: unknown) {
           // overflow-hidden matters — the sticky panel header would otherwise
           // square off the top corners as content scrolls under it.
           //
-          // Below lg it is still a drawer flush to the edge, where a rounded
-          // floating panel would just waste the little width a phone has.
-          className={`w-72 bg-white dark:bg-zinc-900 flex flex-col shrink-0 max-lg:transition-transform max-lg:duration-300 max-lg:ease-[cubic-bezier(0.32,0.72,0,1)] max-lg:will-change-transform lg:transition-[width,opacity,margin] lg:duration-300 lg:ease-out max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:border-r max-lg:border-zinc-200 dark:max-lg:border-zinc-800 lg:transform-none lg:mt-0 lg:mb-1.5 lg:ml-1.5 lg:mr-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-zinc-200/80 dark:lg:border-zinc-800 lg:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] ${panelCollapsed ? 'lg:w-0 lg:ml-0 lg:mb-0 lg:border-0 lg:opacity-0 lg:pointer-events-none' : ''} ${
-            panelOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'
+          // Below lg it comes up from the bottom instead of in from the left.
+          // A 288px drawer is a desktop sidebar turned sideways: it covers the
+          // preview you are editing against, on the screen with the least of
+          // it to spare. As a sheet at two thirds height the section you
+          // tapped stays visible above it, which is the whole point of
+          // editing against a live preview.
+          // The desk width lives in the branch below, not here. Next to a
+          // collapsed `lg:w-0` a base `lg:w-72` is the same specificity in the
+          // same media query, so which one applies comes down to the order
+          // Tailwind emitted them in, and w-72 wins: the panel would not shut.
+          className={`w-full bg-white dark:bg-zinc-900 flex flex-col shrink-0 ${sheetDragging
+            ? 'max-lg:transition-none'
+            : `${sheetSnapping ? 'max-lg:transition-[transform,height]' : 'max-lg:transition-transform'} ${panelOpen ? SHEET_IN_MQ : SHEET_OUT_MQ}`} max-lg:will-change-transform lg:transition-[width,opacity,margin] lg:duration-300 lg:ease-out max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:h-(--sheet-h) max-lg:z-40 max-lg:rounded-t-2xl max-lg:border-t max-lg:border-zinc-200 dark:max-lg:border-zinc-800 max-lg:shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.35)] lg:transform-none lg:mt-1 lg:mr-0 lg:overflow-hidden lg:rounded-2xl lg:border-zinc-200/80 dark:lg:border-zinc-800 lg:shadow-[0_1px_4px_rgba(0,0,0,0.06)] ${panelCollapsed
+            ? 'lg:w-0 lg:ml-0 lg:mb-0 lg:border-0 lg:opacity-0 lg:pointer-events-none'
+            : 'lg:w-72 lg:ml-1 lg:mb-1 lg:border'} ${
+            panelOpen ? 'max-lg:translate-y-0' : 'max-lg:translate-y-full'
           }`}
+          ref={asideRef}
+          // Only the sheet reads this. Above lg the height is the flex
+          // column's business and this variable goes unused.
+          style={{ '--sheet-h': `${sheetPct}%` } as React.CSSProperties}
         >
 
+          {/* Only on the sheet. The grab bar says which edge this arrived
+              from, and Close is there because the strip of preview left
+              above the sheet is a small thing to have to hit. */}
+          <div
+            onPointerDown={sheetPointerDown}
+            onPointerMove={sheetPointerMove}
+            onPointerUp={sheetPointerUp}
+            onPointerCancel={sheetPointerUp}
+            // Without this the browser claims the vertical drag for its own
+            // scrolling and the handle never sees the move events.
+            style={{ touchAction: 'none' }}
+            className="lg:hidden shrink-0 relative flex items-center justify-center px-3 pt-2.5 pb-1.5 cursor-grab active:cursor-grabbing select-none"
+          >
+            <span className={`absolute left-1/2 top-2.5 -translate-x-1/2 h-1 rounded-full transition-[width,background-color] ${
+              sheetDragging ? 'w-12 bg-zinc-400 dark:bg-zinc-500' : 'w-9 bg-zinc-200 dark:bg-zinc-700'
+            }`} />
+
+            {/* Close on the left, what you are editing in the middle. The
+                title is centred absolutely so it stays centred on the sheet
+                rather than on whatever is left over beside the button. */}
+            <div className="w-full flex items-center mt-2.5">
+              <button
+                onClick={closeSheet}
+                className="-ml-1 px-2 py-1 text-[12.5px] font-semibold text-zinc-500 dark:text-zinc-400"
+              >
+                Close
+              </button>
+              <span className="absolute left-1/2 -translate-x-1/2 max-w-[60%] truncate text-[12.5px] font-bold text-zinc-900 dark:text-zinc-50 pointer-events-none">
+                {sheetTitle}
+              </span>
+            </div>
+          </div>
+
           {/* ── Page picker ── */}
-          <div ref={pickerRef} className="px-3 pt-3 pb-2.5 border-b border-zinc-100 dark:border-zinc-800 shrink-0 relative">
+          <div ref={pickerRef} className="px-3 pt-3 max-lg:pt-1 pb-2.5 border-b border-zinc-100 dark:border-zinc-800 shrink-0 relative">
             <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mb-1.5">Editing Page</p>
             <button
               onClick={() => setPickerOpen(o => !o)}
@@ -986,7 +1323,7 @@ function handlePageContentChange(content: unknown) {
                     updateTheme={updateTheme}
                     onBack={() => setSectionView('list')}
                     slides={heroSlides}
-                    onSlidesChange={setHeroSlides}
+                    onSlidesChange={changeHeroSlides}
                     editingIndex={activeHeroSlide}
                     onEditingChange={setActiveHeroSlide}
                     onPageCreated={handlePageCreated}
@@ -1028,14 +1365,92 @@ function handlePageContentChange(content: unknown) {
           </div>
         </aside>
 
+        {/* What is left when the sheet is down. Dismissing the panel used to
+            leave nothing, and the way back was an icon at the top of the
+            screen, which is the far end from the thumb that just closed it.
+            This is the same row the sheet wears, still reachable. */}
+        <div
+          ref={peekBarRef}
+          // The whole bar opens the sheet, not just the pencil. It went from
+          // a button to a div when it grew two controls of its own, and the
+          // open handler went with it: the pencil says what a tap does, but
+          // the bar is the target people actually aim at. Close and the
+          // pencil handle their own clicks and stop them here.
+          onClick={e => {
+            if ((e.target as HTMLElement).closest('button')) return
+            setPanelOpen(true)
+          }}
+          onPointerDown={peekPointerDown}
+          onPointerMove={peekPointerMove}
+          onPointerUp={peekPointerUp}
+          onPointerCancel={peekPointerUp}
+          // Always mounted, never unmounted: a bar that appears the moment
+          // the sheet starts leaving arrives before the space for it does.
+          // It travels on the sheet's curve and duration, so the two read as
+          // one object going up and coming back rather than one dissolving
+          // while the other slides.
+          aria-hidden={panelOpen}
+          // Sits on the bottom edge and fills the width, so the only
+          // corners it needs are the two the sheet shows when it rises out of
+          // the same place. The safe-area allowance is padding again: the bar
+          // is against the edge, so it has to grow to clear the home bar
+          // rather than lift off it.
+          className={`lg:hidden absolute inset-x-0 bottom-0 z-30 flex items-center gap-2 px-2 pt-1.5 h-14 cursor-grab active:cursor-grabbing select-none bg-white dark:bg-zinc-900 rounded-t-2xl border-t border-zinc-200 dark:border-zinc-800 shadow-[0_-6px_20px_-12px_rgba(0,0,0,0.25)] transition-transform will-change-transform ${panelOpen ? SHEET_IN : SHEET_OUT} ${
+            panelOpen ? 'translate-y-full pointer-events-none' : 'translate-y-0'
+          }`}
+          // touch-action none, or the browser takes the vertical drag for
+          // its own scrolling and the handler never sees a move.
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)', touchAction: 'none' }}
+        >
+          {/* The same line the sheet wears, in the same place, because it is
+              the same object at a different height. */}
+          <span className="absolute left-1/2 top-1.5 -translate-x-1/2 h-1 w-9 rounded-full bg-zinc-200 dark:bg-zinc-700 pointer-events-none" />
+
+          {/* Drops the selection rather than dismissing the bar. After a
+              mis-tap in the preview this is what you want, and the bar has
+              nowhere to go anyway. */}
+          <button
+            onClick={() => { setSectionView('list'); setTab('sections') }}
+            disabled={panelOpen}
+            tabIndex={panelOpen ? -1 : 0}
+            className="shrink-0 px-2 py-2 text-[12.5px] font-semibold text-zinc-500 dark:text-zinc-400"
+          >
+            Close
+          </button>
+
+          <span className="absolute left-1/2 -translate-x-1/2 max-w-[55%] truncate text-[12.5px] font-bold text-zinc-900 dark:text-zinc-50 pointer-events-none">
+            {sheetTitle}
+          </span>
+
+          <button
+            onClick={() => setPanelOpen(true)}
+            disabled={panelOpen}
+            tabIndex={panelOpen ? -1 : 0}
+            aria-label={`Edit ${sheetTitle}`}
+            className="ml-auto shrink-0 flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 dark:text-zinc-300 active:bg-zinc-100 dark:active:bg-zinc-800 transition-colors"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+        </div>
+
         <main
-          className={`flex-1 bg-zinc-100 dark:bg-zinc-800 flex justify-center overflow-hidden ${
+          className={`flex-1 bg-zinc-100 dark:bg-zinc-950 flex justify-center overflow-hidden ${
             reordering ? 'items-start' : 'items-center'
-          } ${device === 'desktop' ? 'p-1.5' : 'p-5'}`}
+          // Even on all four edges, and tight: 4px is enough to keep the
+          // preview, the toolbar and the panel reading as three surfaces
+          // without spending screen on the seams. Tightening only the two
+          // shared edges instead made the preview look welded to them. The
+          // device modes centre a narrow frame and need room around it.
+          } ${device === 'desktop' ? 'p-1' : 'px-5 pb-5 pt-2'} max-lg:pb-14`}
         >
           <div
-            className={`relative bg-white transition-all duration-300 overflow-hidden ${
-              device === 'desktop' ? '' : 'shadow-2xl'
+            // A hairline around the frame, the same one the settings panel
+            // wears, so the preview reads as a surface sitting on the canvas
+            // rather than a hole cut in it. A ring rather than a border: the
+            // frame is sized to 100% of its box, and a border would grow that
+            // box by 2px and hand the preview a scrollbar it does not need.
+            className={`relative bg-white overflow-hidden ring-1 ring-zinc-200/80 dark:ring-zinc-800 ${
+              device === 'desktop' ? 'shadow-[0_1px_4px_rgba(0,0,0,0.06)]' : 'shadow-2xl'
             }`}
             style={{
               width: DEVICE_WIDTHS[device],
@@ -1047,9 +1462,18 @@ function handlePageContentChange(content: unknown) {
               // container, and a centred transform pushes the top of the page
               // off screen — the part you most need when aiming a drop.
               transformOrigin: 'top center',
-              transition: 'transform 0.3s ease-out, height 0.3s ease-out',
+              // Width and radius belong here too. An inline `transition`
+              // replaces the `transition-all` class beside it rather than
+              // adding to it, so listing only transform and height meant the
+              // width jumped the moment the device buttons were pressed:
+              // the class looked like it covered everything and covered
+              // nothing.
+              transition: 'width 0.3s ease-out, border-radius 0.3s ease-out, transform 0.3s ease-out, height 0.3s ease-out',
               maxWidth: '100%',
-              borderRadius: device === 'desktop' ? '1rem' : '1.5rem',
+              // Squarer on desktop, where the frame is the page itself and a
+              // big radius starts eating the corners of the design inside it.
+              // The device modes keep theirs: that curve is the phone.
+              borderRadius: device === 'desktop' ? '0.625rem' : '1.5rem',
             }}
           >
             <iframe
