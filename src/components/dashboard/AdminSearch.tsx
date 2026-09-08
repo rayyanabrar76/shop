@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/currency'
 import { buildCommands, scoreText } from '@/lib/admin-commands'
@@ -63,6 +63,21 @@ const RAIL: { id: Scope; label: string; icon: Icon; groups: Group[] | null; page
   { id: 'Actions', label: 'Actions', icon: HiBolt, groups: ['Actions'] },
 ]
 const railOf = (scope: Scope) => RAIL.find(r => r.id === scope)!
+
+/**
+ * The header's own breakpoint. Below it the field is a short slot between the
+ * menu button and the store chip, and the results have to leave it.
+ */
+const PHONE = '(max-width: 767px)'
+const phoneStore = {
+  subscribe(cb: () => void) {
+    const mq = window.matchMedia(PHONE)
+    mq.addEventListener('change', cb)
+    return () => mq.removeEventListener('change', cb)
+  },
+  get: () => window.matchMedia(PHONE).matches,
+  server: () => false,
+}
 const inScope = (row: Row, scope: Scope) => {
   const groups = railOf(scope).groups
   return groups === null || groups.includes(row.group)
@@ -140,6 +155,16 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
   useEffect(() => { setModeRef.current = setMode }, [setMode])
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
+  const phone = useSyncExternalStore(phoneStore.subscribe, phoneStore.get, phoneStore.server)
+
+  // The page stays visible under the sheet, dimmed, and must not scroll
+  // when a finger overshoots the list onto it.
+  useEffect(() => {
+    if (!(open && phone)) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [open, phone])
   const [rows, setRows] = useState<Row[]>([])
   const [active, setActive] = useState(0)
   const [scope, setScopeState] = useState<Scope>('all')
@@ -421,10 +446,16 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
         }}
       />
 
-    <div ref={rootRef} className="relative w-full">
+    <div ref={rootRef} className="relative w-full min-h-9">
       {/* ── Field ───────────────────────────────────────────────────────── */}
       <div
-        className={`group/field relative z-121 w-full flex items-center gap-2.5 h-9 pl-3 pr-1.5 rounded-lg text-left transition-[background,border-color,box-shadow,color] duration-200 ${
+        // Width and height live in the branch, not the base: a fixed element
+        // given left, right AND w-full overflows by its insets, and h-9 next
+        // to h-10 is the same-group conflict that has bitten this codebase
+        // three times today.
+        className={`group/field z-121 flex items-center gap-2.5 pl-3 pr-1.5 rounded-lg text-left transition-[background,border-color,box-shadow,color] duration-200 ${
+          open && phone ? 'fixed left-2 right-2 top-2.5 h-10' : 'relative w-full h-9'
+        } ${
           open ? '' : 'bg-(--admin-header-field) hover:bg-white/9'
         }`}
         style={{
@@ -457,7 +488,7 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
             if (e.key === 'Enter' && results[active]) go(results[active])
           }}
           placeholder={scope === 'all' ? 'Search products, orders, customers, settings…' : `Search ${rail.label.toLowerCase()}…`}
-          className={`${open ? 'admin-panel-field' : 'admin-header-field'} flex-1 min-w-0 bg-transparent text-[13.5px] outline-none transition-colors duration-200`}
+          className={`${open ? 'admin-panel-field' : 'admin-header-field'} flex-1 min-w-0 bg-transparent text-[13.5px] max-md:text-[13px] outline-none transition-colors duration-200`}
           style={{ color: open ? 'var(--admin-text)' : 'var(--admin-header-text)' }}
         />
 
@@ -492,12 +523,16 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
       <div
         inert={!open}
         aria-hidden={!open}
-        className="absolute -left-3 -right-3 -top-2 z-120 rounded-2xl overflow-hidden origin-top"
+        className={phone
+          ? 'fixed inset-x-0 top-0 z-120 max-h-[78dvh] rounded-b-2xl overflow-hidden flex flex-col'
+          : 'absolute -left-3 -right-3 -top-2 z-120 rounded-2xl overflow-hidden origin-top'}
         style={{
           // The card surrounds the field: it starts above and outside it and
           // its content begins beneath it, so the input reads as living
-          // inside the card rather than the card hanging off the input.
-          paddingTop: 'calc(0.5rem + 2.25rem + 0.5rem)',
+          // inside the card rather than the card hanging off the input. On a
+          // phone the card hangs from the top edge and the field is a bar
+          // across it, so the padding is that bar's height.
+          paddingTop: phone ? '3.75rem' : 'calc(0.5rem + 2.25rem + 0.5rem)',
           // A fold, not a fade. The card is hinged along its top edge and
           // swings down out of the search bar in shallow 3D, settling flat.
           // It folds back up faster, on a plain ease-in, the way a physical
@@ -507,9 +542,13 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
           transitionDuration: open ? '280ms' : '160ms',
           transitionTimingFunction: open ? 'cubic-bezier(0.2, 0.9, 0.25, 1.05)' : 'cubic-bezier(0.4, 0, 1, 1)',
           opacity: open ? 1 : 0,
-          transform: open
-            ? 'perspective(1400px) rotateX(0deg) translateY(0)'
-            : 'perspective(1400px) rotateX(-16deg) translateY(-6px)',
+          // A sheet does not hinge; a full-screen surface tilting in
+          // perspective reads as the whole phone warping. It just rises.
+          transform: phone
+            ? (open ? 'translateY(0)' : 'translateY(10px)')
+            : open
+              ? 'perspective(1400px) rotateX(0deg) translateY(0)'
+              : 'perspective(1400px) rotateX(-16deg) translateY(-6px)',
           backfaceVisibility: 'hidden',
           willChange: 'transform, opacity',
           pointerEvents: open ? 'auto' : 'none',
@@ -521,7 +560,7 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
           ].join(', '),
         }}
       >
-        <div className="flex flex-col sm:flex-row" style={{ borderTop: `1px solid ${tint(6)}` }}>
+        <div className="flex flex-col sm:flex-row max-md:flex-1 max-md:min-h-0" style={{ borderTop: `1px solid ${tint(6)}` }}>
           {/* ── Rail ──
               A strip of scopes on a slightly recessed ground. On a phone it
               lies along the top and scrolls sideways; on a desktop it stands
@@ -546,7 +585,7 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
                   onMouseDown={e => e.preventDefault() /* keep focus in the input */}
                   onClick={() => setScope(on && r.id !== 'all' ? 'all' : r.id)}
                   aria-pressed={on}
-                  className="flex h-8 shrink-0 items-center gap-2 rounded-md pl-2 pr-1.5 text-left text-[12.5px] transition-[background,color,opacity] duration-150"
+                  className="flex h-8 max-md:h-7 shrink-0 items-center gap-2 max-md:gap-1.5 rounded-md pl-2 pr-1.5 text-left text-[12.5px] max-md:text-[11.5px] transition-[background,color,opacity] duration-150"
                   style={{
                     background: on ? 'var(--admin-text)' : 'transparent',
                     color: on ? 'var(--admin-bg)' : 'var(--admin-text-2)',
@@ -572,13 +611,13 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
           </nav>
 
           {/* ── Pane ── */}
-          <div className="flex-1 min-w-0 flex flex-col">
+          <div className="flex-1 min-w-0 min-h-0 flex flex-col">
             {/* Under a scope, one line says how much is here and where the
                 whole list lives. Under "Everything" the group headings do
                 that job. */}
             {scope !== 'all' && (
               <div
-                className="flex items-center justify-between h-8 pl-3.5 pr-2 text-[11px]"
+                className="flex items-center justify-between h-8 max-md:h-7 pl-3.5 max-md:pl-3 pr-2 text-[11px] max-md:text-[10.5px]"
                 style={{ color: 'var(--admin-text-3)', borderBottom: `1px solid ${tint(6)}` }}
               >
                 <span className="tabular-nums">
@@ -606,12 +645,12 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
             {showRecents && (
               <div className="px-2 pt-1.5 pb-1" style={{ borderBottom: `1px solid ${tint(6)}` }}>
                 <div className="flex items-center justify-between px-2.5 pb-0.5">
-                  <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--admin-text-4)' }}>
+                  <span className="text-[10.5px] max-md:text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--admin-text-4)' }}>
                     Recent
                   </span>
                   <button
                     onClick={clearRecents}
-                    className="text-[11px] font-medium hover:underline"
+                    className="text-[11px] max-md:text-[10.5px] font-medium hover:underline"
                     style={{ color: 'var(--admin-text-3)' }}
                   >
                     Clear
@@ -622,7 +661,7 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
                     <button
                       key={t}
                       onClick={() => runRecent(t)}
-                      className="flex h-6.5 max-w-full items-center gap-1.5 rounded-md pl-1.5 pr-2 text-[12px] transition-colors"
+                      className="flex h-6.5 max-md:h-6 max-w-full items-center gap-1.5 rounded-md pl-1.5 pr-2 text-[12px] max-md:text-[11px] transition-colors"
                       style={{ background: tint(5), color: 'var(--admin-text-2)' }}
                       onMouseEnter={e => (e.currentTarget.style.background = tint(9))}
                       onMouseLeave={e => (e.currentTarget.style.background = tint(5))}
@@ -638,7 +677,7 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
             <div
               key={openSeq}
               ref={listRef}
-              className="max-h-[min(56vh,380px)] overflow-y-auto px-2 pt-1.5 pb-2 mask-[linear-gradient(to_bottom,transparent,black_8px,black_calc(100%-10px),transparent)]"
+              className="max-h-[min(56vh,380px)] max-md:max-h-none max-md:flex-1 overflow-y-auto overscroll-contain px-2 max-md:px-1.5 pt-1.5 pb-2 mask-[linear-gradient(to_bottom,transparent,black_8px,black_calc(100%-10px),transparent)]"
             >
               {results.length === 0 && loading ? (
                 // Placeholder rows in the shape of real ones, so the pane
@@ -662,12 +701,12 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
                   >
                     <SearchX className="w-4.5 h-4.5" strokeWidth={2} />
                   </span>
-                  <p className="mt-3 text-[13px] font-medium" style={{ color: 'var(--admin-text)' }}>
+                  <p className="mt-3 text-[13px] max-md:text-[12px] font-medium" style={{ color: 'var(--admin-text)' }}>
                     {typing
                       ? scope === 'all' ? <>No results for “{q.trim()}”</> : <>No {rail.label.toLowerCase()} match “{q.trim()}”</>
                       : scope === 'all' ? 'Nothing here yet' : `No ${rail.label.toLowerCase()} yet`}
                   </p>
-                  <p className="mt-0.5 text-[12px]" style={{ color: 'var(--admin-text-3)' }}>
+                  <p className="mt-0.5 text-[12px] max-md:text-[11px]" style={{ color: 'var(--admin-text-3)' }}>
                     {typing
                       ? scope === 'all' ? 'Try “dark theme”, “currency”, “logo”, or a product name' : 'Try another word, or widen the search.'
                       : scope === 'all' ? 'Orders and quick actions will show up here.' : 'Add one and it will show up here.'}
@@ -695,7 +734,7 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
                     >
                       {heading && (
                         <div className="flex items-center justify-between px-2.5 pt-1.5 pb-1">
-                          <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--admin-text-4)' }}>
+                          <p className="text-[10.5px] max-md:text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--admin-text-4)' }}>
                             {(idleAll && IDLE_TITLES[group as Group]) || group}
                           </p>
                           {!idleAll && (
@@ -716,7 +755,7 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
                             data-active={isActive}
                             onClick={() => go(r)}
                             onMouseMove={() => { if (!isActive) setActive(i) }}
-                            className="admin-row-in w-full h-11 flex items-center gap-2.5 rounded-lg px-2.5 text-left transition-[background,box-shadow] duration-100"
+                            className="admin-row-in w-full h-11 max-md:h-10 flex items-center gap-2.5 max-md:gap-2 rounded-lg px-2.5 max-md:px-2 text-left transition-[background,box-shadow] duration-100"
                             style={{
                               background: isActive ? tint(6) : 'transparent',
                               boxShadow: isActive ? `inset 0 0 0 1px ${tint(6)}` : 'none',
@@ -726,7 +765,7 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
                             {/* A photo keeps a tile, initials a disc, a glyph sits bare. */}
                             {r.image ? (
                               <span
-                                className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md"
+                                className="flex h-7 w-7 max-md:h-6 max-md:w-6 shrink-0 items-center justify-center overflow-hidden rounded-md"
                                 style={{ background: 'var(--admin-bg)', boxShadow: `inset 0 0 0 1px ${tint(10)}` }}
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -734,7 +773,7 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
                               </span>
                             ) : r.avatar ? (
                               <span
-                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold tracking-wide"
+                                className="flex h-7 w-7 max-md:h-6 max-md:w-6 shrink-0 items-center justify-center rounded-full text-[10px] max-md:text-[9px] font-bold tracking-wide"
                                 style={{ background: tint(8), color: 'var(--admin-text)' }}
                               >
                                 {r.avatar}
@@ -744,31 +783,31 @@ export default function AdminSearch({ storeId, currency }: { storeId: string; cu
                                 className="flex w-6 shrink-0 items-center justify-center transition-colors duration-100"
                                 style={{ color: isActive ? 'var(--admin-text)' : 'var(--admin-text-2)' }}
                               >
-                                <RowIcon className="w-4 h-4" />
+                                <RowIcon className="w-4 h-4 max-md:w-3.5 max-md:h-3.5" />
                               </span>
                             )}
 
                             <span className="flex-1 min-w-0">
                               <span className="flex items-center gap-2 min-w-0">
-                                <span className="text-[13px] font-medium truncate" style={{ color: 'var(--admin-text)' }}>
+                                <span className="text-[13px] max-md:text-[12px] font-medium truncate" style={{ color: 'var(--admin-text)' }}>
                                   {highlight(r.label, tokens[0] ?? '')}
                                 </span>
                                 {r.badge && (
-                                  <span className={`inline-flex shrink-0 items-center gap-1 pl-1.5 pr-2 h-4.5 rounded-full text-[10.5px] font-medium ${TONE[r.badge.tone]}`}>
+                                  <span className={`inline-flex shrink-0 items-center gap-1 pl-1.5 pr-2 h-4.5 max-md:h-4 max-md:pr-1.5 rounded-full text-[10.5px] max-md:text-[9.5px] font-medium ${TONE[r.badge.tone]}`}>
                                     <span className={`h-1.5 w-1.5 rounded-full ${DOT[r.badge.tone]}`} />
                                     {r.badge.label}
                                   </span>
                                 )}
                               </span>
                               {r.sub && (
-                                <span className="block text-[11.5px] truncate mt-px" style={{ color: 'var(--admin-text-3)' }}>
+                                <span className="block text-[11.5px] max-md:text-[10.5px] truncate mt-px" style={{ color: 'var(--admin-text-3)' }}>
                                   {r.sub}
                                 </span>
                               )}
                             </span>
 
                             {r.trailing && (
-                              <span className="shrink-0 text-[12px] tabular-nums" style={{ color: 'var(--admin-text-3)' }}>
+                              <span className="shrink-0 text-[12px] max-md:text-[11px] tabular-nums" style={{ color: 'var(--admin-text-3)' }}>
                                 {r.trailing}
                               </span>
                             )}

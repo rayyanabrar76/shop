@@ -38,6 +38,18 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
   const [accountOpen, setAccountOpen] = useState(false);
+  /**
+   * One block of the account card, arriving a beat after the one above it.
+   * Arrive-only: on the way out everything leaves with the card, because a
+   * reverse stagger makes closing feel slower than it is.
+   */
+  const arrive = (i: number): React.CSSProperties => ({
+    opacity: accountOpen ? 1 : 0,
+    transform: accountOpen ? 'translateY(0)' : 'translateY(6px)',
+    transition: accountOpen
+      ? `opacity 220ms cubic-bezier(0.22,0.32,0.16,1) ${60 + i * 45}ms, transform 260ms cubic-bezier(0.22,0.32,0.16,1) ${60 + i * 45}ms`
+      : 'none',
+  });
   const accountRef = useRef<HTMLDivElement>(null);
 
   // The account menu on the mobile header. Dismissable without navigating, for
@@ -245,12 +257,16 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
         <div
           inert={!accountOpen}
           aria-hidden={!accountOpen}
-          className={`absolute right-0 top-full mt-2 w-76 rounded-2xl overflow-hidden origin-top-right backdrop-blur-xl transition-[opacity,transform] ${
-            accountOpen ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'opacity-0 -translate-y-1.5 scale-[0.98] pointer-events-none'
+          className={`absolute right-0 top-full mt-2 w-76 max-md:w-66 rounded-2xl overflow-hidden origin-top-right backdrop-blur-xl transition-[opacity,transform] ${
+            accountOpen ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'opacity-0 -translate-y-2 scale-[0.96] pointer-events-none'
           }`}
           style={{
-            transitionDuration: accountOpen ? '180ms' : '130ms',
-            transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            // Arrives slower than it leaves. 260ms on a curve that eases out
+            // of the start is long enough to be seen settling; the old 180ms
+            // expo was over before the eye registered it had begun. Closing
+            // is quick and accelerates away.
+            transitionDuration: accountOpen ? '260ms' : '150ms',
+            transitionTimingFunction: accountOpen ? 'cubic-bezier(0.22, 0.32, 0.16, 1)' : 'cubic-bezier(0.4, 0, 1, 1)',
             background: "color-mix(in srgb, var(--admin-bg) 94%, transparent)",
             boxShadow: [
               "0 0 0 1px color-mix(in srgb, var(--admin-text) 9%, transparent)",
@@ -264,11 +280,11 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
               its address, before it offers anywhere else to go. */}
           {activeStore && (
             <div
-              className="m-1.5 mb-0 flex items-center gap-3 rounded-xl px-3 py-3"
-              style={{ background: "color-mix(in srgb, var(--admin-text) 5%, transparent)" }}
+              className="m-1.5 mb-0 flex items-center gap-3 max-md:gap-2.5 rounded-xl px-3 py-3 max-md:px-2.5 max-md:py-2.5"
+              style={{ background: "color-mix(in srgb, var(--admin-text) 5%, transparent)", ...arrive(0) }}
             >
               <span
-                className="w-9 h-9 rounded-[10px] bg-black text-white font-bold flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/10"
+                className="w-9 h-9 max-md:w-8 max-md:h-8 rounded-[10px] bg-black text-white font-bold flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/10"
               >
                 {activeStore.markUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -299,10 +315,11 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
           )}
 
           {/* ── Switch ──────────────────────────────────────────────── */}
+          <div style={arrive(1)}>
           {stores.filter((s) => s.id !== activeStore?.id).length > 0 && (
             <>
               <p
-                className="px-4 pt-3.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.1em]"
+                className="px-4 max-md:px-3.5 pt-3.5 max-md:pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest"
                 style={{ color: "var(--admin-text-4)" }}
               >
                 Switch store
@@ -312,9 +329,9 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
                   <Link
                     key={store.id}
                     href={`/dashboard/stores/${store.id}`}
-                    className="group/row w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors hover:bg-(--admin-bg-muted)"
+                    className="group/row w-full flex items-center gap-2.5 px-2 py-1.5 max-md:py-1 rounded-lg text-left transition-colors hover:bg-(--admin-bg-muted)"
                   >
-                    <span className="w-7 h-7 rounded-lg bg-black text-white font-bold flex items-center justify-center shrink-0 ring-1 ring-white/10 overflow-hidden">
+                    <span className="w-7 h-7 max-md:w-6 max-md:h-6 rounded-lg bg-black text-white font-bold flex items-center justify-center shrink-0 ring-1 ring-white/10 overflow-hidden">
                       {store.markUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={store.markUrl} alt="" className="w-full h-full object-cover" />
@@ -345,7 +362,7 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
               className="group/row w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors hover:bg-(--admin-bg-muted)"
             >
               <span
-                className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors"
+                className="w-7 h-7 max-md:w-6 max-md:h-6 rounded-lg flex items-center justify-center shrink-0 transition-colors"
                 style={{
                   border: "1px dashed color-mix(in srgb, var(--admin-text) 22%, transparent)",
                   color: "var(--admin-text-3)",
@@ -358,11 +375,12 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
               </span>
             </Link>
           </div>
+          </div>
 
           {/* ── The person ──────────────────────────────────────────── */}
           <div
-            className="flex items-center gap-2.5 px-3 py-2.5"
-            style={{ borderTop: "1px solid color-mix(in srgb, var(--admin-text) 7%, transparent)" }}
+            className="flex items-center gap-2.5 px-3 py-2.5 max-md:px-2.5 max-md:py-2"
+            style={{ borderTop: "1px solid color-mix(in srgb, var(--admin-text) 7%, transparent)", ...arrive(2) }}
           >
             {imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -679,7 +697,9 @@ function NavItem({
       }}
     >
       <Link href={href}>
-        <div className="flex items-center gap-2.5 px-3 py-2">
+        {/* Room on the right for the actions where they are always showing,
+            so the label does not run under them. */}
+        <div className={`flex items-center gap-2.5 px-3 py-2 ${actions ? "touch:pr-14" : ""}`}>
           <Icon
             className="w-4.5 h-4.5 shrink-0"
             style={{ color: active ? "var(--admin-text)" : "var(--admin-text-2)" }}
@@ -696,15 +716,19 @@ function NavItem({
           {/* Hidden while the actions are showing, so they do not stack up. */}
           {active && (
             <div
-              className={`w-1 h-3.5 rounded-full shrink-0 ${actions ? "group-hover/nav:opacity-0" : ""}`}
+              className={`w-1 h-3.5 rounded-full shrink-0 ${actions ? "group-hover/nav:opacity-0 touch:opacity-0" : ""}`}
               style={{ background: "var(--admin-text)" }}
             />
           )}
         </div>
       </Link>
 
+      {/* Revealed on hover where there is a hover. On a touch screen there
+          is not, so they stay, and shrink so two extra glyphs do not crowd a
+          row that also has to hold the label. Keyed to the pointer rather
+          than the width: a touchscreen laptop needs them too. */}
       {actions && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover/nav:opacity-100 focus-within:opacity-100 transition-opacity">
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover/nav:opacity-100 focus-within:opacity-100 touch:opacity-100 transition-opacity">
           {actions.map(a => {
             const Ico = a.icon;
             return (
@@ -714,11 +738,11 @@ function NavItem({
                 title={a.title}
                 aria-label={a.title}
                 {...(a.external ? { target: "_blank", rel: "noreferrer" } : {})}
-                className="p-1.5 rounded-lg transition-colors"
+                className="p-1.5 touch:p-1 rounded-lg transition-colors"
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--admin-bg-muted)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ""; }}
               >
-                <Ico className="w-3.5 h-3.5" style={{ color: "var(--admin-text-2)" }} />
+                <Ico className="w-3.5 h-3.5 touch:w-3 touch:h-3" style={{ color: "var(--admin-text-2)" }} />
               </a>
             );
           })}
