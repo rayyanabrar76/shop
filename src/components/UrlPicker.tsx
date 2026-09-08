@@ -119,9 +119,9 @@ export default function UrlPicker({
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between rounded-xl border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm bg-white dark:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
+        className="w-full flex items-center justify-between rounded-xl border border-(--admin-border) px-3 py-2 text-sm bg-white dark:bg-zinc-800 hover:border-(--admin-field-border) transition-colors"
       >
-        <span className={`truncate ${value ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500'}`}>
+        <span className={`truncate ${value ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500'}`}>
           {value ? displayValue : placeholder}
         </span>
         {open
@@ -132,7 +132,7 @@ export default function UrlPicker({
 
       {/* Inline dropdown */}
       {open && (
-        <div className="mt-1 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg overflow-hidden">
+        <div className="mt-1 rounded-xl border border-(--admin-border) bg-white dark:bg-zinc-900 shadow-lg overflow-hidden">
 
           {/* Built-in routes */}
           <div className="p-2">
@@ -144,7 +144,7 @@ export default function UrlPicker({
                 onClick={() => select(r.url)}
                 className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left"
               >
-                <r.Icon className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
+                <r.Icon className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                 <span className="text-sm text-zinc-700 dark:text-zinc-300 flex-1">{r.label}</span>
                 {value === r.url && <Check className="w-3 h-3 text-zinc-900 shrink-0" />}
               </button>
@@ -154,7 +154,7 @@ export default function UrlPicker({
           {/* Custom pages */}
           {pages.length > 0 && (
             <>
-              <div className="border-t border-zinc-100 dark:border-zinc-800" />
+              <div className="border-t border-(--admin-edge)" />
               <div className="p-2">
                 <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 px-2 py-1">Your Pages</p>
                 {pages.map(p => {
@@ -166,7 +166,7 @@ export default function UrlPicker({
                       onClick={() => select(url)}
                       className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left"
                     >
-                      <Globe className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
+                      <Globe className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                       <span className="text-sm text-zinc-700 dark:text-zinc-300 flex-1">{p.name}</span>
                       {value === url && <Check className="w-3 h-3 text-zinc-900 shrink-0" />}
                     </button>
@@ -179,7 +179,7 @@ export default function UrlPicker({
           {/* Categories */}
           {categories.length > 0 && (
             <>
-              <div className="border-t border-zinc-100 dark:border-zinc-800" />
+              <div className="border-t border-(--admin-edge)" />
               <div className="p-2">
                 <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 px-2 py-1">Categories</p>
                 <div className="max-h-40 overflow-y-auto space-y-0.5 thin-scrollbar">
@@ -192,7 +192,7 @@ export default function UrlPicker({
                         onClick={() => select(url)}
                         className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left"
                       >
-                        <Tag className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
+                        <Tag className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                         <span className="text-sm text-zinc-700 dark:text-zinc-300 flex-1 truncate">{c.name}</span>
                         {value === url && <Check className="w-3 h-3 text-zinc-900 shrink-0" />}
                       </button>
@@ -206,7 +206,7 @@ export default function UrlPicker({
           {/* Products */}
           {products.length > 0 && (
             <>
-              <div className="border-t border-zinc-100 dark:border-zinc-800" />
+              <div className="border-t border-(--admin-edge)" />
               <div className="p-2">
                 <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 px-2 py-1">Products</p>
                 <div className="max-h-40 overflow-y-auto space-y-0.5 thin-scrollbar">
@@ -219,7 +219,7 @@ export default function UrlPicker({
                         onClick={() => select(url)}
                         className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left"
                       >
-                        <ShoppingBag className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
+                        <ShoppingBag className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                         <span className="text-sm text-zinc-700 dark:text-zinc-300 flex-1 truncate">{p.title}</span>
                         {value === url && <Check className="w-3 h-3 text-zinc-900 shrink-0" />}
                       </button>
@@ -231,7 +231,7 @@ export default function UrlPicker({
           )}
 
           {/* Add New Page */}
-          <div className="border-t border-zinc-100 dark:border-zinc-800" />
+          <div className="border-t border-(--admin-edge)" />
           <div className="p-2">
             <button
               type="button"

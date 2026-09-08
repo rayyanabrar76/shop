@@ -101,7 +101,7 @@ export default function AddPageModal({ storeId, subdomain, existingPages, onCrea
                   key={tpl.type}
                   type="button"
                   onClick={() => { onCreated(existingPage as PageResult); onClose() }}
-                  className="p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 text-left"
+                  className="p-3 rounded-xl border border-(--admin-edge) bg-zinc-50 dark:bg-zinc-800/50 text-left"
                 >
                   <tpl.Icon className="w-4 h-4 mb-1.5 text-zinc-300 dark:text-zinc-600" />
                   <p className="text-xs font-bold leading-tight text-zinc-400 dark:text-zinc-500">{tpl.name}</p>
@@ -116,7 +116,7 @@ export default function AddPageModal({ storeId, subdomain, existingPages, onCrea
                 type="button"
                 onClick={() => pickTemplate(tpl)}
                 className={`p-3 rounded-xl border text-left transition-all ${
-                  isSelected ? 'border-zinc-900 bg-zinc-900' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
+                  isSelected ? 'border-zinc-900 bg-zinc-900' : 'border-(--admin-edge) hover:border-(--admin-field-border)'
                 }`}
               >
                 <tpl.Icon className={`w-4 h-4 mb-1.5 ${isSelected ? 'text-white' : 'text-zinc-500 dark:text-zinc-400'}`} />
@@ -132,7 +132,7 @@ export default function AddPageModal({ storeId, subdomain, existingPages, onCrea
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1 block">Page Name</label>
               <input
-                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-colors"
+                className="w-full rounded-xl border border-(--admin-edge) bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 px-3 py-2 text-sm outline-none focus:border-(--admin-field-border-focus) dark:focus:border-(--admin-field-border-focus) transition-colors"
                 placeholder="e.g. Our Story"
                 value={customName}
                 onChange={e => {
@@ -144,8 +144,8 @@ export default function AddPageModal({ storeId, subdomain, existingPages, onCrea
             </div>
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1 block">URL Slug</label>
-              <div className="flex items-center rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden focus-within:border-zinc-400 dark:focus-within:border-zinc-500 transition-colors">
-                <span className="px-2 text-xs text-zinc-400 dark:text-zinc-500 py-2 bg-zinc-50 dark:bg-zinc-800 border-r border-zinc-200 dark:border-zinc-700 whitespace-nowrap shrink-0">/{subdomain}/</span>
+              <div className="flex items-center rounded-xl border border-(--admin-edge) overflow-hidden focus-within:border-(--admin-field-border-hover) transition-colors">
+                <span className="px-2 text-xs text-zinc-400 dark:text-zinc-500 py-2 bg-zinc-50 dark:bg-zinc-800 border-r border-(--admin-edge) whitespace-nowrap shrink-0">/{subdomain}/</span>
                 <input
                   className="flex-1 px-2 py-2 text-sm outline-none bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
                   placeholder="our-story"
@@ -167,7 +167,7 @@ export default function AddPageModal({ storeId, subdomain, existingPages, onCrea
         <div className="flex gap-2 pt-1">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-sm font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+            className="flex-1 py-2.5 rounded-xl border border-(--admin-edge) text-sm font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
           >
             Cancel
           </button>

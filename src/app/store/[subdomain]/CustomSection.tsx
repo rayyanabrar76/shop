@@ -115,7 +115,7 @@ export default function CustomSection({ section, themeStyle, categories = [], su
 
     return (
       <section className="px-4 md:px-8 py-14 max-w-7xl mx-auto w-full" style={wrapperStyle}>
-        {/* Heading left, view-all right — the standard collection-row header. */}
+        {/* Heading left, view-all right, the standard collection-row header. */}
         <div className="flex items-end justify-between gap-6 mb-9">
           <div className="min-w-0">
             {heading && (
@@ -152,7 +152,7 @@ export default function CustomSection({ section, themeStyle, categories = [], su
 
         {shown.length === 0 ? (
           <p className="text-sm opacity-50 py-8">
-            No categories yet — add some under Categories and they will appear here.
+            No categories yet, add some under Categories and they will appear here.
           </p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-9 sm:gap-x-6 sm:gap-y-10">

@@ -27,7 +27,7 @@ export const DEFAULT_PAGES: DefaultPage[] = [
     slug: 'privacy-policy',
     heading: 'Privacy Policy',
     body: `What we collect
-Which details you ask people for — name, email, delivery address, payment details — and at what point.
+Which details you ask people for (name, email, delivery address, payment details) and at what point.
 
 How we use it
 What each piece of information is actually for. Fulfilling an order, sending updates, anything else.
@@ -82,7 +82,7 @@ Which country's law applies to a dispute.`,
 How many days a customer has to ask for a refund, counted from when.
 
 Condition of returned items
-What state something must be in to be accepted. Note anything you cannot take back — perishable goods and made-to-order items are the usual ones.
+What state something must be in to be accepted. Note anything you cannot take back. Perishable goods and made-to-order items are the usual ones.
 
 How to start a return
 The exact steps: who to email, what to include, whether you send a label.

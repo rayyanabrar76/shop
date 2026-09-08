@@ -382,7 +382,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
         >
           {/* Left: hamburger (mobile) + brand, or the nav when centred */}
           <div className={`flex items-center gap-2 ${centered ? 'justify-start' : ''}`}>
-            {/* Hamburger — mobile only */}
+            {/* Hamburger, mobile only */}
             <button
               onClick={handleHamburgerClick}
               className="md:hidden p-2 rounded-xl hover:bg-zinc-100 transition-colors text-zinc-600 hover:text-zinc-900"
@@ -395,7 +395,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
             {menuInLeft && <div className="hidden md:flex items-center">{navList}</div>}
           </div>
 
-          {/* Centre slot — the brand when centred, otherwise the menu (or an
+          {/* Centre slot, the brand when centred, otherwise the menu (or an
               empty spacer, so justify-between still has three children). */}
           {centered ? (
             <div className="flex justify-center">{brand}</div>

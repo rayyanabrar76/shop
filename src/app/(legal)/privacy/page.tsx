@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Privacy Policy — ShopFlow',
+  title: 'Privacy Policy, ShopFlow',
 }
 
 const EFFECTIVE = 'May 9, 2026'
@@ -46,13 +46,13 @@ export default function PrivacyPage() {
       <h2 className="text-xl font-bold mt-8">3. Sharing &amp; sub-processors</h2>
       <p>We share information with the following service providers, only as needed to operate the Service:</p>
       <ul className="list-disc pl-6 space-y-1">
-        <li><strong>Vercel</strong> — application hosting</li>
-        <li><strong>Neon</strong> — database hosting (PostgreSQL)</li>
-        <li><strong>Clerk</strong> — store owner authentication</li>
-        <li><strong>Stripe</strong> — payment processing</li>
-        <li><strong>ImageKit</strong> — image &amp; video hosting</li>
-        <li><strong>Resend</strong> — transactional email</li>
-        <li><strong>Google</strong> — OAuth login (when buyers choose it)</li>
+        <li><strong>Vercel</strong>, application hosting</li>
+        <li><strong>Neon</strong>, database hosting (PostgreSQL)</li>
+        <li><strong>Clerk</strong>, store owner authentication</li>
+        <li><strong>Stripe</strong>, payment processing</li>
+        <li><strong>ImageKit</strong>, image &amp; video hosting</li>
+        <li><strong>Resend</strong>, transactional email</li>
+        <li><strong>Google</strong>, OAuth login (when buyers choose it)</li>
       </ul>
       <p>Each sub-processor is bound by its own privacy and security commitments.</p>
 

@@ -107,7 +107,7 @@ function Newsletter({
 
       {state === 'done' ? (
         <p className="flex items-center gap-2 text-sm font-medium">
-          <Check className="w-4 h-4 shrink-0" /> Thanks — you are on the list.
+          <Check className="w-4 h-4 shrink-0" /> Thanks, you are on the list.
         </p>
       ) : (
         <form onSubmit={submit} className="flex items-center gap-0 max-w-xs">

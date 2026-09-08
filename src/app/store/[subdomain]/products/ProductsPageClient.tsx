@@ -404,7 +404,7 @@ export default function ProductsPageClient({
             )}
           </div>
 
-          {/* Product grid — same component as homepage */}
+          {/* Product grid, same component as homepage */}
           <ProductGrid
             products={products}
             theme={theme}

@@ -28,7 +28,7 @@ interface ProductDetailClientProps {
     imageUrl: string | null
     sku: string | null
     category: string | null
-    images: string[]
+    images: { url: string; alt: string }[]
     variants: Variant[]
   }
   theme: {
@@ -46,7 +46,9 @@ export default function ProductDetailClient({ product, theme }: ProductDetailCli
   const [activeImage, setActiveImage] = useState(0)
   const [selections, setSelections] = useState<Record<string, string>>({})
 
-  const images = product.images.length > 0 ? product.images : (product.imageUrl ? [product.imageUrl] : [])
+  const images = product.images.length > 0
+    ? product.images
+    : (product.imageUrl ? [{ url: product.imageUrl, alt: product.title }] : [])
 
   const allVariantsSelected = product.variants.length === 0 ||
     product.variants.every(v => selections[v.id])
@@ -81,7 +83,7 @@ export default function ProductDetailClient({ product, theme }: ProductDetailCli
       <div className="w-full">
         <div className="relative w-full bg-zinc-100 overflow-hidden" style={{ borderRadius: radius, aspectRatio: '1 / 1' }}>
           {images.length > 0 ? (
-            <img src={images[activeImage]} alt={product.title} className="w-full h-full object-cover" />
+            <img src={images[activeImage].url} alt={images[activeImage].alt} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-zinc-300">
               <Package className="w-12 h-12" />
@@ -115,7 +117,7 @@ export default function ProductDetailClient({ product, theme }: ProductDetailCli
                 className="shrink-0 w-16 h-16 overflow-hidden border-2 transition-all"
                 style={{ borderColor: activeImage === i ? primary : 'transparent', borderRadius: radius }}
               >
-                <img src={img} alt="" className="w-full h-full object-cover" />
+                <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
               </button>
             ))}
           </div>

@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Terms of Service — ShopFlow',
+  title: 'Terms of Service, ShopFlow',
 }
 
 const EFFECTIVE = 'May 9, 2026'

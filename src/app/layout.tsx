@@ -54,7 +54,7 @@ export default function RootLayout({
     >
       <html lang="en" suppressHydrationWarning>
         <head>
-          {/* Runs synchronously before paint — prevents flash of wrong theme */}
+          {/* Runs synchronously before paint, prevents flash of wrong theme */}
           <script
             dangerouslySetInnerHTML={{
               __html: `(function(){try{var t=localStorage.getItem('admin-theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');}catch(e){}})();`,

@@ -27,7 +27,7 @@ export default function TagsInput({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2 py-2 focus-within:border-zinc-400 dark:focus-within:border-zinc-500 transition-colors">
+    <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-(--admin-field-border) bg-white dark:bg-zinc-800 px-2 py-2 transition-[border-color,box-shadow] hover:border-(--admin-field-border-hover) focus-within:border-(--admin-field-border-focus) focus-within:ring-4 focus-within:ring-zinc-900/5 dark:focus-within:ring-white/10">
       {value.map(tag => (
         <span
           key={tag}
@@ -36,7 +36,7 @@ export default function TagsInput({
           {tag}
           <button
             onClick={() => onChange(value.filter(t => t !== tag))}
-            className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors"
+            className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
             aria-label={`Remove ${tag}`}
           >
             <HiX className="w-3 h-3" />
@@ -62,7 +62,7 @@ export default function TagsInput({
         }}
         onBlur={() => commit(draft)}
         placeholder={value.length ? '' : 'e.g. candle, soy wax, gift'}
-        className="flex-1 min-w-24 bg-transparent text-sm outline-none text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 px-1"
+        className="flex-1 min-w-24 bg-transparent text-sm outline-none text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-500 px-1"
       />
     </div>
   )

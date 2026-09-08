@@ -44,7 +44,7 @@ export async function generateMetadata({
   return {
     // Absolute base so relative canonicals and OG images resolve correctly.
     metadataBase: new URL(canonical),
-    title: { default: homeTitle, template: `%s — ${store.name}` },
+    title: { default: homeTitle, template: `%s, ${store.name}` },
     description,
     alternates: { canonical },
     icons: icon ? { icon } : undefined,
@@ -226,7 +226,7 @@ export default async function StoreLayout({
       <StoreBaseProvider base={storeBase}>
       <CurrencyProvider currency={store?.currency}>
       <CartProvider storeKey={subdomain}>
-        {/* Blocking script — executes before first paint, sets data-dark on <html> with zero flash */}
+        {/* Blocking script, executes before first paint, sets data-dark on <html> with zero flash */}
         <script dangerouslySetInnerHTML={{ __html: DARK_INIT_SCRIPT }} />
         {customCss  && <style dangerouslySetInnerHTML={{ __html: customCss }} />}
         {customHead && <div dangerouslySetInnerHTML={{ __html: customHead }} />}

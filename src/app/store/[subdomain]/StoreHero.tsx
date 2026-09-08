@@ -162,11 +162,11 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
               {/* A solid button was also being given the white 2px border meant
                   for outline buttons, so it read as a black chip ringed in
                   white. Each style now gets only what it should:
-                    solid   — filled, no border. Over a photo it flips to white
+                    solid:   filled, no border. Over a photo it flips to white
                               on the brand colour, which stays legible on any
                               image instead of a dark fill on a dark donut.
-                    outline — a hairline, never 2px, which reads as chunky.
-                    ghost   — type only, with a rule that draws in on hover. */}
+                    outline: a hairline, never 2px, which reads as chunky.
+                    ghost:   type only, with a rule that draws in on hover. */}
               <a
                 href={resolveStoreHref(slide.ctaUrl, storeBase)}
                 className={`group/cta relative inline-flex items-center px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-300 ${

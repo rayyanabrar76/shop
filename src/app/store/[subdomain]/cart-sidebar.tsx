@@ -399,7 +399,7 @@ export default function CartSidebar({ themeStyle, subdomain }: CartSidebarProps)
                 boxShadow: `0 12px 28px -10px ${primary}80`,
               }}
             >
-              {/* A hairline of light along the top edge — the detail that stops
+              {/* A hairline of light along the top edge, the detail that stops
                   a flat filled rectangle looking like a placeholder. */}
               <span
                 className="pointer-events-none absolute inset-x-0 top-0 h-px opacity-25"

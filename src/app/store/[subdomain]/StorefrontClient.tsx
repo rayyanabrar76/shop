@@ -325,7 +325,7 @@ export default function StorefrontClient({
         fontFamily: theme.font === 'serif' ? 'serif' : theme.font === 'mono' ? 'monospace' : 'inherit',
       }}
     >
-      {/* Preview pulse animation — only injected when inside the editor iframe */}
+      {/* Preview pulse animation, only injected when inside the editor iframe */}
       {isEditor && (
         <style>{`
           @keyframes preview-section-pulse {

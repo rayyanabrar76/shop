@@ -67,7 +67,7 @@ export default function OwnerPreviewBar({ storeId, isOwner = false }: { storeId:
 
   return (
     <>
-      {/* Keep each device iframe in DOM once loaded — avoids re-fetching on switch */}
+      {/* Keep each device iframe in DOM once loaded, avoids re-fetching on switch */}
       {DEVICES.filter(d => d.width && mounted.has(d.id)).map(d => (
         <div
           key={d.id}
@@ -135,7 +135,7 @@ export default function OwnerPreviewBar({ storeId, isOwner = false }: { storeId:
           href={customerUrl}
           target="_blank"
           rel="noopener noreferrer"
-          title="See store as a customer — copy URL into incognito for a fully clean view"
+          title="See store as a customer, copy URL into incognito for a fully clean view"
           className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 hover:text-white transition-colors px-1"
         >
           <ExternalLink className="w-3 h-3" />

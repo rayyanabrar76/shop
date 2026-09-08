@@ -221,7 +221,7 @@ export default function Hero() {
         </motion.div>
       </div>
 
-      {/* RIGHT — Mockup, no clipping wrapper so badges float freely */}
+      {/* RIGHT, Mockup, no clipping wrapper so badges float freely */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}

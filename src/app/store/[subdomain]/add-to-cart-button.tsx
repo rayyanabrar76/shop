@@ -148,7 +148,7 @@ export default function AddToCartButton({
       {/* The detail that separates a designed button from a filled
           rectangle: a single pixel of the label's own colour along the top
           edge, at low opacity, so the surface reads as lit from above.
-          Solid fills only — on an outline button there is nothing to light. */}
+          Solid fills only, on an outline button there is nothing to light. */}
       {!iconOnly && !expandOnHover && isSolid && !quiet && (
         <span
           aria-hidden
@@ -193,7 +193,7 @@ export default function AddToCartButton({
             {expandOnHover ? (
               /* max-width, not display: width is animatable and display is
                  not, so the pill grows rather than snapping open. Scoped to the
-                 button's own group — the card revealing the disc and the disc
+                 button's own group, the card revealing the disc and the disc
                  revealing its label are two separate steps. */
               <span className="max-w-0 overflow-hidden whitespace-nowrap text-[12px] font-semibold opacity-0 transition-all duration-300 ease-out group-hover/add:ml-1 group-hover/add:max-w-20 group-hover/add:opacity-100">
                 {btnLabel}

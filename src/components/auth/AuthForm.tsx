@@ -244,7 +244,7 @@ export default function AuthForm({
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Email — shown on credentials & reset-request */}
+        {/* Email, shown on credentials & reset-request */}
         {(isCredentials || step === 'reset-request') && (
           <div>
             <label className={labelCls}>Email address</label>
@@ -263,7 +263,7 @@ export default function AuthForm({
           </div>
         )}
 
-        {/* Verification code — verify-email & reset-code */}
+        {/* Verification code, verify-email & reset-code */}
         {(step === 'verify-email' || step === 'reset-code') && (
           <div>
             <label className={labelCls}>Verification code</label>
@@ -280,7 +280,7 @@ export default function AuthForm({
           </div>
         )}
 
-        {/* Password — credentials & reset-code (new password) */}
+        {/* Password, credentials & reset-code (new password) */}
         {(isCredentials || step === 'reset-code') && (
           <div>
             <div className="flex items-center justify-between">

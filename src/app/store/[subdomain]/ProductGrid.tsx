@@ -304,7 +304,7 @@ export default function ProductGrid({
                 style={fontFamily ? { fontFamily } : undefined}
                 onClick={() => navigateTo(p.slug || p.id)}
               >
-                {/* The card has no frame of its own — the image is the object,
+                {/* The card has no frame of its own, the image is the object,
                     sitting on the page. Theme radius and shadow move onto it so
                     both settings still read. */}
                 <div
@@ -441,7 +441,7 @@ export default function ProductGrid({
               </EditorItem>
           ))}
 
-          {/* Add Product card — only visible in editor */}
+          {/* Add Product card, only visible in editor */}
           {isEditor && (
               <button
                 onClick={() => window.parent.postMessage({ type: 'add-product' }, '*')}
