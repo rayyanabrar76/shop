@@ -30,7 +30,7 @@ import ProductPriceEdit from './sections/ProductPriceEdit'
 import ProductCartButtonEdit from './sections/ProductCartButtonEdit'
 import NavMenuEdit from './sections/NavMenuEdit'
 import CategoryFilterEdit from './sections/CategoryFilterEdit'
-import PageSkeleton from './PageSkeleton'
+import EditorSkeleton from './EditorSkeleton'
 import AddPageModal, { type PageResult } from '@/components/AddPageModal'
 import ProductModal from './ProductModal'
 import { resolveSectionOrder, serializeSectionOrder } from '@/lib/section-order'
@@ -609,7 +609,7 @@ export default function VisualEditor({
    * the same pair handleSave writes. Two stacks, so an undo can be taken
    * back.
    */
-  type Snapshot = { theme: ThemeState; heroSlides: HeroSlide[] }
+  type Snapshot = { theme: ThemeState; heroSlides: HeroSlide[]; customSections: CustomSection[] }
   const [past, setPast] = useState<Snapshot[]>([])
   const [future, setFuture] = useState<Snapshot[]>([])
   /**
@@ -621,6 +621,21 @@ export default function VisualEditor({
    */
   const lastRecordAt = useRef(0)
   const [iframeLoading, setIframeLoading] = useState(false)
+  /**
+   * False until the preview has rendered once. Distinct from iframeLoading,
+   * which also goes true for later reloads: a page switch should refresh the
+   * middle of the screen, not blank the toolbar the merchant is using.
+   */
+  const [firstPaint, setFirstPaint] = useState(false)
+
+  // The escape hatch. A storefront that fails to load must not take the
+  // editor down with it, so after four seconds the editor shows regardless
+  // and the merchant gets a working toolbar beside an empty frame, which at
+  // least says where the problem is.
+  useEffect(() => {
+    const t = setTimeout(() => setFirstPaint(true), 4000)
+    return () => clearTimeout(t)
+  }, [])
 
   // Refs so page:ready handler always has current values without stale closures
   const themeRef = useRef(theme)
@@ -803,6 +818,7 @@ export default function VisualEditor({
 
   function handleIframeLoad() {
     setIframeLoading(false)
+    setFirstPaint(true)
     const win = iframeRef.current?.contentWindow
     if (!win) return
     win.postMessage({ type: 'theme:update', theme }, '*')
@@ -824,12 +840,13 @@ export default function VisualEditor({
     lastRecordAt.current = now
     setFuture([])
     if (burst) return
-    setPast(p => [...p.slice(-40), { theme, heroSlides }])
+    setPast(p => [...p.slice(-40), { theme, heroSlides, customSections }])
   }
 
   function applySnapshot(s: Snapshot) {
     setTheme(s.theme)
     setHeroSlides(s.heroSlides)
+    setCustomSections(s.customSections)
     // Both have an effect watching them that pushes to the preview, so
     // restoring the state is all it takes to restore what is on screen.
   }
@@ -845,11 +862,21 @@ export default function VisualEditor({
     setHeroSlides(next)
   }
 
+  /**
+   * An edit to the sections, which is a history entry. Loading a page's
+   * sections is not an edit and goes straight to setCustomSections, or the
+   * first press of undo would empty a panel nobody had touched.
+   */
+  function changeCustomSections(next: CustomSection[]) {
+    record()
+    setCustomSections(next)
+  }
+
   function undo() {
     if (past.length === 0) return
     const prev = past[past.length - 1]
     setPast(p => p.slice(0, -1))
-    setFuture(f => [{ theme, heroSlides }, ...f])
+    setFuture(f => [{ theme, heroSlides, customSections }, ...f])
     // A restore is not an edit, so the next real edit must not fold into it.
     lastRecordAt.current = 0
     applySnapshot(prev)
@@ -859,7 +886,7 @@ export default function VisualEditor({
     if (future.length === 0) return
     const next = future[0]
     setFuture(f => f.slice(1))
-    setPast(p => [...p, { theme, heroSlides }])
+    setPast(p => [...p, { theme, heroSlides, customSections }])
     lastRecordAt.current = 0
     applySnapshot(next)
   }
@@ -914,8 +941,20 @@ function handlePageContentChange(content: unknown) {
     setActivePage(page)
   }
 
+  /**
+   * Sections belong to a page and the editor holds one page's worth, so the
+   * outgoing page's are written before the incoming page's are loaded.
+   * Failing here is not worth blocking the switch over: the panel would sit
+   * on a page the merchant has already left.
+   */
+  function leavingPage() {
+    const from = activePageRef.current?.id ?? null
+    flushSections(from).catch(() => {})
+  }
+
   function handlePageSelect(pageId: string) {
     setPickerOpen(false)
+    leavingPage()
     if (pageId === '__home__') {
       setActivePage(null)
       setSystemPageSlug(null)
@@ -928,6 +967,7 @@ function handlePageContentChange(content: unknown) {
 
   function handleSystemPageSelect(slug: string) {
     setPickerOpen(false)
+    leavingPage()
     setActivePage(null)
     setSystemPageSlug(slug)
     setSectionView('list')
@@ -946,6 +986,30 @@ function handlePageContentChange(content: unknown) {
     setAddPageOrigin('picker')
   }
 
+  /**
+   * Write the sections for one page and adopt what comes back.
+   *
+   * The reply carries real ids for anything created, and taking them is not
+   * cosmetic: a section still holding its invented id would be created a
+   * second time by the next save.
+   *
+   * Only adopts the reply if the editor is still on the page that was saved.
+   * A save that lands after the merchant has moved on must not drop another
+   * page's sections into the panel.
+   */
+  async function flushSections(forPageId: string | null) {
+    const sending = customSections
+    const res = await fetch(`/api/stores/${storeId}/custom-sections`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pageId: forPageId, sections: sending }),
+    })
+    if (!res.ok) throw new Error('Could not save sections')
+    const saved = await res.json()
+    const stillHere = (activePageRef.current?.id ?? null) === forPageId
+    if (stillHere) setCustomSections(saved)
+  }
+
   async function handleSave() {
     setSaving(true)
     try {
@@ -955,6 +1019,7 @@ function handlePageContentChange(content: unknown) {
         body: JSON.stringify({ ...theme, heroSlides }),
       })
       if (!res.ok) throw new Error('Save failed')
+      await flushSections(activePage?.id ?? null)
       setSaved(true)
       // The sidebar's store chip is rendered on the server from this theme,
       // so without this a saved logo or favicon does not appear until a full
@@ -1270,7 +1335,9 @@ function handlePageContentChange(content: unknown) {
                 subdomain={subdomain}
                 page={activePage}
                 onContentChange={handlePageContentChange}
-                onSectionsChange={setCustomSections}
+                customSections={customSections}
+                onSectionsChange={changeCustomSections}
+                onSectionsLoad={setCustomSections}
                 onPageCreated={handlePageCreated}
                 onBack={() => setActivePage(null)}
                 autoNav={pageContentNav}
@@ -1354,10 +1421,11 @@ function handlePageContentChange(content: unknown) {
                     subdomain={subdomain}
                     pageId={null}
                     onBack={() => setSectionView('list')}
-                    onSectionsChange={setCustomSections}
+                    onSectionsChange={changeCustomSections}
+                    onSectionsLoad={setCustomSections}
                     onPageCreated={handlePageCreated}
                     focusSectionId={customSectionFocus}
-                    initialSections={customSections.length > 0 ? customSections : undefined}
+                    sections={customSections}
                   />
                 )}
               </>
@@ -1483,18 +1551,22 @@ function handlePageContentChange(content: unknown) {
               title="Store Preview"
               onLoad={handleIframeLoad}
             />
-            {iframeLoading && (
-              <PageSkeleton
-                theme={theme}
-                storeName={dbStoreName}
-                pageType={activePage?.type ?? systemPageSlug ?? 'home'}
-                pageContent={activePage?.content}
-                heroSlides={heroSlides}
-              />
+            {/* A reload of the preview alone — a page switch, or a product
+                saved from the modal. Plain, and only over the frame: the
+                panel and toolbar stay usable because nothing about them is
+                changing. */}
+            {iframeLoading && firstPaint && (
+              <div className="absolute inset-0 bg-white dark:bg-zinc-900 animate-pulse" />
             )}
           </div>
         </main>
       </div>
+
+      {/* Over everything until the preview exists. Rendered last so it sits
+          above the editor without either of them needing a z-index war, and
+          kept in the tree rather than returned early so the iframe below is
+          mounted and loading the whole time it is up. */}
+      {!firstPaint && <EditorSkeleton />}
 
       {productModal && (
         <ProductModal

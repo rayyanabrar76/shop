@@ -20,7 +20,11 @@ interface PageContentEditProps {
   subdomain: string
   page: StorePage
   onContentChange: (content: unknown) => void
+  /** The custom sections for this page. Owned by the editor. */
+  customSections: CustomSection[]
   onSectionsChange: (sections: CustomSection[]) => void
+  /** A page load rather than an edit, so it stays out of the undo history. */
+  onSectionsLoad: (sections: CustomSection[]) => void
   onPageCreated?: (page: any) => void
   onBack: () => void
   autoNav?: { section: string; ts: number } | null
@@ -370,7 +374,9 @@ export default function PageContentEdit({
   subdomain,
   page,
   onContentChange,
+  customSections,
   onSectionsChange,
+  onSectionsLoad,
   onPageCreated,
   onBack,
   autoNav,
@@ -405,6 +411,8 @@ export default function PageContentEdit({
         pageId={page.id}
         onBack={() => setActiveSection(null)}
         onSectionsChange={onSectionsChange}
+        onSectionsLoad={onSectionsLoad}
+        sections={customSections}
         onPageCreated={onPageCreated}
         focusSectionId={focusSectionId}
       />

@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
+import { reconcileSections, type IncomingSection } from '@/lib/custom-sections'
 
 export async function GET(
   req: Request,
@@ -71,4 +72,47 @@ export async function POST(
   revalidatePath(`/store/${store.subdomain}`, 'layout')
 
   return NextResponse.json(section)
+}
+
+/**
+ * PUT /api/stores/[storeId]/custom-sections
+ * { pageId, sections[] } -> the saved sections, with real ids
+ *
+ * The whole list for one page, written at once. POST and the per-section
+ * PATCH and DELETE still exist and still work; this is what the theme editor
+ * uses now, because saving section by section as they were typed is what made
+ * them impossible to undo.
+ */
+export async function PUT(
+  req: Request,
+  { params }: { params: Promise<{ storeId: string }> }
+) {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { storeId } = await params
+
+  const dbUser = await prisma.user.findUnique({ where: { clerkId: userId }, select: { id: true } })
+  const store = await prisma.store.findUnique({
+    where: { id: storeId },
+    select: { ownerId: true, subdomain: true },
+  })
+  if (!store || store.ownerId !== dbUser?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const body = await req.json().catch(() => null)
+  if (!Array.isArray(body?.sections)) {
+    return NextResponse.json({ error: 'sections must be an array' }, { status: 400 })
+  }
+  // "home" and a missing value both mean the store's own front page, matching
+  // how GET reads the same parameter.
+  const raw = body.pageId
+  const pageId: string | null = (raw === undefined || raw === null || raw === 'home') ? null : raw
+
+  const saved = await reconcileSections(storeId, pageId, body.sections as IncomingSection[])
+
+  revalidatePath(`/store/${store.subdomain}`, 'layout')
+
+  return NextResponse.json(saved)
 }

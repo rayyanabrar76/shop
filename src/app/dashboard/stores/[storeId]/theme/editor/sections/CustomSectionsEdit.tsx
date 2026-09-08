@@ -36,10 +36,17 @@ interface CustomSectionsEditProps {
   subdomain: string
   pageId?: string | null
   onBack: () => void
+  /** An edit. Goes into the undo history and is written on Save. */
   onSectionsChange: (sections: CustomSection[]) => void
+  /** A page load. Same state, but it is not something anyone did. */
+  onSectionsLoad: (sections: CustomSection[]) => void
   onPageCreated?: (page: any) => void
   focusSectionId?: { id: string; ts: number } | null
-  initialSections?: CustomSection[]
+  /**
+   * The list to show. Owned by the editor, because undo and redo change it
+   * from outside this panel and a local copy would not hear about it.
+   */
+  sections: CustomSection[]
   /** Timestamp from the preview's "Add section" pill; each new value opens the picker. */
   openAddModal?: number | null
 }
@@ -47,9 +54,8 @@ interface CustomSectionsEditProps {
 const inactiveBtnCls = 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-600 dark:text-zinc-300'
 const activeBtnCls = 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
 
-export default function CustomSectionsEdit({ storeId, subdomain, pageId = null, onBack, onSectionsChange, onPageCreated, focusSectionId, openAddModal, initialSections }: CustomSectionsEditProps) {
-  const [sections, setSections] = useState<CustomSection[]>(initialSections ?? [])
-  const [loading, setLoading] = useState(!initialSections || initialSections.length === 0)
+export default function CustomSectionsEdit({ storeId, subdomain, pageId = null, onBack, onSectionsChange, onSectionsLoad, onPageCreated, focusSectionId, openAddModal, sections }: CustomSectionsEditProps) {
+  const [loading, setLoading] = useState(sections.length === 0)
   // Derived rather than synced in an effect: the picker is open if it was
   // opened from this panel, or if the preview's "Add section" pill fired a
   // timestamp newer than the last dismissal. Clicking the pill twice reopens
@@ -76,48 +82,56 @@ export default function CustomSectionsEdit({ storeId, subdomain, pageId = null, 
       const res = await fetch(`/api/stores/${storeId}/custom-sections${pageQuery}`)
       if (res.ok) {
         const data = await res.json()
-        setSections(data)
-        onSectionsChange(data)
+        onSectionsLoad(data)
       }
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleAdd(name: string, layout: string) {
-    const res = await fetch(`/api/stores/${storeId}/custom-sections${pageQuery}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, layout, heading: 'Section Heading', text: 'Add your content here.', pageId }),
-    })
-    if (res.ok) {
-      const newSection = await res.json()
-      const updated = [...sections, newSection]
-      setSections(updated)
-      onSectionsChange(updated)
-      closeAdd()
-      setEditingId(newSection.id)
-    }
+  /**
+   * A section that exists only here until Save.
+   *
+   * The id has to be unique among the sections on screen and recognisable as
+   * unsaved on the way back, which is all the "new-" prefix is for: the
+   * server treats any id carrying it as a row to create.
+   */
+  function handleAdd(name: string, layout: string) {
+    const newSection = {
+      id: `new-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+      storeId,
+      pageId,
+      name,
+      layout,
+      heading: 'Section Heading',
+      text: 'Add your content here.',
+      imageUrl: null,
+      buttonLabel: null,
+      buttonUrl: null,
+      buttonVariant: null,
+      buttonRadius: null,
+      buttonColor: null,
+      buttonFont: null,
+      showButton: false,
+      categoryIds: '',
+      showCount: false,
+      bgColor: null,
+      position: sections.length,
+      visible: true,
+    } as unknown as CustomSection
+    onSectionsChange([...sections, newSection])
+    closeAdd()
+    setEditingId(newSection.id)
   }
 
-  async function handleUpdate(id: string, patch: Partial<CustomSection>) {
-    const updated = sections.map(s => s.id === id ? { ...s, ...patch } : s)
-    setSections(updated)
-    onSectionsChange(updated)
-    await fetch(`/api/stores/${storeId}/custom-sections/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patch),
-    })
+  function handleUpdate(id: string, patch: Partial<CustomSection>) {
+    onSectionsChange(sections.map(s => s.id === id ? { ...s, ...patch } : s))
   }
 
-  async function handleDelete(id: string) {
-    const updated = sections.filter(s => s.id !== id)
-    setSections(updated)
-    onSectionsChange(updated)
+  function handleDelete(id: string) {
+    onSectionsChange(sections.filter(s => s.id !== id))
     setDeleteConfirmId(null)
     setEditingId(null)
-    await fetch(`/api/stores/${storeId}/custom-sections/${id}`, { method: 'DELETE' })
   }
 
   const editing = sections.find(s => s.id === editingId)
