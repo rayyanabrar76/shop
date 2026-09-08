@@ -93,7 +93,7 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
             {/* Shows the value rather than describing it: the swatch carries
                 whatever radius the slider is on. */}
             <div
-              className="h-5 w-5 shrink-0 border-2 border-(--admin-field-border) transition-[border-radius]"
+              className="h-5 w-5 shrink-0 border-2 border-zinc-200 dark:border-zinc-700 transition-[border-radius]"
               style={{ borderRadius: theme.borderRadius }}
             />
             <input
@@ -114,7 +114,7 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
               }}
               className="flex-1 h-1.5 cursor-pointer rounded-full accent-zinc-900 dark:accent-zinc-100"
             />
-            <div className="w-5 h-5 border-2 border-(--admin-field-border) shrink-0 rounded-full" />
+            <div className="w-5 h-5 border-2 border-zinc-200 dark:border-zinc-700 shrink-0 rounded-full" />
           </div>
         </div>
 
@@ -226,11 +226,11 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
           />
         </div>
 
-        <div className="pt-4 border-t border-(--admin-edge)">
+        <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
           <Link
             href={`/dashboard/stores/${storeId}/products`}
             target="_blank"
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-(--admin-border) text-zinc-600 dark:text-zinc-300 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 text-sm font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             See All Products

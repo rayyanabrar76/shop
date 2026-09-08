@@ -13,7 +13,7 @@ export default function ThemeLoading() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="rounded-2xl border border-(--admin-border) bg-(--admin-card) overflow-hidden">
+          <div key={i} className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
             <Sk className="h-44 w-full rounded-none" />
             <div className="p-4 space-y-2">
               <Sk className="h-5 w-24" />

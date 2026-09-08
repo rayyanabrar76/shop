@@ -36,7 +36,7 @@ export default async function ThemePage({
   const iconColor = luminance > 0.6 ? 'text-black' : 'text-white'
 
   return (
-    <div className="min-h-full bg-(--admin-page)">
+    <div className="min-h-full bg-zinc-50 dark:bg-zinc-950">
       <PageHeader
         storeId={storeId}
         maxWidth="max-w-2xl"
@@ -53,7 +53,7 @@ export default async function ThemePage({
           <Link
             href={storeUrl(store.subdomain, '?customerView=1')}
             target="_blank"
-            className="flex items-center justify-between w-full px-5 py-4 bg-(--admin-card) rounded-2xl border border-(--admin-border) hover:border-(--admin-border) hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all group"
+            className="flex items-center justify-between w-full px-5 py-4 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 hover:border-zinc-200 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all group"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center group-hover:bg-zinc-200 dark:group-hover:bg-zinc-700 transition-colors">
@@ -74,7 +74,7 @@ export default async function ThemePage({
               A theme-derived hairline always has something to contrast with. */}
           <Link
             href={`/dashboard/stores/${storeId}/theme/editor`}
-            className="flex items-center justify-between w-full px-5 py-4 rounded-2xl border border-(--admin-border) shadow-sm hover:shadow-md transition-all group"
+            className="flex items-center justify-between w-full px-5 py-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-md transition-all group"
             style={{ backgroundColor: primary }}
           >
             <div className="flex items-center gap-3">

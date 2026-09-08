@@ -27,7 +27,7 @@ export default function CustomCodeEdit({ theme, updateTheme, onBack }: Props) {
             placeholder={`.my-class {\n  color: red;\n}`}
             rows={10}
             spellCheck={false}
-            className="w-full rounded-xl border border-(--admin-border) bg-zinc-950 text-green-400 text-[11px] font-mono px-3 py-2.5 outline-none focus:border-(--admin-field-border-focus) resize-none leading-relaxed"
+            className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-950 text-green-400 text-[11px] font-mono px-3 py-2.5 outline-none focus:border-zinc-400 dark:focus:border-zinc-500 resize-none leading-relaxed"
           />
           <p className="text-[10px] text-zinc-500 mt-1">Styles apply to your entire storefront.</p>
         </div>
@@ -44,7 +44,7 @@ export default function CustomCodeEdit({ theme, updateTheme, onBack }: Props) {
             placeholder={`<script>\n  // Google Analytics, chat widgets, etc.\n</script>`}
             rows={10}
             spellCheck={false}
-            className="w-full rounded-xl border border-(--admin-border) bg-zinc-950 text-blue-400 text-[11px] font-mono px-3 py-2.5 outline-none focus:border-(--admin-field-border-focus) resize-none leading-relaxed"
+            className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-950 text-blue-400 text-[11px] font-mono px-3 py-2.5 outline-none focus:border-zinc-400 dark:focus:border-zinc-500 resize-none leading-relaxed"
           />
           <p className="text-[10px] text-zinc-500 mt-1">Use for analytics, chat widgets, meta tags, or custom fonts.</p>
         </div>

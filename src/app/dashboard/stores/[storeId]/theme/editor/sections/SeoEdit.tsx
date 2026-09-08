@@ -52,7 +52,7 @@ export default function SeoEdit({
         {/* Search result preview */}
         <div>
           <label className={labelCls}>Google preview</label>
-          <div className="rounded-xl border border-(--admin-border) bg-white dark:bg-zinc-800 p-3.5">
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3.5">
             <div className="flex items-center gap-1.5 mb-1.5">
               <div className="w-4 h-4 rounded-full overflow-hidden bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center shrink-0">
                 {(theme.faviconUrl || theme.logoUrl) ? (
@@ -71,7 +71,7 @@ export default function SeoEdit({
         {/* Browser tab preview */}
         <div>
           <label className={labelCls}>Browser tab</label>
-          <div className="flex items-center gap-2 rounded-t-lg border border-b-0 border-(--admin-border) bg-zinc-100 dark:bg-zinc-800 px-3 py-2 max-w-56">
+          <div className="flex items-center gap-2 rounded-t-lg border border-b-0 border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 max-w-56">
             <div className="w-3.5 h-3.5 rounded-sm overflow-hidden bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center shrink-0">
               {(theme.faviconUrl || theme.logoUrl) ? (
                 <img src={theme.faviconUrl || theme.logoUrl} alt="" className="w-full h-full object-cover" />
@@ -155,14 +155,14 @@ export default function SeoEdit({
             <button
               type="button"
               onClick={() => setFaviconAiOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-(--admin-border) text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-(--admin-field-border) transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
             >
               <HiPhoto className="w-3.5 h-3.5" /> Generate with AI
             </button>
           </div>
           {theme.faviconUrl && (
-            <div className="flex items-center gap-3 mb-2 p-2.5 rounded-xl border border-(--admin-border) bg-white dark:bg-zinc-800">
-              <img src={theme.faviconUrl} alt="" className="w-8 h-8 rounded-lg object-cover border border-(--admin-edge)" />
+            <div className="flex items-center gap-3 mb-2 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
+              <img src={theme.faviconUrl} alt="" className="w-8 h-8 rounded-lg object-cover border border-zinc-100 dark:border-zinc-800" />
               <img src={theme.faviconUrl} alt="" className="w-4 h-4 rounded-sm object-cover" />
               <span className="text-[10px] text-zinc-500 flex-1">Shown at 16px in the tab</span>
               <button

@@ -133,7 +133,7 @@ export default function SectionsList({
         <AddRow onClick={onAddSection} />
       </Group>
 
-      <div className="border-t border-(--admin-edge) mt-1 pt-1">
+      <div className="border-t border-zinc-100 dark:border-zinc-800 mt-1 pt-1">
         <Row icon={Code2} label="Custom Code" onClick={() => onSectionClick('code')} />
       </div>
     </div>
@@ -142,7 +142,7 @@ export default function SectionsList({
 
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="border-t border-(--admin-edge) mt-1 pt-2 first:border-t-0 first:mt-0">
+    <div className="border-t border-zinc-100 dark:border-zinc-800 mt-1 pt-2 first:border-t-0 first:mt-0">
       <p className="px-4 pb-1 text-[11px] font-bold text-zinc-800 dark:text-zinc-200">{label}</p>
       {children}
     </div>

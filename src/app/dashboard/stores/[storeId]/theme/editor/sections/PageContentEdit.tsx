@@ -160,7 +160,7 @@ function FaqItemsSection({
         </button>
 
         {items.length === 0 && (
-          <div className="text-center py-6 text-xs text-zinc-500 border-2 border-dashed border-(--admin-border) rounded-xl">
+          <div className="text-center py-6 text-xs text-zinc-500 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl">
             No FAQ items yet. Add your first question.
           </div>
         )}
@@ -170,7 +170,7 @@ function FaqItemsSection({
           return (
             <div
               key={item.id}
-              className={`rounded-xl border overflow-hidden bg-(--admin-card) transition-all ${isOpen ? 'border-zinc-900 dark:border-zinc-500 ring-2 ring-zinc-900/10 dark:ring-zinc-500/20' : 'border-(--admin-border)'}`}
+              className={`rounded-xl border overflow-hidden bg-white dark:bg-zinc-900 transition-all ${isOpen ? 'border-zinc-900 dark:border-zinc-500 ring-2 ring-zinc-900/10 dark:ring-zinc-500/20' : 'border-zinc-200 dark:border-zinc-700'}`}
             >
               <div
                 className="flex items-center gap-2 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer select-none"
@@ -186,7 +186,7 @@ function FaqItemsSection({
                 {isOpen ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-300 dark:text-zinc-600" />}
               </div>
               {isOpen && (
-                <div className="px-3 pb-3 space-y-2 border-t border-(--admin-edge)">
+                <div className="px-3 pb-3 space-y-2 border-t border-zinc-100 dark:border-zinc-800">
                   <div data-field="faq-question" className="space-y-1 pt-2">
                     <label className={labelCls}>Question</label>
                     <input
@@ -490,8 +490,8 @@ export default function PageContentEdit({
           <button
             key={s.id}
             onClick={() => setActiveSection(s.id)}
-            className={`w-full flex items-center justify-between p-3 rounded-xl border bg-(--admin-card) hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left ${
-              s.id === 'custom' ? 'border-dashed border-(--admin-border)' : 'border-(--admin-border)'
+            className={`w-full flex items-center justify-between p-3 rounded-xl border bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left ${
+              s.id === 'custom' ? 'border-dashed border-zinc-200 dark:border-zinc-700' : 'border-zinc-200 dark:border-zinc-700'
             }`}
           >
             <div className="min-w-0 flex items-center gap-2.5">

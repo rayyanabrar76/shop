@@ -76,9 +76,9 @@ export default function ProductModal({
         setPressedBackdrop(false)
       }}
     >
-      <div className="w-full max-w-2xl max-h-[88vh] flex flex-col bg-(--admin-page) rounded-2xl border border-(--admin-border) shadow-2xl overflow-hidden">
+      <div className="w-full max-w-2xl max-h-[88vh] flex flex-col bg-zinc-50 dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-2xl overflow-hidden">
 
-        <div className="flex items-start gap-3 px-5 py-4 border-b border-(--admin-edge) bg-(--admin-card) shrink-0">
+        <div className="flex items-start gap-3 px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
           <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-black flex items-center justify-center shrink-0">
             <Package className="w-4 h-4" />
           </div>

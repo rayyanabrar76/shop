@@ -102,9 +102,9 @@ export default function SystemPageEdit({
         const hasEditor = !!section.editorView
 
         return (
-          <div key={section.id} className="rounded-xl border border-(--admin-edge) overflow-hidden">
+          <div key={section.id} className="rounded-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden">
             <button
-              className="w-full flex items-center gap-3 px-3 py-3 bg-(--admin-card) hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left group"
+              className="w-full flex items-center gap-3 px-3 py-3 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left group"
               onClick={() => {
                 if (hasEditor) {
                   onSectionClick(section.editorView!)
@@ -131,7 +131,7 @@ export default function SystemPageEdit({
             </button>
 
             {!hasEditor && isExpanded && section.info && (
-              <div className="px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border-t border-(--admin-edge)">
+              <div className="px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border-t border-zinc-100 dark:border-zinc-800">
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{section.info}</p>
                 {THEME_NOTE}
               </div>
@@ -140,7 +140,7 @@ export default function SystemPageEdit({
         )
       })}
 
-      <div className="mt-4 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-(--admin-edge)">
+      <div className="mt-4 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-800">
         <div className="flex items-center gap-2 mb-1">
           <Palette className="w-3.5 h-3.5 text-zinc-500" />
           <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Appearance</p>

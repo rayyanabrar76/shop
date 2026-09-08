@@ -157,7 +157,7 @@ function SlideCard({ storeId, subdomain, slide, index, total, isOpen, onToggle, 
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      className={`rounded-xl border overflow-hidden bg-(--admin-card) transition-all ${isOpen ? 'border-zinc-900 dark:border-zinc-500 ring-2 ring-zinc-900/10 dark:ring-zinc-500/20' : 'border-(--admin-border)'}`}
+      className={`rounded-xl border overflow-hidden bg-white dark:bg-zinc-900 transition-all ${isOpen ? 'border-zinc-900 dark:border-zinc-500 ring-2 ring-zinc-900/10 dark:ring-zinc-500/20' : 'border-zinc-200 dark:border-zinc-700'}`}
     >
       <div className="flex items-center gap-2 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer select-none" onClick={onToggle}>
         <GripVertical className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600 shrink-0" />
@@ -171,7 +171,7 @@ function SlideCard({ storeId, subdomain, slide, index, total, isOpen, onToggle, 
         {isOpen ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-300 dark:text-zinc-600" />}
       </div>
       {isOpen && (
-        <div className="px-3 pb-3 space-y-2 border-t border-(--admin-edge)">
+        <div className="px-3 pb-3 space-y-2 border-t border-zinc-100 dark:border-zinc-800">
           {textFields.map(f => (
             <div key={f.key} className="group/ai space-y-1 pt-2" data-field={f.fieldId}>
               <AiFieldLabel
@@ -227,7 +227,7 @@ function SlideCard({ storeId, subdomain, slide, index, total, isOpen, onToggle, 
           <div className="space-y-1 pt-2">
             <label className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Background Color</label>
             <div className="flex items-center gap-2">
-              <input type="color" className="w-9 h-9 rounded-lg border border-(--admin-border) cursor-pointer" value={slide.bgColor ?? '#f0f4ff'} onChange={e => onUpdate(slide.id, 'bgColor', e.target.value)} />
+              <input type="color" className="w-9 h-9 rounded-lg border border-zinc-200 dark:border-zinc-700 cursor-pointer" value={slide.bgColor ?? '#f0f4ff'} onChange={e => onUpdate(slide.id, 'bgColor', e.target.value)} />
               <input className={inputCls} value={slide.bgColor ?? '#f0f4ff'} onChange={e => onUpdate(slide.id, 'bgColor', e.target.value)} />
             </div>
           </div>

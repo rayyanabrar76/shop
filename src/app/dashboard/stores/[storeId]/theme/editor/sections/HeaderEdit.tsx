@@ -45,7 +45,7 @@ export default function HeaderEdit({ storeId, theme, updateTheme, onBack }: Head
                   className={`flex flex-col items-center gap-2 py-2.5 rounded-xl border text-[10px] font-bold transition-all ${
                     active
                       ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
-                      : 'border-(--admin-border) hover:border-(--admin-field-border-hover) text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800'
+                      : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800'
                   }`}
                 >
                   <span className={`flex items-center gap-1 w-14 ${opt.bars}`}>
@@ -113,7 +113,7 @@ export default function HeaderEdit({ storeId, theme, updateTheme, onBack }: Head
         />
 
         {/* ── Appearance ── */}
-        <div className="pt-1 border-t border-(--admin-edge)" />
+        <div className="pt-1 border-t border-zinc-100 dark:border-zinc-800" />
 
         <Seg
           label="Width"
@@ -178,7 +178,7 @@ export default function HeaderEdit({ storeId, theme, updateTheme, onBack }: Head
         />
 
         {/* ── Home page ── */}
-        <div className="pt-1 border-t border-(--admin-edge)" />
+        <div className="pt-1 border-t border-zinc-100 dark:border-zinc-800" />
 
         <div>
           <label className={labelCls}>Transparent On Home Page</label>
@@ -230,7 +230,7 @@ export default function HeaderEdit({ storeId, theme, updateTheme, onBack }: Head
         )}
 
         {/* ── Colors ── */}
-        <div className="pt-1 border-t border-(--admin-edge)" />
+        <div className="pt-1 border-t border-zinc-100 dark:border-zinc-800" />
 
         <ColorField
           label="Background"
@@ -271,7 +271,7 @@ function Seg({ label, value, onChange, options, hint }: {
             className={`py-2 rounded-xl border text-[11px] font-bold transition-all ${
               value === opt.value
                 ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
-                : 'border-(--admin-border) hover:border-(--admin-field-border-hover) text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800'
+                : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800'
             }`}
           >
             {opt.label}
@@ -300,7 +300,7 @@ function ColorField({ label, value, onChange, placeholder, onReset }: {
           type="color"
           value={value || '#ffffff'}
           onChange={e => onChange(e.target.value)}
-          className="w-8 h-8 rounded-lg border border-(--admin-border) p-0.5 cursor-pointer shrink-0"
+          className="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5 cursor-pointer shrink-0"
         />
         <div className="flex-1 min-w-0">
           <p className="text-[10px] font-mono text-zinc-500">{value || `(${placeholder})`}</p>
@@ -310,7 +310,7 @@ function ColorField({ label, value, onChange, placeholder, onReset }: {
           value={value}
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-24 text-[10px] font-mono border border-(--admin-border) rounded-lg px-2 py-1 focus:outline-none focus:border-(--admin-field-border-focus) bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+          className="w-24 text-[10px] font-mono border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
         />
       </div>
       {value && (

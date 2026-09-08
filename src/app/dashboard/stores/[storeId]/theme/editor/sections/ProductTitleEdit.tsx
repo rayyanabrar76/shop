@@ -20,7 +20,7 @@ const PRESETS = [
   { value: 'h6', label: 'Heading 6' },
 ]
 
-const inactiveBtnCls = 'border-(--admin-border) hover:border-(--admin-field-border-hover) text-zinc-600 dark:text-zinc-300'
+const inactiveBtnCls = 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-600 dark:text-zinc-300'
 const activeBtnCls = 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
 
 export default function ProductTitleEdit({ theme, updateTheme, onBack }: ProductTitleEditProps) {
@@ -108,7 +108,7 @@ export default function ProductTitleEdit({ theme, updateTheme, onBack }: Product
             <div className="flex items-center gap-2">
               <input
                 type="color"
-                className="w-9 h-9 rounded-lg border border-(--admin-border) cursor-pointer shrink-0 p-0.5"
+                className="w-9 h-9 rounded-lg border border-zinc-200 dark:border-zinc-700 cursor-pointer shrink-0 p-0.5"
                 value={theme.productTitleBg || '#ffffff'}
                 onChange={e => updateTheme({ productTitleBg: e.target.value })}
               />
@@ -136,7 +136,7 @@ export default function ProductTitleEdit({ theme, updateTheme, onBack }: Product
                 <div key={field} className="text-center">
                   <input
                     type="number" min={0}
-                    className="w-full rounded-lg border border-(--admin-field-border) px-2 py-1.5 text-xs text-center outline-none focus:border-(--admin-field-border-focus) bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+                    className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-xs text-center outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
                     value={(theme[field] as number) ?? def}
                     onChange={padChange(field)}
                   />

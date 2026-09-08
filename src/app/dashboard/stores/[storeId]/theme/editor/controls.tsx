@@ -45,7 +45,7 @@ export function ColorField({
   return (
     <div>
       <Label text={label} hint={hint} />
-      <div className="flex items-center gap-2 rounded-lg border border-(--admin-edge) bg-white p-1.5 transition-[border-color,box-shadow] focus-within:border-(--admin-field-border-focus) focus-within:ring-2 focus-within:ring-zinc-900/5 dark:bg-zinc-800 dark:focus-within:ring-white/10">
+      <div className="flex items-center gap-2 rounded-lg border border-zinc-100 dark:border-zinc-800 bg-white p-1.5 transition-[border-color,box-shadow] focus-within:border-zinc-400 dark:focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-zinc-900/5 dark:bg-zinc-800 dark:focus-within:ring-white/10">
         {/* The real input is invisible on top of a plain swatch: it keeps the
             native colour picker and its keyboard behaviour while showing none
             of the browser's own bevelled chrome. */}
@@ -173,8 +173,8 @@ export function SelectField({
           aria-expanded={open}
           className={`flex w-full items-center justify-between gap-2 rounded-lg border bg-white px-3 py-2 text-[13px] text-zinc-900 transition-[border-color,box-shadow] dark:bg-zinc-800 dark:text-zinc-50 ${
             open
-              ? 'border-(--admin-field-border-focus) ring-2 ring-zinc-900/5 dark:ring-white/10'
-              : 'border-(--admin-field-border) hover:border-(--admin-field-border-hover)'
+              ? 'border-zinc-400 dark:border-zinc-500 ring-2 ring-zinc-900/5 dark:ring-white/10'
+              : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500'
           }`}
         >
           <span className="truncate">{current?.label ?? value}</span>
@@ -188,7 +188,7 @@ export function SelectField({
             ref={menuRef}
             role="listbox"
             style={{ position: 'fixed', left: pos.left, width: pos.width, top: pos.top, bottom: pos.bottom }}
-            className="z-[200] max-h-64 overflow-auto rounded-lg border border-(--admin-edge) bg-white py-1 shadow-[0_8px_24px_-8px_rgba(9,9,11,0.25)] dark:bg-zinc-800"
+            className="z-[200] max-h-64 overflow-auto rounded-lg border border-zinc-100 dark:border-zinc-800 bg-white py-1 shadow-[0_8px_24px_-8px_rgba(9,9,11,0.25)] dark:bg-zinc-800"
           >
             {options.map(o => {
               const selected = o.value === value
@@ -345,7 +345,7 @@ function BlockMenu({ onPick }: { onPick: (tag: string) => void }) {
         <div
           ref={menu}
           style={{ position: 'fixed', left: pos.left, width: pos.width, top: pos.top, bottom: pos.bottom }}
-          className="z-[200] overflow-hidden rounded-lg border border-(--admin-edge) bg-white py-1 shadow-[0_8px_24px_-8px_rgba(9,9,11,0.25)] dark:bg-zinc-800"
+          className="z-[200] overflow-hidden rounded-lg border border-zinc-100 dark:border-zinc-800 bg-white py-1 shadow-[0_8px_24px_-8px_rgba(9,9,11,0.25)] dark:bg-zinc-800"
         >
           {BLOCKS.map(b => (
             <button
@@ -424,10 +424,10 @@ export function RichTextField({
   return (
     <div>
       <Label text={label} hint={hint} />
-      <div className="overflow-hidden rounded-lg border border-(--admin-edge) bg-white transition-[border-color,box-shadow] focus-within:border-(--admin-field-border-focus) focus-within:ring-2 focus-within:ring-zinc-900/5 dark:bg-zinc-800 dark:focus-within:ring-white/10">
-        <div className="flex items-center gap-0.5 border-b border-(--admin-edge) px-1.5 py-1">
+      <div className="overflow-hidden rounded-lg border border-zinc-100 dark:border-zinc-800 bg-white transition-[border-color,box-shadow] focus-within:border-zinc-400 dark:focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-zinc-900/5 dark:bg-zinc-800 dark:focus-within:ring-white/10">
+        <div className="flex items-center gap-0.5 border-b border-zinc-100 dark:border-zinc-800 px-1.5 py-1">
           <BlockMenu onPick={tag => run('formatBlock', `<${tag}>`)} />
-          <span className="mx-0.5 h-4 w-px bg-(--admin-edge)" />
+          <span className="mx-0.5 h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
           <Btn title="Bold" on={() => run('bold')}><Bold className="h-3.5 w-3.5" /></Btn>
           <Btn title="Italic" on={() => run('italic')}><Italic className="h-3.5 w-3.5" /></Btn>
           <Btn
@@ -439,7 +439,7 @@ export function RichTextField({
           >
             <Link2 className="h-3.5 w-3.5" />
           </Btn>
-          <span className="mx-0.5 h-4 w-px bg-(--admin-edge)" />
+          <span className="mx-0.5 h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
           <Btn title="Bulleted list" on={() => run('insertUnorderedList')}><List className="h-3.5 w-3.5" /></Btn>
           <Btn title="Numbered list" on={() => run('insertOrderedList')}><ListOrdered className="h-3.5 w-3.5" /></Btn>
         </div>
