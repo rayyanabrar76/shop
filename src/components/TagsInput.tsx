@@ -46,21 +46,34 @@ export default function TagsInput({
       <input
         value={draft}
         onChange={e => {
-          // A pasted "a, b, c" should become three tags, not one.
-          if (e.target.value.includes(',')) {
-            const parts = e.target.value.split(',')
+          // A pasted "a, b, c" should become three tags, not one. A newline
+          // counts as a separator too: a phone keyboard often inserts one
+          // rather than reporting a keypress, which is how pressing return on
+          // a phone used to skip to the next field with the tag unsaved.
+          const text = e.target.value
+          if (/[,\n]/.test(text)) {
+            const parts = text.split(/[,\n]/)
             const last = parts.pop() ?? ''
             parts.forEach(commit)
             setDraft(last)
           } else {
-            setDraft(e.target.value)
+            setDraft(text)
           }
         }}
         onKeyDown={e => {
-          if (e.key === 'Enter') { e.preventDefault(); commit(draft) }
+          // keyCode 13 as well as the key name: some Android keyboards report
+          // every key as Unidentified and only the legacy code is usable.
+          if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); commit(draft) }
           if (e.key === 'Backspace' && !draft && value.length) onChange(value.slice(0, -1))
         }}
         onBlur={() => commit(draft)}
+        // "done" rather than the default, so the phone shows a return key
+        // instead of a Next arrow that jumps to Price. This is the actual fix;
+        // the rest is for keyboards that ignore it.
+        enterKeyHint="done"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
         placeholder={value.length ? '' : 'e.g. candle, soy wax, gift'}
         className="flex-1 min-w-24 bg-transparent text-sm outline-none text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-500 px-1"
       />

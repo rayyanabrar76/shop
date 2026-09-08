@@ -5,7 +5,7 @@ import { HiSparkles, HiArrowPath } from 'react-icons/hi2'
 
 export type AiFieldKind =
   | 'heading' | 'subheading' | 'button' | 'banner' | 'paragraph' | 'tagline'
-  | 'seo-title' | 'seo-description'
+  | 'seo-title' | 'seo-description' | 'keywords'
 
 /**
  * A field label with a "Write with AI" button that appears on hover.
@@ -28,6 +28,7 @@ export default function AiFieldLabel({
   kind,
   current,
   hint,
+  context,
   onWrite,
   className = '',
   labelClassName = '',
@@ -40,6 +41,8 @@ export default function AiFieldLabel({
   current?: string
   /** Where this text appears, for context. */
   hint?: string
+  /** The item being described, when the field is about one thing. */
+  context?: string
   onWrite: (text: string) => void
   className?: string
   labelClassName?: string
@@ -57,7 +60,7 @@ export default function AiFieldLabel({
       const res = await fetch(`/api/stores/${storeId}/ai/field`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind, label, current, hint }),
+        body: JSON.stringify({ kind, label, current, hint, context }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Could not write that')
@@ -72,7 +75,7 @@ export default function AiFieldLabel({
 
   return (
     <div className={`flex items-center justify-between gap-2 mb-1.5 ${className}`}>
-      <label className={labelClassName || 'text-[10.5px] font-semibold uppercase tracking-[0.08em] text-zinc-600 dark:text-zinc-400'}>
+      <label className={`min-w-0 truncate ${labelClassName || 'text-[10.5px] font-semibold uppercase tracking-[0.08em] text-zinc-600 dark:text-zinc-400'}`}>
         {label}
       </label>
       <div className="flex items-center gap-2 min-w-0">

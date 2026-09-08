@@ -195,6 +195,7 @@ export default function SeoEdit({
         storeId={storeId}
         style="icon"
         seed={storeName}
+        context={`Shop name: ${storeName}`}
         onApply={url => updateTheme({ faviconUrl: url })}
       />
     </div>

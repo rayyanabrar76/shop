@@ -47,11 +47,11 @@ export default function CategoryFormModal({
 
   return (
     <div
-      className="fixed inset-0 z-100 flex items-center justify-center bg-zinc-950/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-100 flex items-center justify-center bg-zinc-950/50 backdrop-blur-sm p-3 sm:p-4 dialog-dim"
       onMouseDown={e => { if (e.target === e.currentTarget && !f.saving) onClose() }}
     >
       <div
-        className="w-full max-w-4xl max-h-[88vh] flex flex-col rounded-2xl bg-white dark:bg-zinc-900 border border-(--admin-border) shadow-[0_32px_80px_-20px_rgba(0,0,0,0.45)] animate-in zoom-in-95 duration-200 overflow-hidden"
+        className="w-full max-w-4xl max-h-[88dvh] flex flex-col rounded-2xl bg-white dark:bg-zinc-900 border border-(--admin-border) shadow-[0_32px_80px_-20px_rgba(0,0,0,0.45)] overflow-hidden dialog-in"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -232,6 +232,10 @@ export default function CategoryFormModal({
         onClose={() => setImageAiOpen(false)}
         storeId={storeId}
         seed={f.name}
+        context={[
+          `Category: ${f.name || '(not named yet)'}`,
+          f.description.trim() ? `What it holds: ${f.description.trim()}` : null,
+        ].filter(Boolean).join('\n')}
         onApply={url => f.setImageUrl(url)}
       />
 

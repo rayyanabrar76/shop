@@ -251,6 +251,10 @@ export default function CategoryFormPage({
         onClose={() => setImageAiOpen(false)}
         storeId={storeId}
         seed={f.name}
+        context={[
+          `Category: ${f.name || '(not named yet)'}`,
+          f.description.trim() ? `What it holds: ${f.description.trim()}` : null,
+        ].filter(Boolean).join('\n')}
         onApply={url => f.setImageUrl(url)}
       />
 
