@@ -266,6 +266,11 @@ export default function StorefrontClient({
 
   const themeStyle = {
     primaryColor: btnColor,
+    // Custom sections carry their own background and the dark stylesheet
+    // repaints them, so they have to know which world they are in. Anchored
+    // to this object by name: there is a second theme object above with an
+    // overlapping shape, and adding it there does nothing at all.
+    darkMode: theme.darkMode ?? false,
     backgroundColor: theme.backgroundColor,
     footerColor: theme.footerColor,
     accentColor: theme.accentColor,
