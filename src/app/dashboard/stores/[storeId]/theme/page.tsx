@@ -3,8 +3,9 @@ import { storeUrl } from '@/lib/config'
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import Link from 'next/link'
-import { Eye, Paintbrush } from 'lucide-react'
+import { Paintbrush } from 'lucide-react'
 import PageHeader from '@/components/dashboard/PageHeader'
+import ThemeClient from './ThemeClient'
 
 export const metadata = { title: 'Customization' }
 
@@ -17,81 +18,79 @@ export default async function ThemePage({
   const { userId: clerkId } = await auth()
   if (!clerkId) redirect('/sign-in')
 
-  const store = await prisma.store.findFirst({ where: { id: storeId, owner: { clerkId } },
-    include: { theme: true },
+  const store = await prisma.store.findFirst({
+    where: { id: storeId, owner: { clerkId } },
+    include: {
+      theme: true,
+      _count: { select: { pages: true, products: true } },
+    },
   })
   if (!store) notFound()
 
-  const primary = store.theme?.primaryColor ?? '#6c47ff'
+  // Home page sections only. The ones attached to a custom page belong to that
+  // page, and counting them here would credit the home page with blocks that
+  // are not on it.
+  const sectionCount = await prisma.customSection.count({
+    where: { storeId, pageId: null, visible: true },
+  })
 
-  // Calculate if primary color is light or dark to pick contrasting text
-  const hex = primary.replace('#', '')
-  const r = parseInt(hex.slice(0, 2), 16)
-  const g = parseInt(hex.slice(2, 4), 16)
-  const b = parseInt(hex.slice(4, 6), 16)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  const buttonTextColor = luminance > 0.6 ? '#000000' : '#ffffff'
-  const buttonTextOpacity = luminance > 0.6 ? 'text-black/70' : 'text-white/70'
-  const buttonArrowColor = luminance > 0.6 ? 'text-black/40' : 'text-white/60'
-  const iconColor = luminance > 0.6 ? 'text-black' : 'text-white'
+  const t = store.theme
+  const slides = Array.isArray(t?.heroSlides) ? (t!.heroSlides as unknown[]) : null
+  const nav = Array.isArray(t?.navLinks) ? (t!.navLinks as unknown[]) : null
 
   return (
-    <div className="min-h-full bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-full bg-(--admin-page)">
       <PageHeader
         storeId={storeId}
-        maxWidth="max-w-2xl"
+        maxWidth="max-w-5xl"
         icon={<Paintbrush className="w-5 h-5" />}
         title="Customization"
-      />
-
-      {/* Left-aligned like every other section now, rather than a centred
-          card floating in the middle of the page. */}
-      <div className="w-full max-w-2xl px-6 pb-10 space-y-4">
-
-        <div className="space-y-3">
-          {/* View Live Store */}
-          <Link
-            href={storeUrl(store.subdomain, '?customerView=1')}
-            target="_blank"
-            className="flex items-center justify-between w-full px-5 py-4 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 hover:border-zinc-200 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center group-hover:bg-zinc-200 dark:group-hover:bg-zinc-700 transition-colors">
-                <Eye className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">View Live Store</p>
-                <p className="text-xs text-zinc-500 mt-0.5">See your store as customers see it</p>
-              </div>
-            </div>
-            <span className="text-zinc-300 dark:text-zinc-600 text-lg">→</span>
-          </Link>
-
-          {/* Customize, goes to full visual editor.
-              The border is deliberately not the primary colour: this card is
-              filled with the store's own colour, so a black theme on the dark
-              admin page gave a black card a black border and the edge vanished.
-              A theme-derived hairline always has something to contrast with. */}
+        action={
           <Link
             href={`/dashboard/stores/${storeId}/theme/editor`}
-            className="flex items-center justify-between w-full px-5 py-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-md transition-all group"
-            style={{ backgroundColor: primary }}
+            className="flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-50 px-3 text-[11.5px] font-semibold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white transition-colors"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-                <Paintbrush className={`w-4 h-4 ${iconColor}`} />
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-semibold" style={{ color: buttonTextColor }}>Customize Your Store</p>
-                <p className={`text-xs mt-0.5 ${buttonTextOpacity}`}>sections, theme - live editor</p>
-              </div>
-            </div>
-            <span className={`text-lg ${buttonArrowColor}`}>→</span>
+            <Paintbrush className="w-3.5 h-3.5" /> Customise
           </Link>
-        </div>
+        }
+      />
 
-        <p className="text-[11px] text-zinc-400 dark:text-zinc-600 font-mono">{storeUrl(store.subdomain).replace(/^https?:\/\//, '')}</p>
-      </div>
+      <ThemeClient
+        storeId={storeId}
+        storeName={store.name}
+        // customerView keeps the owner's preview bar out of the frame; the
+        // storefront hides it inside an iframe anyway, and this is belt and
+        // braces for a preview that is meant to look like the shop.
+        previewUrl={`/store/${store.subdomain}?customerView=1`}
+        liveUrl={storeUrl(store.subdomain, '?customerView=1')}
+        displayUrl={storeUrl(store.subdomain).replace(/^https?:\/\//, '')}
+        facts={{
+          primaryColor: t?.primaryColor ?? '#0a0a0a',
+          palette: {
+            page:    t?.backgroundColor ?? '#ffffff',
+            footer:  t?.footerColor     ?? '#ffffff',
+            text:    t?.textColor       ?? '#09090b',
+            primary: t?.primaryColor    ?? '#0a0a0a',
+            accent:  t?.accentColor     ?? '#000000',
+          },
+          headingFont: t?.headingFont ?? 'serif',
+          font:        t?.font        ?? 'sans',
+          showBanner:  t?.showBanner  ?? false,
+          bannerText:  t?.bannerText  ?? '',
+          hasLogo:     !!t?.logoUrl,
+          navLinkCount: nav ? nav.length : null,
+          // No saved slides means the storefront shows its two defaults.
+          heroSlideCount: slides ? slides.length : 2,
+          layout:       t?.layout ?? 'grid',
+          productCount: store._count.products,
+          sectionCount,
+          newsletter:   t?.footerNewsletter ?? true,
+          pageCount:    store._count.pages,
+          seoTitleSet:  !!t?.seoTitle?.trim(),
+          faviconSet:   !!t?.faviconUrl,
+          customCode:   !!(t?.customCss?.trim() || t?.customHead?.trim()),
+        }}
+      />
     </div>
   )
 }

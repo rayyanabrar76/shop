@@ -468,9 +468,9 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
                       key={product.id}
                       href={`${storeBase}/products/${product.slug || product.id}`}
                       onClick={closeSearch}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-black/[0.04] transition-colors border-b border-black/[0.07] last:border-0"
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-black/4 transition-colors border-b border-black/[0.07] last:border-0"
                     >
-                      <div className="w-12 h-12 rounded-lg bg-black/[0.06] shrink-0 overflow-hidden">
+                      <div className="w-12 h-12 rounded-lg bg-black/6 shrink-0 overflow-hidden">
                         {product.imageUrl ? (
                           <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover" />
                         ) : (
@@ -491,7 +491,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
                     <Link
                       href={`${storeBase}/products?q=${encodeURIComponent(query)}`}
                       onClick={closeSearch}
-                      className="block text-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-t border-black/[0.07] hover:bg-black/[0.04] transition-colors"
+                      className="block text-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-t border-black/[0.07] hover:bg-black/4 transition-colors"
                       style={{ color: primaryColor }}
                     >
                       View all results
@@ -528,14 +528,14 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
                     <Link
                       href={`${storeBase}/account`}
                       onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-black/[0.04] transition-colors"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-black/4 transition-colors"
                     >
                       <User className="w-4 h-4" /> My Account
                     </Link>
                     <Link
                       href={`${storeBase}/account/orders`}
                       onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-black/[0.04] transition-colors"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-black/4 transition-colors"
                     >
                       <ShoppingBag className="w-4 h-4" /> My Orders
                     </Link>
@@ -603,7 +603,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
               </Link>
               <button
                 onClick={() => setDrawerOpen(false)}
-                className="p-2 rounded-xl hover:bg-black/[0.05] transition-colors opacity-60"
+                className="p-2 rounded-xl hover:bg-black/5 transition-colors opacity-60"
                 aria-label="Close menu"
               >
                 <X className="w-5 h-5" />
@@ -617,7 +617,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
                   key={`${label}-${i}`}
                   href={buildHref(storeBase, href)}
                   onClick={() => setDrawerOpen(false)}
-                  className="px-3 py-2.5 rounded-xl text-sm font-semibold hover:bg-black/[0.05] transition-colors"
+                  className="px-3 py-2.5 rounded-xl text-sm font-semibold hover:bg-black/5 transition-colors"
                   style={navTextStyle}
                 >
                   {label}
@@ -638,7 +638,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
                     <Link
                       href={`${storeBase}/products`}
                       onClick={() => setDrawerOpen(false)}
-                      className="px-3 py-2 rounded-xl text-sm font-medium opacity-80 hover:opacity-100 hover:bg-black/[0.05] transition-colors"
+                      className="px-3 py-2 rounded-xl text-sm font-medium opacity-80 hover:opacity-100 hover:bg-black/5 transition-colors"
                     >
                       All Products
                     </Link>
@@ -647,7 +647,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
                         key={cat.id}
                         href={`${storeBase}/products?category=${cat.slug}`}
                         onClick={() => setDrawerOpen(false)}
-                        className="px-3 py-2 rounded-xl text-sm font-medium opacity-80 hover:opacity-100 hover:bg-black/[0.05] transition-colors"
+                        className="px-3 py-2 rounded-xl text-sm font-medium opacity-80 hover:opacity-100 hover:bg-black/5 transition-colors"
                       >
                         {cat.name}
                       </Link>
