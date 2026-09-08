@@ -124,11 +124,15 @@ export default function ReviewsClient({
     try {
       const res = await fetch(`/api/stores/${storeId}/reviews/request`, { method: 'POST' })
       const data = await res.json()
-      setAsked(res.ok
-        ? data.sent > 0
-          ? `Asked ${data.sent} customer${data.sent === 1 ? '' : 's'}.`
-          : 'Nobody new to ask right now.'
-        : data.error ?? 'Could not send those')
+      // A failure has to say so. Reporting "nobody to ask" when the send
+      // actually broke is how a misconfigured mail key looks like a quiet
+      // shop for a week.
+      setAsked(
+        !res.ok ? (data.error ?? 'Could not send those')
+        : data.failed > 0 ? `Could not send ${data.failed}. ${data.error ?? ''}`.trim()
+        : data.sent > 0 ? `Asked ${data.sent} customer${data.sent === 1 ? '' : 's'}.`
+        : 'Nobody new to ask right now.',
+      )
     } catch {
       setAsked('Could not send those')
     } finally {

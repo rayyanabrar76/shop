@@ -26,6 +26,8 @@ export interface ReviewRequestResult {
   sent: number
   skipped: number
   failed: number
+  /** Why the first failure failed, so a caller can say more than 'failed'. */
+  error?: string
 }
 
 export async function sendPendingReviewRequests(opts: {
@@ -112,6 +114,9 @@ export async function sendPendingReviewRequests(opts: {
     } catch (err) {
       console.error('[review-request]', order.id, err)
       result.failed++
+      // Kept so the admin can be told what went wrong rather than being
+      // shown a count and left to go reading server logs.
+      result.error ??= err instanceof Error ? err.message : String(err)
     }
   }
 
