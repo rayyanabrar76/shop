@@ -119,7 +119,10 @@ function Newsletter({
             placeholder="you@example.com"
             aria-label="Email address"
             className="flex-1 min-w-0 bg-transparent border px-3 py-2.5 text-sm outline-none transition-colors placeholder:opacity-40 focus:border-current"
-            style={{ borderColor: border, borderRight: 'none' }}
+            // borderRightWidth, not the borderRight shorthand: setting a
+            // shorthand beside the borderColor longhand makes React warn, and
+            // whichever is applied second silently wins.
+            style={{ borderColor: border, borderRightWidth: 0 }}
           />
           <button
             type="submit"

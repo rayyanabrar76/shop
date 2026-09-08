@@ -198,7 +198,7 @@ export default function CheckoutClient({
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-6 bg-zinc-50 dark:bg-zinc-950">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-6 bg-zinc-50">
         <DarkModeSync />
         <span
           className="flex h-16 w-16 items-center justify-center rounded-full"
@@ -207,7 +207,7 @@ export default function CheckoutClient({
           <HiShoppingCart className="w-7 h-7" />
         </span>
         <div>
-          <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Your cart is empty</p>
+          <p className="text-lg font-semibold text-zinc-900">Your cart is empty</p>
           <p className="text-sm text-zinc-500 mt-1">Nothing to check out just yet.</p>
         </div>
         <Link
@@ -226,13 +226,13 @@ export default function CheckoutClient({
     { id: 'stripe', label: 'Pay by card', desc: 'Visa, Mastercard, Apple Pay', icon: HiCreditCard, enabled: payment?.stripeEnabled },
   ].filter(m => m.enabled)
 
-  const card = 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800'
-  const legend = 'text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-500 dark:text-zinc-400'
-  const label = 'text-[12px] font-medium text-zinc-700 dark:text-zinc-300 mb-1.5 block'
+  const card = 'bg-white border border-zinc-200'
+  const legend = 'text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-500'
+  const label = 'text-[12px] font-medium text-zinc-700 mb-1.5 block'
   const field =
-    'w-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3.5 py-3 text-[14px] ' +
-    'text-zinc-900 dark:text-zinc-50 outline-none transition-[border-color,box-shadow] ' +
-    'placeholder:text-zinc-400 dark:placeholder:text-zinc-500'
+    'w-full border border-zinc-300 bg-white px-3.5 py-3 text-[14px] ' +
+    'text-zinc-900 outline-none transition-[border-color,box-shadow] ' +
+    'placeholder:text-zinc-400'
 
   /** Focus is drawn in the shop's colour rather than a browser default blue. */
   const focusRing = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -254,16 +254,16 @@ export default function CheckoutClient({
   })
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950" style={{ color: t.textColor }}>
+    <div className="min-h-screen bg-zinc-50" style={{ color: t.textColor }}>
       <DarkModeSync />
 
       {/* A checkout is its own place. The shop's navigation is deliberately
           not here: every link out of this page is a chance to not buy. */}
-      <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+      <header className="border-b border-zinc-200 bg-white">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center gap-3">
           <Link
             href={`/store/${subdomain}`}
-            className="flex items-center gap-2 text-[13px] font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+            className="flex items-center gap-2 text-[13px] font-medium text-zinc-500 hover:text-zinc-900 transition-colors"
           >
             <HiArrowLeft className="w-4 h-4" />
             {storeName ?? 'Back to the shop'}
@@ -276,7 +276,7 @@ export default function CheckoutClient({
       </header>
 
       <div className="max-w-5xl mx-auto px-6 py-10">
-        <h1 className="text-2xl font-bold tracking-tight mb-8 text-zinc-900 dark:text-zinc-50">Checkout</h1>
+        <h1 className="text-2xl font-bold tracking-tight mb-8 text-zinc-900">Checkout</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
           {/* ── The form ── */}
@@ -325,17 +325,17 @@ export default function CheckoutClient({
                     <button
                       key={rate.id}
                       onClick={() => setSelectedRateId(rate.id)}
-                      className="w-full flex items-center gap-4 p-4 border border-zinc-200 dark:border-zinc-800 text-left transition-colors hover:border-zinc-300 dark:hover:border-zinc-700"
+                      className="w-full flex items-center gap-4 p-4 border border-zinc-200 text-left transition-colors hover:border-zinc-300"
                       style={chosen(on)}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-semibold text-zinc-900 dark:text-zinc-50">{rate.name}</p>
+                        <p className="text-[14px] font-semibold text-zinc-900">{rate.name}</p>
                         {rate.estimatedDays && <p className="text-[12px] text-zinc-500 mt-0.5">{rate.estimatedDays}</p>}
                         {rate.minOrder > 0 && subtotal < rate.minOrder && (
                           <p className="text-[12px] text-zinc-500 mt-0.5">Free over {price(rate.minOrder)}</p>
                         )}
                       </div>
-                      <p className="text-[14px] font-semibold shrink-0 text-zinc-900 dark:text-zinc-50">
+                      <p className="text-[14px] font-semibold shrink-0 text-zinc-900">
                         {effectivePrice === 0 ? 'Free' : price(effectivePrice)}
                       </p>
                       <Tick on={on} colour={t.primary} />
@@ -356,7 +356,7 @@ export default function CheckoutClient({
                     <button
                       key={method.id}
                       onClick={() => setSelectedMethod(method.id as 'cod' | 'stripe')}
-                      className="w-full flex items-center gap-4 p-4 border border-zinc-200 dark:border-zinc-800 text-left transition-colors hover:border-zinc-300 dark:hover:border-zinc-700"
+                      className="w-full flex items-center gap-4 p-4 border border-zinc-200 text-left transition-colors hover:border-zinc-300"
                       style={chosen(on)}
                     >
                       <span
@@ -366,7 +366,7 @@ export default function CheckoutClient({
                         <method.icon className="w-4.5 h-4.5" />
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-semibold text-zinc-900 dark:text-zinc-50">{method.label}</p>
+                        <p className="text-[14px] font-semibold text-zinc-900">{method.label}</p>
                         <p className="text-[12px] text-zinc-500 mt-0.5">{method.desc}</p>
                       </div>
                       <Tick on={on} colour={t.primary} />
@@ -386,7 +386,7 @@ export default function CheckoutClient({
                 {items.map(item => (
                   <li key={item.productId} className="flex items-center gap-3">
                     <span
-                      className="relative w-12 h-12 shrink-0 overflow-hidden bg-zinc-100 dark:bg-zinc-800"
+                      className="relative w-12 h-12 shrink-0 overflow-hidden bg-zinc-100"
                       style={{ borderRadius: innerRadius }}
                     >
                       {item.imageUrl && (
@@ -402,23 +402,23 @@ export default function CheckoutClient({
                         {item.quantity}
                       </span>
                     </span>
-                    <p className="flex-1 min-w-0 text-[13px] font-medium text-zinc-900 dark:text-zinc-50 line-clamp-2">{item.title}</p>
-                    <p className="text-[13px] font-semibold shrink-0 text-zinc-900 dark:text-zinc-50">{price(item.price * item.quantity)}</p>
+                    <p className="flex-1 min-w-0 text-[13px] font-medium text-zinc-900 line-clamp-2">{item.title}</p>
+                    <p className="text-[13px] font-semibold shrink-0 text-zinc-900">{price(item.price * item.quantity)}</p>
                   </li>
                 ))}
               </ul>
 
               {discountCode ? (
                 <div
-                  className="flex items-center justify-between px-3 py-2.5 border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/40"
+                  className="flex items-center justify-between px-3 py-2.5 border border-emerald-100 bg-emerald-50"
                   style={{ borderRadius: innerRadius }}
                 >
                   <span className="flex items-center gap-2 min-w-0">
-                    <HiTag className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span className="text-[12px] font-semibold text-emerald-800 dark:text-emerald-300 truncate">{discountCode}</span>
-                    <span className="text-[12px] text-emerald-700 dark:text-emerald-400 shrink-0">−{price(discountAmount)}</span>
+                    <HiTag className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span className="text-[12px] font-semibold text-emerald-700 truncate">{discountCode}</span>
+                    <span className="text-[12px] text-emerald-700 shrink-0">−{price(discountAmount)}</span>
                   </span>
-                  <button onClick={removeDiscount} aria-label="Remove discount" className="text-emerald-600 hover:text-emerald-800 dark:hover:text-emerald-200 transition-colors">
+                  <button onClick={removeDiscount} aria-label="Remove discount" className="text-emerald-600 hover:text-emerald-700 transition-colors">
                     <HiX className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -438,34 +438,34 @@ export default function CheckoutClient({
                     <button
                       onClick={applyDiscount}
                       disabled={discountLoading || !discountInput.trim()}
-                      className="px-4 text-[13px] font-semibold border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors disabled:opacity-40"
+                      className="px-4 text-[13px] font-semibold border border-zinc-300 text-zinc-700 hover:border-zinc-400 transition-colors disabled:opacity-40"
                       style={{ borderRadius: innerRadius }}
                     >
                       {discountLoading ? '…' : 'Apply'}
                     </button>
                   </div>
-                  {discountError && <p className="text-[12px] text-red-600 dark:text-red-400 mt-1.5">{discountError}</p>}
+                  {discountError && <p className="text-[12px] text-red-600 mt-1.5">{discountError}</p>}
                 </div>
               )}
 
-              <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4 space-y-2.5">
+              <div className="border-t border-zinc-200 pt-4 space-y-2.5">
                 <Line label="Subtotal" value={price(subtotal)} />
-                {discountAmount > 0 && <Line label="Discount" value={`−${price(discountAmount)}`} tone="text-emerald-700 dark:text-emerald-400" />}
+                {discountAmount > 0 && <Line label="Discount" value={`−${price(discountAmount)}`} tone="text-emerald-700" />}
                 {selectedRate && <Line label="Delivery" value={shippingAmount === 0 ? 'Free' : price(shippingAmount)} />}
                 {taxAmount > 0 && <Line label={payment?.taxName ?? 'Tax'} value={price(taxAmount)} />}
-                <div className="flex items-baseline justify-between pt-3 border-t border-zinc-200 dark:border-zinc-800">
-                  <span className="text-[14px] font-semibold text-zinc-900 dark:text-zinc-50">Total</span>
-                  <span className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">{price(total)}</span>
+                <div className="flex items-baseline justify-between pt-3 border-t border-zinc-200">
+                  <span className="text-[14px] font-semibold text-zinc-900">Total</span>
+                  <span className="text-2xl font-bold tracking-tight text-zinc-900">{price(total)}</span>
                 </div>
               </div>
 
               {error && (
                 <div
-                  className="flex items-start gap-2 p-3 border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40"
+                  className="flex items-start gap-2 p-3 border border-red-100 bg-red-50"
                   style={{ borderRadius: innerRadius }}
                 >
-                  <HiExclamation className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-px" />
-                  <p className="text-[12.5px] text-red-700 dark:text-red-300">{error}</p>
+                  <HiExclamation className="w-4 h-4 text-red-600 shrink-0 mt-px" />
+                  <p className="text-[12.5px] text-red-600">{error}</p>
                 </div>
               )}
 
@@ -513,7 +513,7 @@ function Tick({ on, colour }: { on: boolean; colour: string }) {
 
 function Line({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
-    <div className={`flex items-center justify-between text-[13px] ${tone ?? 'text-zinc-600 dark:text-zinc-400'}`}>
+    <div className={`flex items-center justify-between text-[13px] ${tone ?? 'text-zinc-600'}`}>
       <span>{label}</span>
       <span className="tabular-nums">{value}</span>
     </div>
