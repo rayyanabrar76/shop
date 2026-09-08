@@ -9,6 +9,10 @@ const SECURITY_HEADERS = [
 ]
 
 const nextConfig: NextConfig = {
+  // A build can be sent somewhere other than .next, so a production build can
+  // be checked while  is running. Sharing .next between the two
+  // races them, and the dev server comes back broken until it is cleared.
+  distDir: process.env.NEXT_BUILD_DIR || '.next',
   reactStrictMode: true,
   poweredByHeader: false,
 

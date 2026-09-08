@@ -47,3 +47,6 @@ next-env.d.ts
 
 # User-uploaded files (runtime generated)
 /public/uploads/
+
+# A production build made while `next dev` is running, see distDir in next.config
+.next-check/
