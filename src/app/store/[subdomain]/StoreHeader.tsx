@@ -2,12 +2,14 @@
 
 import { Fragment, useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Search, X, User, LogOut, ShoppingBag, ChevronDown, Menu } from 'lucide-react'
 import CartIcon from './cart-icon'
 import { useAuth } from './auth-context'
 import { EditorItem } from './EditorHighlight'
 import { usePrice } from '@/components/CurrencyProvider'
 import { useStoreBase } from '@/components/StoreBaseProvider'
+import { readableText } from '@/lib/contrast'
 
 interface NavLink {
   label: string
@@ -84,6 +86,21 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
   const price = usePrice()
   const notify = onEdit ?? (() => {})
   const { customer, logout } = useAuth()
+  const pathname = usePathname()
+
+  /**
+   * Is this nav link the page we are on?
+   *
+   * Prefix rather than equality, so /products stays marked while you are
+   * looking at one product. Home is the exception: every path starts with it,
+   * so it only counts when it is the whole path.
+   */
+  const isCurrent = (href: string) => {
+    if (isEditor) return false
+    const target = buildHref(storeBase, href)
+    if (target === (storeBase || '/')) return pathname === target
+    return pathname === target || pathname.startsWith(target + '/')
+  }
 
 
   const [searchOpen, setSearchOpen]     = useState(false)
@@ -222,8 +239,37 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
   // whether the descendant override below is needed.
   const barFg = isTransparent ? (theme?.headerTransparentText || '#ffffff') : headerFg
 
+  /*
+   * The bar's own chrome, mixed from whatever colour it is writing in.
+   *
+   * Every one of these was a fixed grey before, which only worked on a white
+   * header. Mixing from the foreground means a dark bar gets pale hovers and
+   * a light bar gets dark ones, with no branch for either, and the
+   * transparent state over a hero comes out right for free.
+   */
+  const fg = barFg || '#09090b'
+  const chrome = {
+    /** Behind an icon button under the pointer. */
+    hover: `color-mix(in srgb, ${fg} 8%, transparent)`,
+    /** Behind the search field and other recessed things. */
+    well: `color-mix(in srgb, ${fg} 5%, transparent)`,
+    /** The hairline under the bar, and around a field. */
+    line: `color-mix(in srgb, ${fg} 12%, transparent)`,
+    /** A nav link at rest. Full strength on hover. */
+    muted: `color-mix(in srgb, ${fg} 62%, transparent)`,
+    /** Placeholder text and the quietest labels. */
+    faint: `color-mix(in srgb, ${fg} 40%, transparent)`,
+  }
+
   // The brand markup is identical in both header layouts and in both editor and
   // live modes, so it is built once here rather than duplicated four ways.
+  /** Every icon button in the bar shares one hover, lit from the bar's own colour. */
+  const iconButton = {
+    className: 'flex h-10 w-10 items-center justify-center rounded-xl transition-colors',
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.backgroundColor = chrome.hover },
+    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.backgroundColor = 'transparent' },
+  }
+
   const logoNode = activeLogoUrl ? (
     <img
       src={activeLogoUrl}
@@ -248,22 +294,31 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
         {navLinks.map(({ label, href }, i) => (
           <Fragment key={`${label}-${i}`}>
             {navDividers && i > 0 && (
-              <span className="w-px h-4 bg-zinc-200 shrink-0 mx-3.5" />
+              <span className="w-px h-4 shrink-0 mx-3.5" style={{ backgroundColor: chrome.line }} />
             )}
             {isEditor ? (
               <span
-                className="font-semibold text-zinc-500 transition-colors cursor-default px-3 whitespace-nowrap"
-                style={navTextStyle}
+                className="font-semibold transition-colors cursor-default px-3 whitespace-nowrap"
+                style={{ ...navTextStyle, color: chrome.muted }}
               >
                 {label}
               </span>
             ) : (
+              // The underline grows from the middle on hover and stays put on
+              // the page you are on, so the menu says where you are rather
+              // than only where you could go.
               <Link
                 href={buildHref(storeBase, href)}
-                className="font-semibold text-zinc-500 hover:text-zinc-900 transition-colors px-3 whitespace-nowrap"
-                style={navTextStyle}
+                className="group/nav relative font-semibold transition-colors px-3 py-1 whitespace-nowrap"
+                style={{ ...navTextStyle, color: isCurrent(href) ? fg : chrome.muted }}
+                onMouseEnter={e => (e.currentTarget.style.color = fg)}
+                onMouseLeave={e => (e.currentTarget.style.color = isCurrent(href) ? fg : chrome.muted)}
               >
                 {label}
+                <span
+                  className="pointer-events-none absolute left-3 right-3 -bottom-0.5 h-px origin-center scale-x-0 transition-transform duration-200 group-hover/nav:scale-x-100"
+                  style={{ backgroundColor: fg, transform: isCurrent(href) ? 'scaleX(1)' : undefined }}
+                />
               </Link>
             )}
           </Fragment>
@@ -308,7 +363,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
           }`}
           style={{
             backgroundColor: isTransparent ? 'transparent' : headerBg,
-            borderColor: 'rgba(0,0,0,0.06)',
+            borderColor: chrome.line,
             borderBottomWidth: isTransparent ? 0 : borderW,
             ...(isTransparent
               ? { color: theme?.headerTransparentText || '#ffffff' }
@@ -332,7 +387,8 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
             {/* Hamburger, mobile only */}
             <button
               onClick={handleHamburgerClick}
-              className="md:hidden p-2 rounded-xl hover:bg-zinc-100 transition-colors text-zinc-600 hover:text-zinc-900"
+              {...iconButton}
+              className={iconButton.className + ' md:hidden'}
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5" />
@@ -363,23 +419,27 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
             {/* Search */}
             <div ref={searchRef} className="relative">
               {searchOpen ? (
-                <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 w-52 md:w-72 transition-all">
-                  <Search className="w-4 h-4 text-zinc-400 shrink-0" />
+                <div
+                  className="flex items-center gap-2 rounded-xl px-3 h-10 w-52 md:w-72 transition-all"
+                  style={{ backgroundColor: chrome.well, border: `1px solid ${chrome.line}` }}
+                >
+                  <Search className="w-4 h-4 shrink-0" style={{ color: chrome.faint }} />
                   <input
                     ref={inputRef}
                     value={query}
                     onChange={e => setQuery(e.target.value)}
-                    placeholder="Search products..."
-                    className="flex-1 bg-transparent text-sm outline-none text-zinc-800 placeholder:text-zinc-400"
+                    placeholder="Search products"
+                    className="flex-1 bg-transparent text-sm outline-none placeholder:opacity-60"
                   />
-                  <button onClick={closeSearch}>
-                    <X className="w-4 h-4 text-zinc-400 hover:text-zinc-700 transition-colors" />
+                  <button onClick={closeSearch} aria-label="Close search" className="shrink-0 opacity-50 hover:opacity-100 transition-opacity">
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               ) : (
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="p-2 rounded-xl hover:bg-zinc-100 transition-colors text-zinc-600 hover:text-zinc-900 flex items-center gap-1.5"
+                  {...iconButton}
+                  className={utilityText ? 'flex h-10 items-center gap-1.5 rounded-xl px-3 transition-colors' : iconButton.className}
                   aria-label="Search"
                 >
                   <Search className={`w-5 h-5 ${utilityText ? 'md:hidden' : ''}`} />
@@ -391,12 +451,15 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
 
               {/* Search dropdown */}
               {searchOpen && (query.trim() || searching) && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-zinc-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                <div
+                  className="absolute right-0 top-full mt-2 w-80 rounded-2xl z-50 overflow-hidden shadow-[0_16px_40px_-12px_rgba(0,0,0,0.25)]"
+                  style={{ backgroundColor: 'var(--store-bg, #ffffff)', color: 'var(--store-text, #09090b)', border: '1px solid var(--store-card-border, #f1f1f1)' }}
+                >
                   {searching && (
-                    <div className="px-4 py-3 text-sm text-zinc-400">Searching…</div>
+                    <div className="px-4 py-3 text-sm opacity-50">Searching…</div>
                   )}
                   {!searching && results.length === 0 && query.trim() && (
-                    <div className="px-4 py-3 text-sm text-zinc-400">
+                    <div className="px-4 py-3 text-sm opacity-50">
                       No results for &ldquo;{query}&rdquo;
                     </div>
                   )}
@@ -405,19 +468,19 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
                       key={product.id}
                       href={`${storeBase}/products/${product.slug || product.id}`}
                       onClick={closeSearch}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 transition-colors border-b border-zinc-100 last:border-0"
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-black/[0.04] transition-colors border-b border-black/[0.07] last:border-0"
                     >
-                      <div className="w-12 h-12 rounded-lg bg-zinc-100 shrink-0 overflow-hidden">
+                      <div className="w-12 h-12 rounded-lg bg-black/[0.06] shrink-0 overflow-hidden">
                         {product.imageUrl ? (
                           <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-zinc-300">
+                          <div className="w-full h-full flex items-center justify-center opacity-30">
                             <ShoppingBag className="w-4 h-4" />
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-zinc-800 truncate">{product.title}</p>
+                        <p className="text-sm font-semibold truncate">{product.title}</p>
                         <p className="text-xs font-bold mt-0.5" style={{ color: primaryColor }}>
                           {price(product.price)}
                         </p>
@@ -428,7 +491,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
                     <Link
                       href={`${storeBase}/products?q=${encodeURIComponent(query)}`}
                       onClick={closeSearch}
-                      className="block text-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-t border-zinc-100 hover:bg-zinc-50 transition-colors"
+                      className="block text-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-t border-black/[0.07] hover:bg-black/[0.04] transition-colors"
                       style={{ color: primaryColor }}
                     >
                       View all results
@@ -443,36 +506,40 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
               <div ref={userMenuRef} className="relative">
                 <button
                   onClick={() => setUserMenuOpen(o => !o)}
-                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl hover:bg-zinc-100 transition-colors"
+                  {...iconButton}
+                  className="flex h-10 items-center gap-1.5 rounded-xl px-2 transition-colors"
                 >
                   <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                    style={{ backgroundColor: primaryColor }}
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                    style={{ backgroundColor: primaryColor, color: readableText(primaryColor) }}
                   >
                     {((customer.name ?? customer.email)[0] ?? '?').toUpperCase()}
                   </div>
-                  <span className="hidden md:block text-sm font-semibold text-zinc-700 max-w-24 truncate">
+                  <span className="hidden md:block text-sm font-semibold max-w-24 truncate">
                     {customer.name ?? customer.email.split('@')[0]}
                   </span>
-                  <ChevronDown className="w-3.5 h-3.5 text-zinc-400 hidden md:block" />
+                  <ChevronDown className="w-3.5 h-3.5 hidden md:block" style={{ color: chrome.faint }} />
                 </button>
                 {userMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-zinc-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                  <div
+                    className="absolute right-0 top-full mt-2 w-48 rounded-xl z-50 overflow-hidden shadow-[0_12px_32px_-12px_rgba(0,0,0,0.25)]"
+                    style={{ backgroundColor: 'var(--store-bg, #ffffff)', color: 'var(--store-text, #09090b)', border: '1px solid var(--store-card-border, #f1f1f1)' }}
+                  >
                     <Link
                       href={`${storeBase}/account`}
                       onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-zinc-50 transition-colors text-zinc-700"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-black/[0.04] transition-colors"
                     >
                       <User className="w-4 h-4" /> My Account
                     </Link>
                     <Link
                       href={`${storeBase}/account/orders`}
                       onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-zinc-50 transition-colors text-zinc-700"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-black/[0.04] transition-colors"
                     >
                       <ShoppingBag className="w-4 h-4" /> My Orders
                     </Link>
-                    <div className="border-t border-zinc-100" />
+                    <div className="border-t border-black/[0.07]" />
                     <button
                       onClick={() => { logout(subdomain); setUserMenuOpen(false) }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-red-50 text-red-600 transition-colors"
@@ -486,8 +553,9 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
               <Link
                 href={`${storeBase}/login`}
                 aria-label="Sign in"
-                className={`flex items-center gap-1.5 rounded-xl text-sm font-semibold transition-colors hover:bg-zinc-100 text-zinc-700 shrink-0 whitespace-nowrap ${
-                  utilityText ? 'px-3 py-1.5' : 'p-2'
+                {...iconButton}
+                className={`text-sm font-semibold shrink-0 whitespace-nowrap ${
+                  utilityText ? 'flex h-10 items-center gap-1.5 rounded-xl px-3 transition-colors' : iconButton.className
                 }`}
               >
                 <User className={`w-5 h-5 ${utilityText ? 'md:hidden' : ''}`} />
@@ -511,9 +579,10 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
             onClick={() => setDrawerOpen(false)}
           />
           {/* Slide panel */}
-          <div className="relative drawer-slide-in w-72 max-w-[85vw] h-full bg-white shadow-2xl flex flex-col overflow-y-auto">
+          <div className="relative drawer-slide-in w-72 max-w-[85vw] h-full shadow-2xl flex flex-col overflow-y-auto"
+            style={{ backgroundColor: 'var(--store-bg, #ffffff)', color: 'var(--store-text, #09090b)' }}>
             {/* Drawer header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.07]">
               <Link
                 href={buildHref(storeBase, '/')}
                 onClick={() => setDrawerOpen(false)}
@@ -534,7 +603,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
               </Link>
               <button
                 onClick={() => setDrawerOpen(false)}
-                className="p-2 rounded-xl hover:bg-zinc-100 transition-colors text-zinc-500"
+                className="p-2 rounded-xl hover:bg-black/[0.05] transition-colors opacity-60"
                 aria-label="Close menu"
               >
                 <X className="w-5 h-5" />
@@ -548,7 +617,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
                   key={`${label}-${i}`}
                   href={buildHref(storeBase, href)}
                   onClick={() => setDrawerOpen(false)}
-                  className="px-3 py-2.5 rounded-xl text-sm font-semibold text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                  className="px-3 py-2.5 rounded-xl text-sm font-semibold hover:bg-black/[0.05] transition-colors"
                   style={navTextStyle}
                 >
                   {label}
@@ -560,16 +629,16 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
             {/* Categories */}
             {categories.length > 0 && (
               <>
-                <div className="mx-5 border-t border-zinc-100" />
+                <div className="mx-5 border-t border-black/[0.07]" />
                 <div className="px-4 py-4">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2 px-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-50 mb-2 px-3">
                     Categories
                   </p>
                   <div className="flex flex-col gap-1">
                     <Link
                       href={`${storeBase}/products`}
                       onClick={() => setDrawerOpen(false)}
-                      className="px-3 py-2 rounded-xl text-sm font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                      className="px-3 py-2 rounded-xl text-sm font-medium opacity-80 hover:opacity-100 hover:bg-black/[0.05] transition-colors"
                     >
                       All Products
                     </Link>
@@ -578,7 +647,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor = false,
                         key={cat.id}
                         href={`${storeBase}/products?category=${cat.slug}`}
                         onClick={() => setDrawerOpen(false)}
-                        className="px-3 py-2 rounded-xl text-sm font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                        className="px-3 py-2 rounded-xl text-sm font-medium opacity-80 hover:opacity-100 hover:bg-black/[0.05] transition-colors"
                       >
                         {cat.name}
                       </Link>
