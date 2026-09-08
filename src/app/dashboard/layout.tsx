@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import Sidebar from '@/components/dashboard/Sidebar'
 import { AdminThemeProvider, type AdminThemeMode } from '@/components/dashboard/AdminThemeProvider'
 import { DashboardCurrencyProvider } from '@/components/CurrencyProvider'
+import { platformAdmin } from '@/lib/platform-admin'
 
 export default async function DashboardLayout({
   children,
@@ -31,6 +32,10 @@ export default async function DashboardLayout({
 
   const currencies = Object.fromEntries(stores.map(s => [s.id, s.currency]))
 
+  // Checked here rather than in the client: the allow-list lives in the
+  // environment and must never be shipped to the browser.
+  const isPlatformAdmin = !!(await platformAdmin())
+
   return (
     <AdminThemeProvider initialMode={(dbUser.adminTheme as AdminThemeMode) ?? 'system'}>
       <div
@@ -49,6 +54,7 @@ export default async function DashboardLayout({
             lastName={user?.lastName ?? ''}
             email={email}
             imageUrl={user?.imageUrl ?? ''}
+            isPlatformAdmin={isPlatformAdmin}
           />
           {/* pt-15 clears the fixed mobile header; the desktop sidebar is beside
               the content rather than above it, so it needs no offset. */}

@@ -10,7 +10,7 @@ import { storeUrl } from "@/lib/config";
 import { storeInitials } from "@/lib/store-initials";
 import AdminSearch from "./AdminSearch";
 import {
-  ChevronRight, LogOut, Plus, ChevronsUpDown, Eye, Pencil, Menu,
+  ChevronRight, LogOut, Plus, ChevronsUpDown, Eye, Pencil, Menu, ShieldCheck,
 } from "lucide-react";
 import { getStoreNav } from "@/lib/admin-nav";
 
@@ -30,10 +30,13 @@ type Props = {
   email: string;
   imageUrl: string;
   stores: StoreItem[];
+  /** True only for a ShopFlow platform admin. Decided on the server from an
+      allow-list of addresses, never from anything the browser can set. */
+  isPlatformAdmin?: boolean;
 };
 
 
-export default function Sidebar({ firstName, lastName, email, imageUrl, stores }: Props) {
+export default function Sidebar({ firstName, lastName, email, imageUrl, stores, isPlatformAdmin = false }: Props) {
   const pathname = usePathname();
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
@@ -377,10 +380,37 @@ export default function Sidebar({ firstName, lastName, email, imageUrl, stores }
           </div>
           </div>
 
+          {/* ── ShopFlow itself ──────────────────────────────────────
+              Only ever rendered for a platform admin, and it leaves the
+              merchant product altogether, so it gets its own divider rather
+              than sitting among the store rows. */}
+          {isPlatformAdmin && (
+            <div
+              className="px-1.5 py-1.5"
+              style={{ borderTop: "1px solid color-mix(in srgb, var(--admin-text) 7%, transparent)", ...arrive(2) }}
+            >
+              <Link
+                href="/admin"
+                className="group/row w-full flex items-center gap-2.5 px-2 py-1.5 max-md:py-1 rounded-lg text-left transition-colors hover:bg-(--admin-bg-muted)"
+              >
+                <span className="w-7 h-7 max-md:w-6 max-md:h-6 rounded-lg flex items-center justify-center shrink-0 bg-(--admin-bg-muted)">
+                  <ShieldCheck className="w-3.5 h-3.5" style={{ color: "var(--admin-text-2)" }} />
+                </span>
+                <span className="flex-1 min-w-0 text-[13px] font-medium truncate" style={{ color: "var(--admin-text)" }}>
+                  ShopFlow admin
+                </span>
+                <ChevronRight
+                  className="w-3.5 h-3.5 shrink-0 opacity-0 -translate-x-1 transition-[opacity,transform] group-hover/row:opacity-100 group-hover/row:translate-x-0"
+                  style={{ color: "var(--admin-text-3)" }}
+                />
+              </Link>
+            </div>
+          )}
+
           {/* ── The person ──────────────────────────────────────────── */}
           <div
             className="flex items-center gap-2.5 px-3 py-2.5 max-md:px-2.5 max-md:py-2"
-            style={{ borderTop: "1px solid color-mix(in srgb, var(--admin-text) 7%, transparent)", ...arrive(2) }}
+            style={{ borderTop: "1px solid color-mix(in srgb, var(--admin-text) 7%, transparent)", ...arrive(3) }}
           >
             {imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
