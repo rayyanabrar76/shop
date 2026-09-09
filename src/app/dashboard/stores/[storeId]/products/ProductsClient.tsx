@@ -309,21 +309,41 @@ export default function ProductsClient({ storeId, products: initial, categories 
                     : <HiPhotograph className="w-4 h-4 text-zinc-500" />}
                 </div>
 
+                {/* Two rows that line up as two columns: what it is on the
+                    left, what it costs and what is left of it on the right.
+                    The category and the stock used to run together on one line
+                    separated by a dot, so a long category pushed the count
+                    around and no two rows agreed on where anything sat.
+
+                    The price steps down from the title rather than matching
+                    it. On a card this narrow the name is what is being scanned
+                    and the number only has to be legible, and two things at
+                    the same size next to each other read as one thing. */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-[13.5px] font-medium text-zinc-900 dark:text-zinc-50 truncate">
+                  <div className="flex items-baseline justify-between gap-2.5">
+                    <p className="text-[13px] font-medium text-zinc-900 dark:text-zinc-50 truncate">
                       {p.title}
                     </p>
-                    <span className="text-[13.5px] font-semibold text-zinc-900 dark:text-zinc-50 tabular-nums shrink-0">
+                    <span className="text-[11.5px] font-semibold text-zinc-900 dark:text-zinc-50 tabular-nums shrink-0">
                       {price(p.price)}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1.5 mt-0.5 text-[11.5px] text-zinc-500">
-                    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${statusDot(p.status)}`} />
-                    <span className="truncate">{categoryLabel(p.category) ?? 'No category'}</span>
-                    <span className="opacity-40">·</span>
-                    <span className={`shrink-0 ${p.inventory === 0 ? 'text-red-500 font-medium' : ''}`}>
+                  <div className="flex items-center justify-between gap-2 mt-0.5">
+                    <span className="flex items-center gap-1.5 min-w-0 text-[10.5px] text-zinc-500">
+                      <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${statusDot(p.status)}`} />
+                      <span className="truncate">{categoryLabel(p.category) ?? 'No category'}</span>
+                    </span>
+                    {/* Sits under the price, so the numbers make a column. */}
+                    <span
+                      className={`shrink-0 text-[10.5px] tabular-nums ${
+                        p.inventory === 0
+                          ? 'text-red-500 font-semibold'
+                          : p.inventory <= 5
+                            ? 'text-amber-600 dark:text-amber-500 font-medium'
+                            : 'text-zinc-500'
+                      }`}
+                    >
                       {p.inventory === 0 ? 'Out of stock' : `${p.inventory} left`}
                     </span>
                   </div>
