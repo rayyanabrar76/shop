@@ -80,7 +80,13 @@ export default function MediaLibraryModal({ storeId, accept, onClose, onSelect }
       formData.append('signature', auth.signature)
       formData.append('expire', String(auth.expire))
       formData.append('token', auth.token)
-      formData.append('folder', '/shopflow')
+      // Filed under the shop that owns it, the same as the product upload
+      // and the AI generator. This used to be a flat '/shopflow', so every
+      // merchant's library landed in one bucket: nothing was exposed, since
+      // the asset rows are still scoped by store, but there was no way to tell
+      // whose file was whose from ImageKit and no way to clear a shop's images
+      // when it was deleted.
+      formData.append('folder', `/stores/${storeId}`)
 
       const uploadResult = await new Promise<any>((resolve, reject) => {
         const xhr = new XMLHttpRequest()
