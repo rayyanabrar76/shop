@@ -2,10 +2,13 @@
 
 import { useRef, type DragEvent } from 'react'
 import SectionHeader from './SectionHeader'
+import { labelCls } from '../types'
+import { PanelRow } from '../controls'
+import { resolveHeroButton } from '@/lib/hero-button'
 import MediaPicker from '@/components/MediaPicker'
 import { ThemeState, inputCls } from '../types'
 import { RichTextField } from '../controls'
-import { GripVertical, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { GripVertical, MousePointerClick, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import UrlPicker from '@/components/UrlPicker'
 import AiFieldLabel, { type AiFieldKind } from '@/components/ai/AiFieldLabel'
 
@@ -30,6 +33,8 @@ interface HeroEditProps {
   editingIndex: number | null
   onEditingChange: (idx: number | null) => void
   onPageCreated?: (page: any) => void
+  /** Opens a panel belonging to the hero. */
+  onOpenPanel?: (view: string) => void
 }
 
 function newSlide(): HeroSlide {
@@ -43,7 +48,8 @@ function newSlide(): HeroSlide {
   }
 }
 
-export default function HeroEdit({ storeId, subdomain, onBack, slides, onSlidesChange, editingIndex, onEditingChange, onPageCreated }: HeroEditProps) {
+export default function HeroEdit({ storeId, subdomain, theme, updateTheme, onBack, slides, onSlidesChange, editingIndex, onEditingChange, onPageCreated, onOpenPanel }: HeroEditProps) {
+  const heroButton = resolveHeroButton(theme.heroButton)
   const dragIdx = useRef<number | null>(null)
   const overIdx = useRef<number | null>(null)
 
@@ -83,6 +89,95 @@ export default function HeroEdit({ storeId, subdomain, onBack, slides, onSlidesC
     <div>
       <SectionHeader title="Hero" description="Carousel slides on top of store" onBack={onBack} />
       <div className="p-4 space-y-3">
+
+        {/* Height, as a share of the window rather than a number of pixels, so
+            the same setting means the same thing on a phone and a monitor. The
+            top of the track is the whole screen, which is why it is named
+            rather than left as another number. */}
+        <div data-field="hero-height">
+          <div className="flex items-center justify-between mb-2">
+            <label className={`${labelCls} mb-0`}>Height</label>
+            <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] text-zinc-600 tabular-nums dark:bg-zinc-800 dark:text-zinc-300">
+              {(theme.heroHeight ?? 60) >= 100 ? 'Full screen' : `${theme.heroHeight ?? 60}%`}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Shows the proportion rather than describing it: the bar fills
+                the same fraction of its frame that the hero fills of the
+                window. */}
+            <div className="relative h-5 w-4 shrink-0 overflow-hidden rounded-[3px] border border-zinc-200 dark:border-zinc-700">
+              <div
+                className="absolute inset-x-0 top-0 bg-zinc-300 transition-[height] dark:bg-zinc-600"
+                style={{ height: `${theme.heroHeight ?? 60}%` }}
+              />
+            </div>
+            <input
+              type="range"
+              min={40} max={100} step={5}
+              value={theme.heroHeight ?? 60}
+              onChange={e => updateTheme({ heroHeight: parseInt(e.target.value) })}
+              className="flex-1 h-1.5 cursor-pointer rounded-full accent-zinc-900 dark:accent-zinc-100"
+              aria-label="Hero height"
+            />
+            <button
+              type="button"
+              onClick={() => updateTheme({ heroHeight: 100 })}
+              className="shrink-0 rounded-md px-1.5 py-1 text-[10px] font-semibold text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            >
+              Full
+            </button>
+          </div>
+        </div>
+
+        {/* Content position.
+
+            A grid of nine rather than two dropdowns: the control is the same
+            shape as the thing it sets, so picking bottom-centre is one click on
+            the bottom-centre square instead of reading two lists and holding
+            the combination in your head. */}
+        <div data-field="hero-position">
+          <label className={labelCls}>Content Position</label>
+          <div className="grid w-max grid-cols-3 gap-1 rounded-xl border border-zinc-200 dark:border-zinc-700 p-1">
+            {(['top', 'middle', 'bottom'] as const).map(y =>
+              (['left', 'center', 'right'] as const).map(x => {
+                const value = `${x}-${y}`
+                const active = (theme.heroPosition || 'left-middle') === value
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => updateTheme({ heroPosition: value })}
+                    aria-label={`${y} ${x}`}
+                    aria-pressed={active}
+                    className={`flex h-7 w-9 items-center justify-center rounded-lg transition-colors ${
+                      active
+                        ? 'bg-zinc-900 dark:bg-zinc-100'
+                        : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    {/* A short rule, sitting where the text would sit. */}
+                    <span
+                      className={`block h-0.5 w-3.5 rounded-full ${
+                        active ? 'bg-white dark:bg-zinc-900' : 'bg-zinc-300 dark:bg-zinc-600'
+                      }`}
+                    />
+                  </button>
+                )
+              }),
+            )}
+          </div>
+        </div>
+
+        {/* The button is its own thing: its label and link live on each
+            slide, but how it is drawn is one decision for all of them. */}
+        {onOpenPanel && (
+          <PanelRow
+            icon={MousePointerClick}
+            label="Button"
+            note={heroButton.show ? undefined : 'Hidden'}
+            onClick={() => onOpenPanel('hero-button')}
+          />
+        )}
 
         <button
           onClick={add}

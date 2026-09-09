@@ -262,6 +262,16 @@ model StoreTheme {
   instagramHandle String?
   twitterHandle   String?
   facebookUrl     String?
+  /// How tall the hero stands, as a percentage of the window. 100 fills the
+  /// screen. 60 is what it was when this was a fixed 460px.
+  heroHeight      Int     @default(60)
+  /// Where the slide's words sit in the band, as "x-y": left|center|right
+  /// and top|middle|bottom. Left and middle is where they always were.
+  heroPosition    String  @default("left-middle")
+  /// How the hero's call to action is drawn. Its words and destination stay
+  /// on each slide; this is the one shape they all share. See
+  /// src/lib/hero-button.ts.
+  heroButton      Json?
   heroSlides      Json?
   navLinks        Json?
   /// The mobile drawer's contents. One column rather than a scalar per

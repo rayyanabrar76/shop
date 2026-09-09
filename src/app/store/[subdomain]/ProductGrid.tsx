@@ -216,16 +216,38 @@ const HEADING_PRESETS: Record<string, string> = {
  * literal class strings for Tailwind to find them at build time.
  */
 const HEADING_IN_TEXT =
-  '[&_h1]:text-4xl [&_h1]:font-black [&_h1]:tracking-tight ' +
-  '[&_h2]:text-3xl [&_h2]:font-bold [&_h2]:tracking-tight ' +
-  '[&_h3]:text-2xl [&_h3]:font-bold [&_h3]:tracking-tight ' +
-  '[&_h4]:text-xl [&_h4]:font-semibold ' +
-  '[&_h5]:text-lg [&_h5]:font-semibold ' +
-  '[&_h6]:text-sm [&_h6]:font-semibold [&_h6]:uppercase [&_h6]:tracking-widest ' +
-  // A heading is one line in a heading, so the block elements inside it sit on
-  // that line rather than starting new ones.
-  '[&_h1]:inline [&_h2]:inline [&_h3]:inline [&_h4]:inline [&_h5]:inline [&_h6]:inline ' +
-  '[&_p]:inline [&_p]:m-0'
+  '[&_.hl1]:text-4xl [&_.hl1]:font-black [&_.hl1]:tracking-tight ' +
+  '[&_.hl2]:text-3xl [&_.hl2]:font-bold [&_.hl2]:tracking-tight ' +
+  '[&_.hl3]:text-2xl [&_.hl3]:font-bold [&_.hl3]:tracking-tight ' +
+  '[&_.hl4]:text-xl [&_.hl4]:font-semibold ' +
+  '[&_.hl5]:text-lg [&_.hl5]:font-semibold ' +
+  '[&_.hl6]:text-sm [&_.hl6]:font-semibold [&_.hl6]:uppercase [&_.hl6]:tracking-widest'
+
+/**
+ * The label's own markup, flattened to something a heading can legally hold.
+ *
+ * The toolbar can mark a run of text as Heading 1, which arrives here as a
+ * real <h1>. Putting that inside the <h2> this section already renders is
+ * invalid: the browser's parser closes the outer heading when it meets the
+ * inner one, so the DOM it builds does not match the string the server sent
+ * and React reports a hydration mismatch. Same for <p>, <ul> and the rest, all
+ * of which are block elements that cannot live inside a heading.
+ *
+ * So the block tags become spans carrying the size that tag would have had.
+ * The chosen level still reads at the chosen size, the markup is valid, and
+ * the outer tag stays the one thing search engines are shown.
+ */
+// The lookahead is what stops "p" also matching the start of <pre>.
+const BLOCK_IN_LABEL = /<(\/?)(h[1-6]|p|div|ul|ol|li)(?=[\s/>])[^>]*>/gi
+
+function inlineLabel(html: string): string {
+  return html.replace(BLOCK_IN_LABEL, (_tag, slash: string, name: string) => {
+    const level = /^h([1-6])$/i.exec(name)
+    // Anything that is not a heading is unwrapped: the text stays, the box goes.
+    if (!level) return ''
+    return slash ? '</span>' : `<span class="hl${level[1]}">`
+  })
+}
 
 export default function ProductGrid({
   products, theme, subdomain, themeStyle, isEditor = false, onEdit, activeProductField,
@@ -439,7 +461,7 @@ export default function ProductGrid({
           <HeadingTag
             className={`${HEADING_PRESETS[headingLevel] ?? HEADING_PRESETS['']} ${HEADING_IN_TEXT}`}
             style={{ fontFamily: headingFont === 'serif' ? 'serif' : 'inherit' }}
-            dangerouslySetInnerHTML={{ __html: sanitizeRichText(featuredLabel || 'Featured Products') }}
+            dangerouslySetInnerHTML={{ __html: inlineLabel(sanitizeRichText(featuredLabel || 'Featured Products')) }}
           />
         </EditorItem>
       </div>
@@ -703,7 +725,7 @@ export default function ProductGrid({
                 border: shopAllStyle === 'outline' ? `2px solid ${primaryColor}` : 'none',
               }}
               dangerouslySetInnerHTML={{
-                __html: sanitizeRichText(themeStyle.shopAllLabel || 'Shop All Products'),
+                __html: inlineLabel(sanitizeRichText(themeStyle.shopAllLabel || 'Shop All Products')),
               }}
             />
           </EditorItem>

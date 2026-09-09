@@ -99,6 +99,9 @@ interface ThemeStyle {
   productTitlePaddingRight?: number
   productPriceShowSale?: boolean
   productPriceHidden?: boolean
+  heroHeight?: number
+  heroPosition?: string
+  heroButton?: unknown
   productPriceInstallments?: boolean
   productPriceTaxInfo?: boolean
   productPricePreset?: string
@@ -249,6 +252,9 @@ export default function StorefrontClient({
     headerTextColor: theme.headerTextColor,
     utilityStyle: theme.utilityStyle,
     headerTransparent: theme.headerTransparent,
+    heroHeight: theme.heroHeight,
+    heroPosition: theme.heroPosition,
+    heroButton: theme.heroButton,
     headerInverseLogoUrl: theme.headerInverseLogoUrl,
     headerTransparentText: theme.headerTransparentText,
     drawer: theme.drawer,

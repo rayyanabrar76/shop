@@ -1,4 +1,5 @@
 import type { DrawerConfig } from '@/lib/drawer'
+import type { HeroButtonConfig } from '@/lib/hero-button'
 
 export interface NavLink {
   label: string
@@ -116,6 +117,9 @@ export interface ThemeState {
   cartBtnPaddingLeft: number
   cartBtnPaddingRight: number
   // Navigation
+  heroHeight: number
+  heroPosition: string
+  heroButton: HeroButtonConfig
   navLinks: NavLink[]
   /** The mobile drawer's contents. See src/lib/drawer.ts. */
   drawer: DrawerConfig

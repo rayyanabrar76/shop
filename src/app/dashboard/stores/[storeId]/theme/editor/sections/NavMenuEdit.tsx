@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import SectionHeader from './SectionHeader'
 import { ThemeState, labelCls } from '../types'
 import { Plus, Trash2, GripVertical } from 'lucide-react'
@@ -27,9 +28,31 @@ const CASE_OPTIONS = [
 
 export default function NavMenuEdit({ theme, updateTheme, onBack }: NavMenuEditProps) {
   const links: NavLink[] = theme.navLinks?.length ? theme.navLinks : DEFAULT_LINKS
+  /** The row being carried, by index. Null when nothing is moving. */
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
 
   function setLinks(next: NavLink[]) {
     updateTheme({ navLinks: next })
+  }
+
+  /*
+   * Reordering.
+   *
+   * There has been a grip on every row since this panel was written, and it
+   * did nothing: a handle that looks draggable and is not is worse than no
+   * handle, because the menu looks reorderable and quietly is not.
+   *
+   * The list moves as the cursor crosses a row rather than on the drop, so the
+   * order under the pointer is the order you get. That also means the preview,
+   * which redraws from the same array, shows the menu rearranging as you drag.
+   */
+  function moveTo(to: number) {
+    if (dragIdx === null || dragIdx === to) return
+    const next = [...links]
+    const [carried] = next.splice(dragIdx, 1)
+    next.splice(to, 0, carried)
+    setDragIdx(to)
+    setLinks(next)
   }
 
   function addLink() {
@@ -54,8 +77,28 @@ export default function NavMenuEdit({ theme, updateTheme, onBack }: NavMenuEditP
           <label className={labelCls}>Nav Links</label>
           <div className="space-y-2">
             {links.map((link, i) => (
-              <div key={i} className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800 rounded-xl px-3 py-2 border border-zinc-200 dark:border-zinc-700">
-                <GripVertical className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600 shrink-0" />
+              <div
+                key={i}
+                // Only the handle starts a drag, or selecting text in either
+                // field would pick the whole row up instead.
+                draggable={dragIdx === i}
+                onDragEnd={() => setDragIdx(null)}
+                onDragOver={e => { e.preventDefault(); moveTo(i) }}
+                onDrop={e => { e.preventDefault(); setDragIdx(null) }}
+                className={`flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800 rounded-xl px-3 py-2 border transition-[opacity,border-color] ${
+                  dragIdx === i
+                    ? 'opacity-50 border-zinc-400 dark:border-zinc-500'
+                    : 'border-zinc-200 dark:border-zinc-700'
+                }`}
+              >
+                <span
+                  onPointerDown={() => setDragIdx(i)}
+                  onPointerUp={() => setDragIdx(null)}
+                  aria-label="Drag to reorder"
+                  className="shrink-0 cursor-grab touch-none active:cursor-grabbing"
+                >
+                  <GripVertical className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600" />
+                </span>
                 <div className="flex-1 flex flex-col gap-1 min-w-0">
                   <input
                     value={link.label}

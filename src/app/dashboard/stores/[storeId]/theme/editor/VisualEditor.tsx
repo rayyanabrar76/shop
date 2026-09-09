@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { storeUrl } from '@/lib/config'
 import { resolveDrawer } from '@/lib/drawer'
+import { resolveHeroButton } from '@/lib/hero-button'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -31,6 +32,7 @@ import ProductPriceEdit from './sections/ProductPriceEdit'
 import ProductCartButtonEdit from './sections/ProductCartButtonEdit'
 import NavMenuEdit from './sections/NavMenuEdit'
 import DrawerEdit from './sections/DrawerEdit'
+import HeroButtonEdit from './sections/HeroButtonEdit'
 import CategoryFilterEdit from './sections/CategoryFilterEdit'
 import EditorSkeleton from './EditorSkeleton'
 import AddPageModal, { type PageResult } from '@/components/AddPageModal'
@@ -50,7 +52,7 @@ type Tab = 'sections' | 'theme'
 const SECTION_VIEWS = [
   'list', 'banner', 'header', 'hero', 'products', 'footer', 'custom', 'code',
   'seo', 'product-title', 'product-price', 'product-cart', 'nav-menu', 'category-filter',
-  'drawer',
+  'drawer', 'hero-button',
 ] as const
 type SectionView = (typeof SECTION_VIEWS)[number]
 
@@ -115,6 +117,7 @@ const SECTION_LABELS: Record<string, string> = {
   'product-cart': 'Add to Cart Button',
   'nav-menu': 'Menu',
   drawer: 'Drawer',
+  'hero-button': 'Hero Button',
   'category-filter': 'Category Filter',
 }
 
@@ -637,6 +640,9 @@ export default function VisualEditor({
     cartBtnPaddingLeft:   initialTheme?.cartBtnPaddingLeft   ?? 0,
     cartBtnPaddingRight:  initialTheme?.cartBtnPaddingRight  ?? 0,
     // Navigation
+    heroHeight:  initialTheme?.heroHeight  ?? 60,
+    heroPosition: initialTheme?.heroPosition ?? 'left-middle',
+    heroButton:  resolveHeroButton(initialTheme?.heroButton),
     navLinks:    initialTheme?.navLinks    ?? [],
     drawer:      resolveDrawer(initialTheme?.drawer),
     navFontSize: initialTheme?.navFontSize ?? 14,
@@ -1550,6 +1556,7 @@ function handlePageContentChange(content: unknown) {
                     editingIndex={activeHeroSlide}
                     onEditingChange={setActiveHeroSlide}
                     onPageCreated={handlePageCreated}
+                    onOpenPanel={v => { setSectionView(v as SectionView); triggerSidebarPulse() }}
                   />
                 )}
                 {sectionView === 'products'      && <ProductGridEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} storeId={storeId} isProductsPage={systemPageSlug === 'products'} onOpenPanel={v => { setSectionView(v as SectionView); triggerSidebarPulse() }} />}
@@ -1557,6 +1564,9 @@ function handlePageContentChange(content: unknown) {
                 {sectionView === 'product-price' && <ProductPriceEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('products')} />}
                 {sectionView === 'product-cart'    && <ProductCartButtonEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('products')} storeId={storeId} />}
                 {sectionView === 'nav-menu'        && <NavMenuEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('header')} />}
+                {sectionView === 'hero-button'    && (
+                  <HeroButtonEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('hero')} />
+                )}
                 {sectionView === 'drawer'          && (
                   <DrawerEdit
                     storeId={storeId}

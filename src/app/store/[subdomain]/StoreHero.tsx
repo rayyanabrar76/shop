@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { EditorItem } from './EditorHighlight'
 import { sanitizeRichText } from '@/lib/sanitize'
 import { useStoreBase, resolveStoreHref } from '@/components/StoreBaseProvider'
+import { resolveHeroButton } from '@/lib/hero-button'
 
 export interface HeroSlide {
   id: string
@@ -29,9 +30,51 @@ export interface HeroSlide {
  * With a floor under it the heading begins at the same point every time and
  * only a genuinely long slide pushes past it.
  */
-const HERO_MIN = 460
 const HEADER_OVERLAY = 76
 const CONTENT_MIN = 320
+
+/*
+ * How tall the band stands, as a share of the window.
+ *
+ * A share rather than a number of pixels, so it means the same thing on a
+ * phone held upright and on a monitor: 100 is the screen, whatever the screen
+ * is. It used to be a flat 460px, which is roughly 60% of a phone, so that is
+ * the default and nothing moves for a shop that never touches it.
+ *
+ * dvh, not vh: on a phone the address bar slides away as you scroll, and vh
+ * measures the window as if it never had one, so a "full screen" hero sat
+ * about 60px taller than the screen and its button was under the fold on
+ * arrival.
+ */
+/**
+ * Where the slide's words sit in the band.
+ *
+ * Nine positions from two axes, because those are the two questions: which
+ * edge the text is anchored to, and how far down it sits. Written out as whole
+ * class strings rather than built from the value, since Tailwind reads source
+ * text and would never see a class assembled at runtime.
+ *
+ * The column keeps its own alignment as well as its placement: text pushed to
+ * the right of the band and still ranged left reads as a mistake.
+ */
+const POSITIONS: Record<string, { band: string; column: string }> = {
+  'left-top':      { band: 'items-start',  column: 'mr-auto text-left items-start' },
+  'center-top':    { band: 'items-start',  column: 'mx-auto text-center items-center' },
+  'right-top':     { band: 'items-start',  column: 'ml-auto text-right items-end' },
+  'left-middle':   { band: 'items-center', column: 'mr-auto text-left items-start' },
+  'center-middle': { band: 'items-center', column: 'mx-auto text-center items-center' },
+  'right-middle':  { band: 'items-center', column: 'ml-auto text-right items-end' },
+  'left-bottom':   { band: 'items-end',    column: 'mr-auto text-left items-start' },
+  'center-bottom': { band: 'items-end',    column: 'mx-auto text-center items-center' },
+  'right-bottom':  { band: 'items-end',    column: 'ml-auto text-right items-end' },
+}
+
+const HERO_MIN_VH = 40
+const HERO_MAX_VH = 100
+function heroHeightCss(pct: number | null | undefined): string {
+  const n = typeof pct === 'number' && pct > 0 ? pct : 60
+  return `${Math.min(HERO_MAX_VH, Math.max(HERO_MIN_VH, n))}dvh`
+}
 
 interface StoreHeroProps {
   theme: {
@@ -42,6 +85,12 @@ interface StoreHeroProps {
     headingFont?: string | null
     /** The header floats over this section rather than sitting above it. */
     headerTransparent?: boolean | null
+    /** Percentage of the window the band fills. */
+    heroHeight?: number | null
+    /** Where the words sit in the band, as "x-y". */
+    heroPosition?: string | null
+    /** How the call to action is drawn. See src/lib/hero-button.ts. */
+    heroButton?: unknown
   } | null
   storeName: string
   storeId: string
@@ -104,6 +153,36 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
   // This section only ever renders on the home page, which is the only place a
   // transparent header floats, so the setting alone is the answer here.
   const overlaysHeader = theme?.headerTransparent === true
+  const bandHeight = heroHeightCss(theme?.heroHeight)
+  const place = POSITIONS[theme?.heroPosition || 'left-middle'] ?? POSITIONS['left-middle']
+
+  /*
+   * The call to action.
+   *
+   * Blank means "work it out", everywhere. Style falls back to the theme's own
+   * button style; each colour falls back to what the button used to compute
+   * for itself, which over a photograph is white on the brand colour, because
+   * a dark fill on a dark image is a button nobody finds.
+   *
+   * The row is separate from the button so alignment can be its own choice:
+   * the text can range left while the button sits centred, which is the
+   * arrangement this was asked for and the one the content position alone
+   * could not make.
+   */
+  const btn = resolveHeroButton(theme?.heroButton)
+  const btnStyle = btn.style || buttonStyle
+  const btnBg = btn.bgColor || (hasMedia ? '#ffffff' : primary)
+  const btnFg = btn.textColor || (hasMedia ? primary : '#ffffff')
+  const btnLine = btn.borderColor || (hasMedia ? 'rgba(255,255,255,0.85)' : primary)
+  const btnRadius = btn.radius || radius
+  const btnRow =
+    btn.align === 'left' ? 'justify-start'
+    : btn.align === 'center' ? 'justify-center'
+    : btn.align === 'right' ? 'justify-end'
+    : ''
+  const btnWidth = `${btn.widthMobile === 'full' ? 'w-full justify-center' : 'w-auto'} ${
+    btn.widthDesktop === 'full' ? 'sm:w-full sm:justify-center' : 'sm:w-auto'
+  }`
   const isVideo = isVideoUrl(slide.imageUrl)
 
   return (
@@ -111,7 +190,7 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
       className="relative w-full overflow-hidden transition-colors duration-500"
       style={{
         backgroundColor: slide.bgColor ?? '#f4f4f8',
-        minHeight: HERO_MIN,
+        minHeight: bandHeight,
       }}
     >
       {/* Full-bleed background media */}
@@ -143,15 +222,15 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
 
       {/* Content */}
       <div
-        className="relative z-10 max-w-7xl mx-auto flex items-center"
+        className={`relative z-10 max-w-7xl mx-auto flex ${place.band}`}
         style={{
-          minHeight: HERO_MIN,
+          minHeight: bandHeight,
           // Centred in what is visible, not in the box.
           paddingTop: overlaysHeader ? HEADER_OVERLAY : 0,
         }}
       >
         <div
-          className="flex-1 px-8 md:px-14 py-8 flex flex-col gap-4 max-w-2xl"
+          className={`w-full max-w-2xl px-8 md:px-14 py-8 flex flex-col gap-4 ${place.column}`}
           style={{
             minHeight: CONTENT_MIN,
             opacity: transitioning ? 0 : 1,
@@ -188,8 +267,9 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
               dangerouslySetInnerHTML={{ __html: sanitizeRichText(slide.subheading) }}
             />
           </EditorItem>
-          <div className="flex items-center gap-3 mt-2">
-            <EditorItem section="hero" field="hero-cta" meta={{ slideIndex: current }} label="CTA Button" isEditor={isEditor} onEdit={notify}>
+          {btn.show && (
+          <div className={`flex items-center gap-3 mt-2 w-full ${btnRow}`}>
+            <EditorItem section="hero" field="hero-cta" meta={{ slideIndex: current }} label="CTA Button" isEditor={isEditor} onEdit={notify} block>
               {/* A solid button was also being given the white 2px border meant
                   for outline buttons, so it read as a black chip ringed in
                   white. Each style now gets only what it should:
@@ -200,36 +280,31 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
                     ghost:   type only, with a rule that draws in on hover. */}
               <a
                 href={resolveStoreHref(slide.ctaUrl, storeBase)}
-                className={`group/cta relative inline-flex items-center px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-300 ${
-                  buttonStyle === 'ghost' ? '' : 'hover:-translate-y-0.5'
+                {...(btn.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                className={`group/cta relative inline-flex items-center px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-300 ${btnWidth} ${
+                  btnStyle === 'ghost' || btnStyle === 'text' ? '' : 'hover:-translate-y-0.5'
                 }`}
                 style={{
-                  backgroundColor:
-                    buttonStyle !== 'solid' ? 'transparent' : hasMedia ? '#ffffff' : primary,
-                  color:
-                    buttonStyle === 'solid'
-                      ? hasMedia ? primary : '#ffffff'
-                      : hasMedia ? '#ffffff' : primary,
-                  border:
-                    buttonStyle === 'outline'
-                      ? `1px solid ${hasMedia ? 'rgba(255,255,255,0.85)' : primary}`
-                      : 'none',
-                  borderRadius: radius,
+                  backgroundColor: btnStyle === 'solid' ? btnBg : 'transparent',
+                  color: btnStyle === 'solid' ? btnFg : btnBg,
+                  border: btnStyle === 'outline' ? `1px solid ${btnLine}` : 'none',
+                  borderRadius: btnStyle === 'text' ? 0 : btnRadius,
                   // Lifts the button off busy photography without an outline.
                   boxShadow:
-                    buttonStyle === 'solid' && hasMedia ? '0 6px 24px rgba(0,0,0,0.28)' : 'none',
+                    btnStyle === 'solid' && hasMedia ? '0 6px 24px rgba(0,0,0,0.28)' : 'none',
                 }}
               >
                 {slide.ctaLabel}
-                {buttonStyle === 'ghost' && (
+                {(btnStyle === 'ghost' || btnStyle === 'text') && (
                   <span
                     className="pointer-events-none absolute bottom-2 left-7 right-7 h-px origin-left scale-x-0 transition-transform duration-300 group-hover/cta:scale-x-100"
-                    style={{ backgroundColor: hasMedia ? '#ffffff' : primary }}
+                    style={{ backgroundColor: btnBg }}
                   />
                 )}
               </a>
             </EditorItem>
           </div>
+          )}
         </div>
       </div>
 

@@ -413,9 +413,35 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
    * page's ground in that case and the header's colour whenever one is set.
    */
   const drawerBg = theme?.headerBgColor || 'var(--store-bg, #ffffff)'
+
+  /*
+   * The drawer's own ink, and why it is not the bar's.
+   *
+   * Over the hero the bar writes in its transparent colour, which is chosen to
+   * sit on a photograph and is usually near-white. The drawer is not over the
+   * photograph: it is a solid panel, and on a pale one that same near-white
+   * disappeared completely. So it is worked out from the drawer's own ground
+   * and checked against it, like everything else that lands on a surface a
+   * merchant can repaint.
+   *
+   * The ground has to be a real colour to be measured, so where drawerBg falls
+   * back to a CSS variable this reads the same value from the theme.
+   */
+  const drawerGround = theme?.headerBgColor || theme?.backgroundColor || '#ffffff'
+  const drawerFg = headerInk
+    ? ensureReadable(headerInk, drawerGround)
+    : readableText(drawerGround, '#ffffff', theme?.textColor || '#09090b')
+
+  /** The drawer's rules and hovers, mixed from its own ink rather than the bar's. */
+  const drawerChrome = {
+    hover: `color-mix(in srgb, ${drawerFg} 8%, transparent)`,
+    well: `color-mix(in srgb, ${drawerFg} 5%, transparent)`,
+    line: `color-mix(in srgb, ${drawerFg} 12%, transparent)`,
+  }
+
   /** Every row in the drawer lights the same way the bar's icons do. */
   const drawerHover = {
-    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.backgroundColor = chrome.hover },
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.backgroundColor = drawerChrome.hover },
     onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.backgroundColor = 'transparent' },
   }
 
@@ -759,7 +785,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
             className={`relative w-72 max-w-[85vw] h-full shadow-2xl flex flex-col overflow-y-auto ${
               drawerClosing ? 'drawer-out' : 'drawer-in'
             }`}
-            style={{ backgroundColor: drawerBg, color: fg }}
+            style={{ backgroundColor: drawerBg, color: drawerFg }}
             /* The panel's own animation is the one that decides when the
                drawer is gone. Children animate too and their events bubble,
                so only the panel's own is listened for. */
@@ -771,7 +797,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
             {/* Drawer header */}
             <div
               className="flex items-center justify-between px-5 py-4 border-b"
-              style={{ borderColor: chrome.line }}
+              style={{ borderColor: drawerChrome.line }}
             >
               <Link
                 href={buildHref(storeBase, '/')}
@@ -832,7 +858,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
 
             {/* Menu links. The header's own list, shown a second way. */}
             {drawer.links.show && navLinks.length > 0 && (
-              <DrawerBlock label={drawer.links.label} line={chrome.line} first beat={0} still={drawerClosing}>
+              <DrawerBlock label={drawer.links.label} line={drawerChrome.line} first beat={0} still={drawerClosing}>
                 {navLinks.map(({ label, href }, i) => (
                   <Link
                     key={`${label}-${i}`}
@@ -849,7 +875,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
             )}
 
             {drawer.allProducts.show && (
-              <DrawerBlock line={chrome.line} first={!drawer.links.show} beat={1} still={drawerClosing}>
+              <DrawerBlock line={drawerChrome.line} first={!drawer.links.show} beat={1} still={drawerClosing}>
                 <Link
                   href={`${storeBase}/products`}
                   onClick={closeDrawer}
@@ -862,7 +888,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
             )}
 
             {drawer.categories.show && drawerCategories.length > 0 && (
-              <DrawerBlock label={drawer.categories.label} line={chrome.line} beat={2} still={drawerClosing}>
+              <DrawerBlock label={drawer.categories.label} line={drawerChrome.line} beat={2} still={drawerClosing}>
                 {drawerCategories.map(cat => (
                   <Link
                     key={cat.id}
@@ -881,7 +907,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
                 288px wide, and two columns of product card in it are thumbnails
                 of a thumbnail. */}
             {drawer.carousel.show && drawerProducts.length > 0 && (
-              <DrawerBlock label={drawer.carousel.label} line={chrome.line} flush beat={3} still={drawerClosing}>
+              <DrawerBlock label={drawer.carousel.label} line={drawerChrome.line} flush beat={3} still={drawerClosing}>
                 {/* Snapped, so a flick lands a card square in the panel
                     rather than halfway off the edge of a 288px drawer. */}
                 <div className="flex gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory scroll-px-3 px-3 pb-1">
@@ -898,7 +924,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
                     >
                       <div
                         className="w-32 h-32 overflow-hidden transition-shadow duration-300 group-hover/dp:shadow-lg"
-                        style={{ backgroundColor: chrome.well, borderRadius: cardRadius }}
+                        style={{ backgroundColor: drawerChrome.well, borderRadius: cardRadius }}
                       >
                         {pr.imageUrl && (
                           <img
@@ -921,7 +947,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
             )}
 
             {drawer.contact.show && (
-              <DrawerBlock label={drawer.contact.label} line={chrome.line} beat={4} still={drawerClosing}>
+              <DrawerBlock label={drawer.contact.label} line={drawerChrome.line} beat={4} still={drawerClosing}>
                 {drawer.contact.text.trim() ? (
                   <p className="px-3 text-[13px] leading-relaxed opacity-70 whitespace-pre-wrap">
                     {drawer.contact.text}
