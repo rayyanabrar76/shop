@@ -1,6 +1,7 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import ServiceWorker from "@/components/ServiceWorker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,6 +16,24 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Shopflow - The Minimalist Commerce Engine",
   description: "Built for creators who value simplicity and speed.",
+  // The manifest link is added by Next from app/manifest.ts. These are the
+  // parts iOS wants, which it reads from meta tags rather than the manifest:
+  // without them, adding to the home screen opens a Safari tab with a
+  // screenshot for an icon.
+  appleWebApp: {
+    capable: true,
+    title: "ShopFlow",
+    statusBarStyle: "black-translucent" as const,
+  },
+};
+
+export const viewport = {
+  // The mark's own ground, so the phone's status bar and the app meet without
+  // a seam.
+  themeColor: "#0a0a0a",
+  // The installed app runs edge to edge, so the safe-area insets have to be
+  // readable or content sits under the notch.
+  viewportFit: "cover" as const,
 };
 
 export default function RootLayout({
@@ -65,6 +84,7 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#fdfdfc] text-[#212121] selection:bg-[#e8e8e3] selection:text-black`}
         >
           {children}
+          <ServiceWorker />
         </body>
       </html>
     </ClerkProvider>
