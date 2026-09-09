@@ -126,6 +126,8 @@ export default async function ProductsPage({
     productTitlePaddingLeft:   t?.productTitlePaddingLeft   ?? 0,
     productTitlePaddingRight:  t?.productTitlePaddingRight  ?? 0,
     productPricePreset:       t?.productPricePreset       ?? '',
+    productPriceHidden:       t?.productPriceHidden       ?? false,
+    cartBtnRadius:            t?.cartBtnRadius            ?? '',
     productPriceWidth:        t?.productPriceWidth        ?? '',
     productPriceAlign:        t?.productPriceAlign        ?? '',
     productPriceTextColor:    t?.productPriceTextColor    ?? '',

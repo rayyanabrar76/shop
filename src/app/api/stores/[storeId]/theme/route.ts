@@ -120,6 +120,8 @@ export async function POST(
     productPricePaddingBottom: body.productPricePaddingBottom ?? undefined,
     productPricePaddingLeft:   body.productPricePaddingLeft   ?? undefined,
     productPricePaddingRight:  body.productPricePaddingRight  ?? undefined,
+    productPriceHidden:        body.productPriceHidden        ?? undefined,
+    cartBtnRadius:             body.cartBtnRadius             ?? undefined,
     // Cart button block
     cartBtnLabel:         body.cartBtnLabel         ?? undefined,
     cartBtnBgColor:       body.cartBtnBgColor       ?? undefined,

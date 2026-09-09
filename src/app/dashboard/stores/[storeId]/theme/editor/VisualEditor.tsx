@@ -597,6 +597,8 @@ export default function VisualEditor({
     productPricePaddingBottom: initialTheme?.productPricePaddingBottom ?? 0,
     productPricePaddingLeft:   initialTheme?.productPricePaddingLeft   ?? 0,
     productPricePaddingRight:  initialTheme?.productPricePaddingRight  ?? 0,
+    productPriceHidden:        initialTheme?.productPriceHidden        ?? false,
+    cartBtnRadius:             initialTheme?.cartBtnRadius             ?? '',
     // Cart button block
     cartBtnLabel:         initialTheme?.cartBtnLabel         ?? '',
     cartBtnBgColor:       initialTheme?.cartBtnBgColor       ?? '',
@@ -1492,7 +1494,7 @@ function handlePageContentChange(content: unknown) {
 
                 {/* Shared section sub-editors (home page + system pages that support them) */}
                 {sectionView === 'banner'   && <BannerEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} storeId={storeId} />}
-                {sectionView === 'header'   && <HeaderEdit storeId={storeId} theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} />}
+                {sectionView === 'header'   && <HeaderEdit storeId={storeId} theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} onOpenPanel={v => { setSectionView(v as SectionView); triggerSidebarPulse() }} />}
                 {sectionView === 'hero'     && !systemPageSlug && !preview && (
                   <HeroEdit
                     storeId={storeId}
@@ -1507,7 +1509,7 @@ function handlePageContentChange(content: unknown) {
                     onPageCreated={handlePageCreated}
                   />
                 )}
-                {sectionView === 'products'      && <ProductGridEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} storeId={storeId} isProductsPage={systemPageSlug === 'products'} />}
+                {sectionView === 'products'      && <ProductGridEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} storeId={storeId} isProductsPage={systemPageSlug === 'products'} onOpenPanel={v => { setSectionView(v as SectionView); triggerSidebarPulse() }} />}
                 {sectionView === 'product-title' && <ProductTitleEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('products')} />}
                 {sectionView === 'product-price' && <ProductPriceEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('products')} />}
                 {sectionView === 'product-cart'    && <ProductCartButtonEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('products')} storeId={storeId} />}

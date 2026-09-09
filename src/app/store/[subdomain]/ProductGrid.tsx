@@ -7,6 +7,7 @@ import AddToCartButton from './add-to-cart-button'
 import { EditorItem, previewNavigate } from './EditorHighlight'
 import { usePrice } from '@/components/CurrencyProvider'
 import { useStoreBase } from '@/components/StoreBaseProvider'
+import { readableText, readableBorder, ensureReadable } from '@/lib/contrast'
 
 interface Product {
   id: string
@@ -20,6 +21,16 @@ interface Product {
 
 interface ThemeStyle {
   primaryColor: string
+  /**
+   * The colour the card text is set in.
+   *
+   * Handed down already checked against whatever ground this grid is sitting
+   * on, because only the page above knows what that ground is. The grid used
+   * to take no colour at all and simply inherit the page's, which meant a
+   * merchant who painted this section black got the page's near-black text on
+   * it and the products vanished.
+   */
+  textColor?: string
   borderRadius: string
   buttonStyle: string
   headingFont: string
@@ -40,11 +51,13 @@ interface ThemeStyle {
   productPriceWidth?: string
   productPriceAlign?: string
   productPriceTextColor?: string
+  productPriceHidden?: boolean
   productPricePaddingTop?: number
   productPricePaddingBottom?: number
   productPricePaddingLeft?: number
   productPricePaddingRight?: number
   cartBtnLabel?: string
+  cartBtnRadius?: string
   cartBtnBgColor?: string
   cartBtnTextColor?: string
   cartBtnDisplay?: string
@@ -166,7 +179,7 @@ export default function ProductGrid({
   const storeBase = useStoreBase()
   const price = usePrice()
   const router = useRouter()
-  const { primaryColor, borderRadius, buttonStyle, headingFont, featuredLabel, font } = themeStyle
+  const { primaryColor, borderRadius, headingFont, featuredLabel, font } = themeStyle
 
   /**
    * Heading level is both the tag and the size, so a merchant choosing
@@ -249,29 +262,49 @@ export default function ProductGrid({
     width: (themeStyle.productPriceWidth || 'fit') === 'fill' ? '100%' : 'fit-content',
   }
 
-  // — cart button computed style —
-  // Blank falls back to the grid button colour, so existing stores are
-  // unchanged; setting one overrides just this button.
-  const cartBg = themeStyle.cartBtnBgColor || primaryColor
-  const cartFg = themeStyle.cartBtnTextColor || '#fff'
-  const cartBtnStyle: React.CSSProperties = {
-    backgroundColor: buttonStyle === 'solid' ? cartBg : 'transparent',
-    color: buttonStyle === 'solid' ? cartFg : cartBg,
-    border: buttonStyle === 'ghost' ? 'none' : `1.5px solid ${cartBg}`,
-    borderRadius,
-    fontSize: themeStyle.cartBtnFontSize ? `${themeStyle.cartBtnFontSize}px` : '10px',
-    fontWeight: 700,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em',
-    padding: `${themeStyle.cartBtnPaddingTop ?? 5}px ${themeStyle.cartBtnPaddingRight ?? 0}px ${themeStyle.cartBtnPaddingBottom ?? 5}px ${themeStyle.cartBtnPaddingLeft ?? 0}px`,
-  }
+  // Shops that quote rather than sell, or price at the counter, take the
+  // number off the card entirely.
+  const priceHidden = themeStyle.productPriceHidden === true
+
+  // — the quick-add chip's colours —
+  //
+  // White by default rather than the brand colour, because a solid
+  // brand-coloured square sits on a photograph like a sticker while a light
+  // pill reads as chrome floating over it. That is the default though, not a
+  // rule: a merchant who picks a colour gets that colour.
+  //
+  // These two used to be literals inside the chip's style, next to a computed
+  // style for a full-width button the grid stopped rendering, so both colour
+  // controls in the Cart Button panel changed nothing at all.
+  const chipBg = themeStyle.cartBtnBgColor || '#ffffff'
+  // Blank means "whatever reads on that", and a colour that was set is still
+  // checked against the ground: the two are picked from separate controls, so
+  // painting the chip black leaves yesterday's near-black label on it and the
+  // icon disappears into the pill.
+  const chipFg = themeStyle.cartBtnTextColor
+    ? ensureReadable(themeStyle.cartBtnTextColor, chipBg)
+    : readableText(chipBg, '#ffffff', '#18181b')
+  // Blank is a pill. The shape is what lets the chip grow sideways into a
+  // label without looking like a box being stretched, so it stays the default
+  // even on a squared-off theme; a merchant who wants corners can now say so.
+  const chipRadius = themeStyle.cartBtnRadius || '9999px'
+  // A hairline of its own ink, so the chip still has an edge where it lands on
+  // a pale part of a photo.
+  const chipBorder = readableBorder(chipBg)
 
   const titleHighlight = isEditor && activeProductField === 'product-title' ? HIGHLIGHT : {}
   const priceHighlight = isEditor && activeProductField === 'product-price' ? HIGHLIGHT : {}
   const cartHighlight  = isEditor && activeProductField === 'add-to-cart-btn' ? HIGHLIGHT : {}
 
   return (
-    <main className="flex-1 px-4 md:px-8 py-6 max-w-7xl mx-auto w-full" id="products">
+    <main
+      className="flex-1 px-4 md:px-8 py-6 max-w-7xl mx-auto w-full"
+      id="products"
+      // Set here rather than on each piece so the heading, the titles and the
+      // prices all follow it, and anything with a colour of its own still wins
+      // by being more specific.
+      style={themeStyle.textColor ? { color: themeStyle.textColor } : undefined}
+    >
 
       {/* Section heading */}
       <div className="mb-7 flex items-center gap-2">
@@ -389,7 +422,7 @@ export default function ProductGrid({
                       <EditorItem section="products" field="add-to-cart-btn" label="Cart Button" isEditor={isEditor} onEdit={notify}>
                         <AddToCartButton
                           product={{ id: p.id, title: p.title, price: p.price, imageUrl: p.imageUrl }}
-                          label="Add"
+                          label={themeStyle.cartBtnLabel || 'Add'}
                           showIcon
                           iconOnly
                           expandOnHover
@@ -401,20 +434,10 @@ export default function ProductGrid({
                           className="h-9 min-w-9 px-2 sm:h-10.5 sm:min-w-10.5 sm:px-[9.5px]"
                           isEditor={isEditor}
                           style={{
-                            // Deliberately not the theme's cart colour. A solid
-                            // brand-coloured square sat on the photograph like
-                            // a sticker; a light pill reads as chrome floating
-                            // over the image, which is what it is.
-                            backgroundColor: '#ffffff',
-                            color: '#18181b',
-                            // A hairline of the button's own ink keeps the chip
-                            // legible where it lands on a pale part of a photo
-                            // — a white chip on a white plate has no edge.
-                            border: '1px solid #e3e3e6',
-                            // Always a pill, even on a square theme: the shape
-                            // is what lets it grow sideways into a label
-                            // without looking like a box being stretched.
-                            borderRadius: '9999px',
+                            backgroundColor: chipBg,
+                            color: chipFg,
+                            border: `1px solid ${chipBorder}`,
+                            borderRadius: chipRadius,
                             // Square rather than padded: padding alone let the
                             // icon's own metrics decide the size, so the chip
                             // came out slightly off-square and small.
@@ -463,13 +486,19 @@ export default function ProductGrid({
                     </EditorItem>
                   </div>
                   </div>
-                  <div style={priceHighlight} className={isEditorial ? 'shrink-0' : undefined}>
-                    <EditorItem section="products" field="product-price" label="Price" isEditor={isEditor} onEdit={notify}>
-                      <span style={{ ...priceStyle, paddingTop: priceStyle.paddingTop ?? 0 }}>
-                        {price(p.price)}
-                      </span>
-                    </EditorItem>
-                  </div>
+                  {/* Hidden is hidden, in the editor too: the preview is the
+                      shop, not a diagram of it. The Price panel keeps its own
+                      row in Product Grid so the switch is still reachable
+                      once there is no price left to click. */}
+                  {!priceHidden && (
+                    <div style={priceHighlight} className={isEditorial ? 'shrink-0' : undefined}>
+                      <EditorItem section="products" field="product-price" label="Price" isEditor={isEditor} onEdit={notify}>
+                        <span style={{ ...priceStyle, paddingTop: priceStyle.paddingTop ?? 0 }}>
+                          {price(p.price)}
+                        </span>
+                      </EditorItem>
+                    </div>
+                  )}
                 </div>
               </div>
               </EditorItem>

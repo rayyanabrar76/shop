@@ -188,11 +188,11 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
 
   const [scrolledPastHero, setScrolledPastHero] = useState(false)
   useEffect(() => {
-    if (!((theme?.headerTransparent ?? false) && isHome)) return
+    if (!((theme?.headerTransparent ?? false) && isHome && (theme?.headerSticky ?? true))) return
     const onScroll = () => setScrolledPastHero(window.scrollY > 24)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [theme?.headerTransparent, isHome])
+  }, [theme?.headerTransparent, theme?.headerSticky, isHome])
 
   function handleHamburgerClick() {
     if (isEditor) {
@@ -233,7 +233,10 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
   // The bar sits over the hero instead of above it, then fades to its solid
   // colours once you scroll past the fold.
   const wantsTransparent = (theme?.headerTransparent ?? false) && isHome
-  const isTransparent = wantsTransparent && !scrolledPastHero
+  // A bar that scrolls away is only ever over the hero, so it never needs to
+  // fade to its solid colours; doing it anyway made it change colour on the
+  // way out of view.
+  const isTransparent = wantsTransparent && (!sticky || !scrolledPastHero)
   // Falls back to the normal logo, so enabling this without an inverse mark
   // still works — it just may not contrast well.
   const activeLogoUrl = isTransparent
@@ -355,9 +358,28 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
           }}
         />
       )}
+      {/*
+        * Four positions, from two independent settings.
+        *
+        * Transparent decides whether the bar sits over the hero or above it;
+        * sticky decides whether it stays when the page moves. They used to be
+        * read as one: transparent won outright and pinned the bar with
+        * `fixed`, so on a shop with a transparent header the sticky switch did
+        * nothing at all.
+        *
+        * Absolute is the one that was missing. It puts the bar over the hero
+        * exactly as fixed does, and then lets it leave with the rest of the
+        * page, which is what "scrolls away" means.
+        */}
       <header
         className={`z-40 w-full ${
-          wantsTransparent ? 'fixed top-0 left-0 right-0' : sticky ? 'sticky top-0' : 'relative'
+          wantsTransparent
+            ? sticky
+              ? 'fixed top-0 left-0 right-0'
+              : 'absolute top-0 left-0 right-0'
+            : sticky
+              ? 'sticky top-0'
+              : 'relative'
         }`}
       >
         {/* ── Main bar ── */}

@@ -11,6 +11,7 @@ import ThemeSync from '../ThemeSync'
 import { EditorSection, EditorItem } from '../EditorHighlight'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useStoreBase } from '@/components/StoreBaseProvider'
+import { ensureReadable } from '@/lib/contrast'
 
 interface Product {
   id: string
@@ -88,6 +89,7 @@ interface ThemeState {
   productTitlePaddingLeft?: number
   productTitlePaddingRight?: number
   productPriceShowSale?: boolean
+  productPriceHidden?: boolean
   productPriceInstallments?: boolean
   productPriceTaxInfo?: boolean
   productPricePreset?: string
@@ -101,6 +103,7 @@ interface ThemeState {
   productPricePaddingLeft?: number
   productPricePaddingRight?: number
   cartBtnLabel?: string
+  cartBtnRadius?: string
   cartBtnBgColor?: string
   cartBtnTextColor?: string
   cartBtnDisplay?: string
@@ -209,12 +212,19 @@ export default function ProductsPageClient({
 
   const btnColor = theme.productGridButtonColor || theme.primaryColor
 
+  // What the listing actually sits on. Blank means it inherits the page, so
+  // that is what its text has to be readable against.
+  const gridGround = theme.productGridBg || theme.backgroundColor
+
   const themeStyle = {
     primaryColor:              btnColor,
     backgroundColor:           theme.backgroundColor,
     footerColor:               theme.footerColor,
     accentColor:               theme.accentColor,
-    textColor:                 theme.productGridTextColor || theme.textColor,
+    // Same check the home page's grid gets: the listing's background and its
+    // text are set in different panels, so the pair is verified rather than
+    // trusted. Only a pairing that cannot be read is replaced.
+    textColor:                 ensureReadable(theme.productGridTextColor || theme.textColor, gridGround),
     borderRadius:              theme.borderRadius,
     buttonStyle:               theme.buttonStyle,
     font:                      theme.productGridFont || theme.font,
@@ -233,12 +243,15 @@ export default function ProductsPageClient({
     productTitlePaddingLeft:   theme.productTitlePaddingLeft,
     productTitlePaddingRight:  theme.productTitlePaddingRight,
     productPriceShowSale:      theme.productPriceShowSale,
+    productPriceHidden:        theme.productPriceHidden,
     productPriceInstallments:  theme.productPriceInstallments,
     productPriceTaxInfo:       theme.productPriceTaxInfo,
     productPricePreset:        theme.productPricePreset,
     productPriceWidth:         theme.productPriceWidth,
     productPriceAlign:         theme.productPriceAlign,
-    productPriceTextColor:     theme.productPriceTextColor,
+    productPriceTextColor:     theme.productPriceTextColor
+      ? ensureReadable(theme.productPriceTextColor, gridGround)
+      : theme.productPriceTextColor,
     productPriceHeadingColor:  theme.productPriceHeadingColor,
     productPriceLinkColor:     theme.productPriceLinkColor,
     productPricePaddingTop:    theme.productPricePaddingTop,
@@ -246,6 +259,7 @@ export default function ProductsPageClient({
     productPricePaddingLeft:   theme.productPricePaddingLeft,
     productPricePaddingRight:  theme.productPricePaddingRight,
     cartBtnLabel:              theme.cartBtnLabel,
+    cartBtnRadius:              theme.cartBtnRadius,
     cartBtnBgColor:            theme.cartBtnBgColor,
     cartBtnTextColor:          theme.cartBtnTextColor,
     cartBtnDisplay:            theme.cartBtnDisplay,

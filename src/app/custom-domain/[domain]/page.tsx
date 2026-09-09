@@ -76,6 +76,8 @@ export default async function CustomDomainPage({
     productPricePaddingRight: t?.productPricePaddingRight ?? 0,
     productPricePaddingTop: t?.productPricePaddingTop ?? 0,
     productPricePreset: t?.productPricePreset ?? '',
+    productPriceHidden: t?.productPriceHidden ?? false,
+    cartBtnRadius: t?.cartBtnRadius ?? '',
     productPriceTextColor: t?.productPriceTextColor ?? '',
     productPriceWidth: t?.productPriceWidth ?? '',
     productTitleAlign: t?.productTitleAlign ?? '',

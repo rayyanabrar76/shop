@@ -9,6 +9,7 @@ import StoreFooter from './StoreFooter'
 import CartSidebar from './cart-sidebar'
 import SectionDivider from './SectionDivider'
 import CustomSection, { type CustomSectionData, type StoreCategory } from './CustomSection'
+import ThemeSync from './ThemeSync'
 import { EditorSection, EditorItem, AddSectionSlot } from './EditorHighlight'
 import { resolveSectionOrder, isCustomKey, customIdFromKey } from '@/lib/section-order'
 import { ensureReadable, readableText } from '@/lib/contrast'
@@ -76,6 +77,7 @@ interface ThemeStyle {
   productTitlePaddingLeft?: number
   productTitlePaddingRight?: number
   productPriceShowSale?: boolean
+  productPriceHidden?: boolean
   productPriceInstallments?: boolean
   productPriceTaxInfo?: boolean
   productPricePreset?: string
@@ -89,6 +91,7 @@ interface ThemeStyle {
   productPricePaddingLeft?: number
   productPricePaddingRight?: number
   cartBtnLabel?: string
+  cartBtnRadius?: string
   cartBtnBgColor?: string
   cartBtnTextColor?: string
   cartBtnDisplay?: string
@@ -260,6 +263,10 @@ export default function StorefrontClient({
     visibleCustomSections.map(cs => cs.id),
   )
 
+  // What the product grid actually sits on. Blank means it inherits the page,
+  // so that is what its text has to be readable against.
+  const gridGround = theme.productGridBg || theme.backgroundColor
+
   const themeStyle = {
     primaryColor: btnColor,
     // Custom sections carry their own background and the dark stylesheet
@@ -269,13 +276,13 @@ export default function StorefrontClient({
     backgroundColor: theme.backgroundColor,
     footerColor: theme.footerColor,
     accentColor: theme.accentColor,
-    // Blank means "work it out": the grid has its own background, so falling
-    // back to the page text colour put dark text on a dark grid. A colour that
-    // was set is still checked against that background, since the two are
-    // chosen separately and nothing else compares them.
-    textColor: theme.productGridBg
-      ? ensureReadable(theme.productGridTextColor || theme.textColor, theme.productGridBg)
-      : (theme.productGridTextColor || theme.textColor),
+    // Every colour that lands on the grid is checked against the grid's own
+    // ground first. The two are chosen from different panels, minutes apart,
+    // and nothing else compares them: that is how a section painted black ends
+    // up with the near-black text that was perfectly sensible while the
+    // section was white. A pairing that still reads is left exactly as it was
+    // set, so this only ever rescues text that had disappeared.
+    textColor: ensureReadable(theme.productGridTextColor || theme.textColor, gridGround),
     borderRadius: theme.borderRadius,
     buttonStyle: theme.buttonStyle,
     font: theme.productGridFont || theme.font,
@@ -294,12 +301,17 @@ export default function StorefrontClient({
     productTitlePaddingLeft:   theme.productTitlePaddingLeft,
     productTitlePaddingRight:  theme.productTitlePaddingRight,
     productPriceShowSale:      theme.productPriceShowSale,
+    productPriceHidden:        theme.productPriceHidden,
     productPriceInstallments:  theme.productPriceInstallments,
     productPriceTaxInfo:       theme.productPriceTaxInfo,
     productPricePreset:        theme.productPricePreset,
     productPriceWidth:         theme.productPriceWidth,
     productPriceAlign:         theme.productPriceAlign,
-    productPriceTextColor:     theme.productPriceTextColor,
+    // Checked the same way, and only when one is set: an unset price colour
+    // inherits the grid's text, which has already been checked.
+    productPriceTextColor:     theme.productPriceTextColor
+      ? ensureReadable(theme.productPriceTextColor, gridGround)
+      : theme.productPriceTextColor,
     productPriceHeadingColor:  theme.productPriceHeadingColor,
     productPriceLinkColor:     theme.productPriceLinkColor,
     productPricePaddingTop:    theme.productPricePaddingTop,
@@ -307,6 +319,7 @@ export default function StorefrontClient({
     productPricePaddingLeft:   theme.productPricePaddingLeft,
     productPricePaddingRight:  theme.productPricePaddingRight,
     cartBtnLabel:         theme.cartBtnLabel,
+    cartBtnRadius:         theme.cartBtnRadius,
     cartBtnBgColor:       theme.cartBtnBgColor,
     cartBtnTextColor:     theme.cartBtnTextColor,
     cartBtnDisplay:       theme.cartBtnDisplay,
@@ -328,6 +341,15 @@ export default function StorefrontClient({
         fontFamily: theme.font === 'serif' ? 'serif' : theme.font === 'mono' ? 'monospace' : 'inherit',
       }}
     >
+      {/* Four of this page's colours are read from CSS variables rather than
+          from the theme in state: the page ground, its text, the product
+          grid's ground and the footer's. Nothing writes those variables after
+          the first paint except this, and the home page was the only
+          storefront page that never mounted it, so those four were the only
+          settings in the editor that did nothing to the preview until the
+          theme was saved and the frame reloaded. */}
+      <ThemeSync />
+
       {/* Preview pulse animation, only injected when inside the editor iframe */}
       {isEditor && (
         <style>{`

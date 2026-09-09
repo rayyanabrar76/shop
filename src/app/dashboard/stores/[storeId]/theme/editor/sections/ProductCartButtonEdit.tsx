@@ -3,6 +3,7 @@
 import SectionHeader from './SectionHeader'
 import AiFieldLabel from '@/components/ai/AiFieldLabel'
 import { ThemeState, labelCls, inputCls } from '../types'
+import { readableText, contrastRatio } from '@/lib/contrast'
 
 interface ProductCartButtonEditProps {
   theme: ThemeState
@@ -11,15 +12,30 @@ interface ProductCartButtonEditProps {
   storeId: string
 }
 
-function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      onClick={() => onChange(!on)}
-      className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${on ? 'bg-zinc-900' : 'bg-zinc-200 dark:bg-zinc-700'}`}
-    >
-      <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${on ? 'translate-x-5' : ''}`} />
-    </button>
-  )
+/** What the chip paints itself when no colour is set. Mirrors ProductGrid. */
+const CHIP_BG = '#ffffff'
+
+/**
+ * The slider's top stop, which is the pill rather than a number of pixels.
+ *
+ * The chip is about 40px tall, so anything past ~20px is already fully round
+ * and the last few positions would all look identical. Giving the end of the
+ * track a name instead makes it a choice rather than "drag until it stops
+ * changing", and it stores blank, which is what every existing shop has.
+ */
+const PILL = 26
+
+function radiusToSlider(v: string): number {
+  if (!v || v === '9999px') return PILL
+  if (v.includes('rem')) return Math.round(parseFloat(v) * 16)
+  if (v.includes('px')) return parseInt(v)
+  return PILL
+}
+
+function sliderToRadius(n: number): string {
+  if (n >= PILL) return ''
+  if (n === 0) return '0px'
+  return `${(n / 16).toFixed(4)}rem`
 }
 
 /**
@@ -69,6 +85,16 @@ function Preview({ kind, active }: { kind: string; active: boolean }) {
 
 
 export default function ProductCartButtonEdit({ theme, updateTheme, onBack, storeId }: ProductCartButtonEditProps) {
+  // What the label becomes if its own colour is left blank. The same call the
+  // chip makes, so this panel shows the colour the shop will actually use.
+  const chipBg = theme.cartBtnBgColor || CHIP_BG
+  const autoFg = readableText(chipBg, '#ffffff', '#18181b')
+  // The shop replaces a label colour that cannot be read on the chip. Say so
+  // here, rather than letting this panel show one colour and the preview
+  // another with no explanation.
+  const fgOverridden =
+    !!theme.cartBtnTextColor && (contrastRatio(theme.cartBtnTextColor, chipBg) ?? 21) < 3
+
   function padChange(field: keyof ThemeState) {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
       updateTheme({ [field]: parseInt(e.target.value) || 0 } as any)
@@ -121,61 +147,68 @@ export default function ProductCartButtonEdit({ theme, updateTheme, onBack, stor
           </div>
         </div>
 
-        {/* Blank inherits the grid Button Color, which inherits Primary. */}
+        {/* The chip is white unless a colour is set. This used to say "theme
+            button colour" while the chip painted itself white on the shop, so
+            the swatch disagreed with the thing it was describing. */}
         <div data-field="cart-btn-colors">
           <label className={labelCls}>
-            Background <span className="normal-case font-normal opacity-60">blank uses the theme button colour</span>
+            Background <span className="normal-case font-normal opacity-60">blank keeps the chip white</span>
           </label>
           <div className="flex items-center gap-3">
             <input
               type="color"
-              value={theme.cartBtnBgColor || theme.primaryColor}
+              value={theme.cartBtnBgColor || CHIP_BG}
               onChange={e => updateTheme({ cartBtnBgColor: e.target.value })}
               className="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5 cursor-pointer shrink-0"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-mono text-zinc-500">{theme.cartBtnBgColor || '(theme colour)'}</p>
+              <p className="text-[10px] font-mono text-zinc-500">{theme.cartBtnBgColor || '(white)'}</p>
             </div>
             <input
               type="text"
               value={theme.cartBtnBgColor ?? ''}
               onChange={e => updateTheme({ cartBtnBgColor: e.target.value })}
-              placeholder={theme.primaryColor}
+              placeholder={CHIP_BG}
               className="w-24 text-[10px] font-mono border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
             />
           </div>
           {theme.cartBtnBgColor && (
             <button onClick={() => updateTheme({ cartBtnBgColor: '' })} className="mt-1.5 text-[10px] text-zinc-400 hover:text-zinc-600 underline">
-              Reset to theme colour
+              Reset to white
             </button>
           )}
         </div>
 
         <div>
           <label className={labelCls}>
-            Text Color <span className="normal-case font-normal opacity-60">blank uses white</span>
+            Text Color <span className="normal-case font-normal opacity-60">blank follows the background</span>
           </label>
           <div className="flex items-center gap-3">
             <input
               type="color"
-              value={theme.cartBtnTextColor || '#ffffff'}
+              value={theme.cartBtnTextColor || autoFg}
               onChange={e => updateTheme({ cartBtnTextColor: e.target.value })}
               className="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5 cursor-pointer shrink-0"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-mono text-zinc-500">{theme.cartBtnTextColor || '(white)'}</p>
+              <p className="text-[10px] font-mono text-zinc-500">{theme.cartBtnTextColor || `(auto, ${autoFg})`}</p>
             </div>
             <input
               type="text"
               value={theme.cartBtnTextColor ?? ''}
               onChange={e => updateTheme({ cartBtnTextColor: e.target.value })}
-              placeholder="#ffffff"
+              placeholder={autoFg}
               className="w-24 text-[10px] font-mono border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
             />
           </div>
+          {fgOverridden && (
+            <p className="mt-1.5 text-[10px] text-amber-600 dark:text-amber-400">
+              Too close to the background to read, so the chip is using {autoFg} instead.
+            </p>
+          )}
           {theme.cartBtnTextColor && (
             <button onClick={() => updateTheme({ cartBtnTextColor: '' })} className="mt-1.5 text-[10px] text-zinc-400 hover:text-zinc-600 underline">
-              Reset to white
+              Reset to auto
             </button>
           )}
         </div>
@@ -202,14 +235,37 @@ export default function ProductCartButtonEdit({ theme, updateTheme, onBack, stor
           />
         </div>
 
-        {/* Show icon toggle */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Show cart icon</span>
-          <Toggle
-            on={theme.cartBtnShowIcon ?? true}
-            onChange={v => updateTheme({ cartBtnShowIcon: v })}
-          />
+        {/* Curvature. Reads the same way as the grid's own slider, with a
+            swatch carrying whatever radius the track is on rather than a
+            sentence describing it. */}
+        <div data-field="cart-btn-radius">
+          <div className="flex items-center justify-between mb-2">
+            <label className={`${labelCls} mb-0`}>Curvature</label>
+            <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] text-zinc-600 tabular-nums dark:bg-zinc-800 dark:text-zinc-300">
+              {theme.cartBtnRadius || 'Pill'}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div
+              className="h-5 w-5 shrink-0 border-2 border-zinc-200 dark:border-zinc-700 transition-[border-radius]"
+              style={{ borderRadius: theme.cartBtnRadius || '9999px' }}
+            />
+            <input
+              type="range"
+              min={0} max={PILL} step={2}
+              value={radiusToSlider(theme.cartBtnRadius ?? '')}
+              onChange={e => updateTheme({ cartBtnRadius: sliderToRadius(parseInt(e.target.value)) })}
+              className="flex-1 h-1.5 cursor-pointer rounded-full accent-zinc-900 dark:accent-zinc-100"
+              aria-label="Cart button curvature"
+            />
+            <div className="w-5 h-5 border-2 border-zinc-200 dark:border-zinc-700 shrink-0 rounded-full" />
+          </div>
         </div>
+
+        {/* "Show cart icon" used to sit here, beside Width. The chip *is* the
+            icon, so switching it off left an empty pill, and Show Button above
+            already covers not having one. Both columns stay on the model so
+            old rows still load. */}
 
         {/* Width used to sit here. It only ever applied to the full-width
             button under the card, which no longer exists, the setting stayed

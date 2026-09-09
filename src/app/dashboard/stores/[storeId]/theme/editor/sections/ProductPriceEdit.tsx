@@ -2,6 +2,7 @@
 
 import SectionHeader from './SectionHeader'
 import { ThemeState, labelCls, inputCls } from '../types'
+import { ToggleRow } from '../controls'
 import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
 
 interface ProductPriceEditProps {
@@ -57,6 +58,15 @@ export default function ProductPriceEdit({ theme, updateTheme, onBack }: Product
     <div>
       <SectionHeader title="Price" onBack={onBack} />
       <div className="p-4 space-y-5">
+
+        {/* First, because it governs everything under it: a hidden price has
+            no typography, colour or padding worth setting. */}
+        <ToggleRow
+          label="Show price"
+          hint={theme.productPriceHidden ? 'Cards show no price at all' : undefined}
+          on={!theme.productPriceHidden}
+          onChange={v => updateTheme({ productPriceHidden: !v })}
+        />
 
         {/* Typography */}
         <div className="space-y-3">

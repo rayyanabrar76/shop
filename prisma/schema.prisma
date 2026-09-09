@@ -187,7 +187,14 @@ model StoreTheme {
   productPricePaddingBottom Int  @default(0)
   productPricePaddingLeft   Int  @default(0)
   productPricePaddingRight  Int  @default(0)
+  /// Cards without a price. Some shops quote rather than sell, and some
+  /// price by weight at the counter, so the number is the wrong thing to
+  /// put on the card.
+  productPriceHidden     Boolean @default(false)
   cartBtnLabel       String  @default("")
+  /// The quick-add chip's corners. Blank is a full pill, which is what it
+  /// was before this was settable, so existing shops do not move.
+  cartBtnRadius      String  @default("")
   cartBtnShowIcon    Boolean @default(true)
   cartBtnWidth       String  @default("fill")
   cartBtnFontSize    Int     @default(10)

@@ -15,6 +15,24 @@ export interface HeroSlide {
   bgColor?: string | null
 }
 
+/**
+ * The band's vertical rhythm, in one place.
+ *
+ * HEADER_OVERLAY is what a transparent header takes off the top. Without it
+ * the text is centred in the whole band, which is not the part you can see:
+ * the menu sits over the first seventy-odd pixels, so the heading ends up
+ * pressed against it with a wide empty gap underneath.
+ *
+ * CONTENT_MIN is a floor, not a height. Slides do not have the same number of
+ * lines, and a centred block of different heights starts at a different place
+ * on every slide, so the carousel appears to shuffle its own text as it turns.
+ * With a floor under it the heading begins at the same point every time and
+ * only a genuinely long slide pushes past it.
+ */
+const HERO_MIN = 460
+const HEADER_OVERLAY = 76
+const CONTENT_MIN = 320
+
 interface StoreHeroProps {
   theme: {
     primaryColor?: string | null
@@ -22,6 +40,8 @@ interface StoreHeroProps {
     borderRadius?: string | null
     buttonStyle?: string | null
     headingFont?: string | null
+    /** The header floats over this section rather than sitting above it. */
+    headerTransparent?: boolean | null
   } | null
   storeName: string
   storeId: string
@@ -81,6 +101,9 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
   const radius = theme?.borderRadius ?? '0px'
   const notify = onEdit ?? (() => {})
   const hasMedia = !!slide.imageUrl
+  // This section only ever renders on the home page, which is the only place a
+  // transparent header floats, so the setting alone is the answer here.
+  const overlaysHeader = theme?.headerTransparent === true
   const isVideo = isVideoUrl(slide.imageUrl)
 
   return (
@@ -88,7 +111,7 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
       className="relative w-full overflow-hidden transition-colors duration-500"
       style={{
         backgroundColor: slide.bgColor ?? '#f4f4f8',
-        minHeight: 420,
+        minHeight: HERO_MIN,
       }}
     >
       {/* Full-bleed background media */}
@@ -121,11 +144,19 @@ export default function StoreHero({ theme, slides: propSlides, activeSlide, isEd
       {/* Content */}
       <div
         className="relative z-10 max-w-7xl mx-auto flex items-center"
-        style={{ minHeight: 420 }}
+        style={{
+          minHeight: HERO_MIN,
+          // Centred in what is visible, not in the box.
+          paddingTop: overlaysHeader ? HEADER_OVERLAY : 0,
+        }}
       >
         <div
-          className="flex-1 px-8 md:px-14 py-16 flex flex-col gap-4 max-w-2xl"
-          style={{ opacity: transitioning ? 0 : 1, transition: 'opacity 0.22s' }}
+          className="flex-1 px-8 md:px-14 py-8 flex flex-col gap-4 max-w-2xl"
+          style={{
+            minHeight: CONTENT_MIN,
+            opacity: transitioning ? 0 : 1,
+            transition: 'opacity 0.22s',
+          }}
         >
           <EditorItem section="hero" field="hero-heading" meta={{ slideIndex: current }} label="Heading" isEditor={isEditor} onEdit={notify}>
             {/* Sanitised HTML like the subheading. The base classes below are

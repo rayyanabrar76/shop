@@ -2,20 +2,41 @@
 
 import SectionHeader from './SectionHeader'
 import { ThemeState, labelCls } from '../types'
+import { PanelRow } from '../controls'
 import MediaPicker from '@/components/MediaPicker'
+import { Menu } from 'lucide-react'
 
 interface HeaderEditProps {
   storeId: string
   theme: ThemeState
   updateTheme: (patch: Partial<ThemeState>) => void
   onBack: () => void
+  /** Opens a panel that belongs to the header. */
+  onOpenPanel?: (view: string) => void
 }
 
-export default function HeaderEdit({ storeId, theme, updateTheme, onBack }: HeaderEditProps) {
+export default function HeaderEdit({ storeId, theme, updateTheme, onBack, onOpenPanel }: HeaderEditProps) {
+  const linkCount = theme.navLinks?.length ?? 0
+
   return (
     <div>
       <SectionHeader title="Header" description="Logo and navigation" onBack={onBack} />
       <div className="p-4 space-y-4">
+
+        {/* The menu is its own panel, and clicking it in the preview was the
+            only way in. On a phone it is a hamburger rather than a row of
+            links, so there was often nothing to click at all. */}
+        {onOpenPanel && (
+          <div className="space-y-2">
+            <p className={labelCls}>Header Parts</p>
+            <PanelRow
+              icon={Menu}
+              label="Navigation Menu"
+              note={linkCount > 0 ? `${linkCount} ${linkCount === 1 ? 'link' : 'links'}` : undefined}
+              onClick={() => onOpenPanel('nav-menu')}
+            />
+          </div>
+        )}
 
         <div data-field="header-logo">
           <label className={labelCls}>Logo Image</label>

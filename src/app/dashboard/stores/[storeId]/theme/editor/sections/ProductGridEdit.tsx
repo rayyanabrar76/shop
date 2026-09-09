@@ -4,8 +4,8 @@ import Link from 'next/link'
 import SectionHeader from './SectionHeader'
 import AiFieldLabel from '@/components/ai/AiFieldLabel'
 import { ThemeState, labelCls, inputCls } from '../types'
-import { ColorField, SelectField, ToggleRow } from '../controls'
-import { ExternalLink } from 'lucide-react'
+import { ColorField, PanelRow, SelectField, ToggleRow } from '../controls'
+import { ExternalLink, ShoppingCart, Tag, Type } from 'lucide-react'
 
 interface ProductGridEditProps {
   theme: ThemeState
@@ -13,9 +13,12 @@ interface ProductGridEditProps {
   onBack: () => void
   storeId: string
   isProductsPage?: boolean
+  /** Opens one of the card's own panels. Passed in because the panels are
+      siblings of this one, not children of it. */
+  onOpenPanel?: (view: string) => void
 }
 
-export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, isProductsPage = false }: ProductGridEditProps) {
+export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, isProductsPage = false, onOpenPanel }: ProductGridEditProps) {
   return (
     <div>
       <SectionHeader title={isProductsPage ? 'Product Listing' : 'Product Grid'} description="Layout and card styles" onBack={onBack} />
@@ -134,6 +137,28 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
             ]}
           />
         </div>
+
+        {/* The card's own parts. These are normally reached by clicking the
+            thing itself in the preview, which stops working the moment one of
+            them is switched off, so they have a way in from here as well. */}
+        {onOpenPanel && (
+          <div className="space-y-2">
+            <p className={labelCls}>Product Card</p>
+            <PanelRow icon={Type} label="Product Title" onClick={() => onOpenPanel('product-title')} />
+            <PanelRow
+              icon={Tag}
+              label="Price"
+              note={theme.productPriceHidden ? 'Hidden' : undefined}
+              onClick={() => onOpenPanel('product-price')}
+            />
+            <PanelRow
+              icon={ShoppingCart}
+              label="Cart Button"
+              note={theme.cartBtnDisplay === 'hidden' ? 'Hidden' : undefined}
+              onClick={() => onOpenPanel('product-cart')}
+            />
+          </div>
+        )}
 
         <SelectField
           label="Button Style"

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Bold, Check, ChevronDown, Italic, Link2, List, ListOrdered } from 'lucide-react'
+import { Bold, Check, ChevronDown, ChevronRight, Italic, Link2, List, ListOrdered } from 'lucide-react'
 import { labelCls } from './types'
 
 /**
@@ -454,5 +454,42 @@ export function RichTextField({
         />
       </div>
     </div>
+  )
+}
+
+/**
+ * A link out to a panel that belongs to this one.
+ *
+ * These parts are normally reached by clicking the thing itself in the
+ * preview, which stops working the moment one of them is switched off or is
+ * only visible on a phone. So each panel that owns sub-panels lists them.
+ */
+export function PanelRow({
+  icon: Icon,
+  label,
+  note,
+  onClick,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  /** A short state word, e.g. "Hidden". Not a description. */
+  note?: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
+    >
+      <Icon className="w-3.5 h-3.5 shrink-0 text-zinc-500" />
+      <span className="flex-1 text-[12.5px] font-medium text-zinc-700 dark:text-zinc-200">{label}</span>
+      {note && (
+        <span className="shrink-0 rounded-md bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-zinc-500">
+          {note}
+        </span>
+      )}
+      <ChevronRight className="w-3.5 h-3.5 shrink-0 text-zinc-300 dark:text-zinc-600" />
+    </button>
   )
 }

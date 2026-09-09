@@ -78,6 +78,8 @@ export interface ThemeState {
   productPricePaddingBottom: number
   productPricePaddingLeft: number
   productPricePaddingRight: number
+  productPriceHidden: boolean
+  cartBtnRadius: string
   // Cart button block
   cartBtnLabel: string
   cartBtnBgColor: string
