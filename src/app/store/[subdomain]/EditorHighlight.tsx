@@ -1,5 +1,7 @@
 'use client'
 
+import { useSyncExternalStore } from 'react'
+
 const BLUE = '#3b82f6'
 
 /** Wraps a whole section — shows a border + "Edit X" badge on hover. Non-blocking. */
@@ -22,7 +24,7 @@ export function EditorSection({
 }) {
   if (!isEditor) return <div id={id} className={className}>{children}</div>
   return (
-    <div id={id} className={`relative group/sec cursor-pointer ${className}`} onClick={() => onEdit(section)}>
+    <div id={id} data-editor-section={section} className={`relative group/sec cursor-pointer ${className}`} onClick={() => onEdit(section)}>
       {children}
       {/* non-blocking border */}
       <div
@@ -85,6 +87,7 @@ export function EditorItem({
 
   return (
     <span
+      data-editor-item={field ?? section}
       className={`relative group/item cursor-pointer ${block ? 'block' : 'inline-block'}`}
       onClick={handleClick}
     >
@@ -149,4 +152,53 @@ export function AddSectionSlot({ isEditor }: { isEditor: boolean }) {
       </div>
     </div>
   )
+}
+
+/**
+ * Is this page being rendered inside the theme editor's preview frame?
+ *
+ * The editor loads the real storefront in an iframe, so "am I being edited"
+ * is the same question as "am I framed, and not by the customer preview".
+ * Pages that pass an explicit isEditor prop down from a client shell keep
+ * doing that; this is for the chrome that any page can render without one.
+ *
+ * False on the first paint by design. It is read after mount because the
+ * server has no window to ask, and a guess on the server that the client
+ * disagrees with is a hydration mismatch.
+ */
+export function useIsEditor(): boolean {
+  return useSyncExternalStore(NEVER_CHANGES, readIsEditor, () => false)
+}
+
+/** Whether the page is framed cannot change without a navigation, so there is
+ *  nothing to subscribe to. */
+const NEVER_CHANGES = () => () => {}
+function readIsEditor() {
+  return window.self !== window.top && !new URLSearchParams(window.location.search).has('preview')
+}
+
+/**
+ * Ask the editor to move its preview to another storefront page.
+ *
+ * The frame cannot navigate itself: the editor owns the iframe's src, holds
+ * the unsaved theme, and has a sidebar that has to end up on the same page as
+ * the preview. So a link inside the preview reports where it wanted to go and
+ * lets the editor take it there.
+ */
+export function previewNavigate(path: string, meta?: { label?: string; kind?: string }) {
+  window.parent.postMessage(
+    { type: 'preview:navigate', path, label: meta?.label ?? null, kind: meta?.kind ?? 'page' },
+    '*',
+  )
+}
+
+/**
+ * The default onEdit for chrome that was not handed one.
+ *
+ * EditorItem posts field:focus by itself, but EditorSection and the whole-
+ * section fallbacks call onEdit, and a header rendered by a server page has
+ * nobody to pass a callback in. Same message the client shells send.
+ */
+export function notifyEdit(section: string) {
+  window.parent.postMessage({ type: 'section:edit', section }, '*')
 }

@@ -6,6 +6,7 @@ import {
   Megaphone, Layout, LayoutGrid, Type,
   ShoppingBag, CreditCard, Package, CheckCircle2,
   LogIn, UserPlus, User, Truck, Star, Palette, Filter,
+  Image as ImageIcon,
 } from 'lucide-react'
 
 type SectionDef = {
@@ -18,6 +19,31 @@ type SectionDef = {
 }
 
 const SYSTEM_PAGE_DEFS: Record<string, SectionDef[]> = {
+  // Anywhere else the preview can walk to. The chrome is still the theme's,
+  // so the panels that own it are still the right answer.
+  other: [
+    { id: 'banner', label: 'Announcement Banner', description: 'Top banner with text',         icon: Megaphone, editorView: 'banner' },
+    { id: 'header', label: 'Header',              description: 'Logo and navigation links',    icon: Layout,    editorView: 'header' },
+    { id: 'footer', label: 'Footer',              description: 'Footer text and social links', icon: Type,      editorView: 'footer' },
+  ],
+  product: [
+    { id: 'banner',   label: 'Announcement Banner', description: 'Top banner with text',           icon: Megaphone, editorView: 'banner' },
+    { id: 'header',   label: 'Header',              description: 'Logo and navigation links',      icon: Layout,    editorView: 'header' },
+    { id: 'gallery',  label: 'Product Media',       description: 'Photos of this product',         icon: ImageIcon,
+      info: 'The images come from the product itself. Add or reorder them by opening the product from the grid, or in Products.' },
+    { id: 'details',  label: 'Product Details',     description: 'Title, price, description',      icon: Package,
+      info: 'Title, price, description, variants and stock all come from the product record. Edit them in Products; colors and fonts follow your theme.' },
+    { id: 'reviews',  label: 'Ratings and Reviews', description: 'What customers said',            icon: Star,
+      info: 'Shows reviews you have approved for this product. Approve or reply to them in Reviews.' },
+    { id: 'footer',   label: 'Footer',              description: 'Footer text and social links',   icon: Type,      editorView: 'footer' },
+  ],
+  category: [
+    { id: 'banner',          label: 'Announcement Banner', description: 'Top banner with text',       icon: Megaphone,  editorView: 'banner' },
+    { id: 'header',          label: 'Header',              description: 'Logo and navigation links',  icon: Layout,     editorView: 'header' },
+    { id: 'products',        label: 'Product Listing',     description: 'Grid layout and card styles', icon: LayoutGrid, editorView: 'products' },
+    { id: 'category-filter', label: 'Category Filters',    description: 'Tab curvature, font, colors', icon: Filter,     editorView: 'category-filter' },
+    { id: 'footer',          label: 'Footer',              description: 'Footer text and social links', icon: Type,      editorView: 'footer' },
+  ],
   products: [
     { id: 'banner',          label: 'Announcement Banner', description: 'Top banner with text',              icon: Megaphone,    editorView: 'banner' },
     { id: 'header',          label: 'Header',              description: 'Logo and navigation links',         icon: Layout,       editorView: 'header' },

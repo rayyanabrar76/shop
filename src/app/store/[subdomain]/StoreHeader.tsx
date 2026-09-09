@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { Search, X, User, LogOut, ShoppingBag, ChevronDown, Menu } from 'lucide-react'
 import CartIcon from './cart-icon'
 import { useAuth } from './auth-context'
-import { EditorItem } from './EditorHighlight'
+import { EditorItem, useIsEditor, notifyEdit } from './EditorHighlight'
 import { usePrice } from '@/components/CurrencyProvider'
 import { useStoreBase } from '@/components/StoreBaseProvider'
 import { readableText } from '@/lib/contrast'
@@ -81,10 +81,15 @@ function buildHref(base: string, href: string): string {
   return `${base}${href.startsWith('/') ? href : '/' + href}`
 }
 
-export default function StoreHeader({ store, theme, subdomain, isEditor = false, isHome = false, onEdit }: StoreHeaderProps) {
+export default function StoreHeader({ store, theme, subdomain, isEditor: isEditorProp, isHome = false, onEdit }: StoreHeaderProps) {
   const storeBase = useStoreBase()
   const price = usePrice()
-  const notify = onEdit ?? (() => {})
+  // Pages with a client shell hand this down; the ones rendered straight from
+  // the server (a product, a category) do not, and work it out themselves. So
+  // the header is editable wherever it appears, not only on the home page.
+  const detected = useIsEditor()
+  const isEditor = isEditorProp ?? detected
+  const notify = onEdit ?? notifyEdit
   const { customer, logout } = useAuth()
   const pathname = usePathname()
 

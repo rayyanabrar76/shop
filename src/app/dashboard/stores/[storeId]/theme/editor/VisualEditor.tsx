@@ -10,7 +10,7 @@ import {
   CheckCircle2, Eye, ChevronDown,
   Home, Globe, Plus, Check,
   ShoppingBag, CreditCard, CheckSquare, LogIn, UserCircle, PackageCheck,
-  PanelLeft, X, Pencil,
+  PanelLeft, X, Pencil, Package, Tag,
 } from 'lucide-react'
 import { ThemeState } from './types'
 import SectionsList from './sections/SectionsList'
@@ -69,6 +69,29 @@ const SYSTEM_PAGES = [
   { id: '__signup__',       name: 'Sign Up',            slug: 'signup',       icon: UserCircle },
   { id: '__account__',      name: 'Account',            slug: 'account',      icon: PackageCheck },
 ]
+
+/** Where the preview is, when it is somewhere the page picker cannot name. */
+type PreviewLocation = { path: string; label: string; kind: 'product' | 'category' | 'other' }
+
+/**
+ * What a path clicked inside the preview means to the editor.
+ *
+ * Most of them are pages the picker already lists, and landing on one should
+ * select it rather than opening a nameless "somewhere else" state. Only the
+ * paths with no entry of their own — a single product, a single category —
+ * become a preview location.
+ */
+function classifyPath(path: string, pages: StorePage[]) {
+  const clean = (path.split('?')[0] || '/').replace(/\/+$/, '')
+  if (clean === '' || clean === '/') return { kind: 'home' as const }
+  const slug = clean.replace(/^\//, '')
+  if (SYSTEM_PAGES.some(p => p.slug === slug)) return { kind: 'system' as const, slug }
+  const page = pages.find(p => p.slug === slug)
+  if (page) return { kind: 'page' as const, page }
+  if (slug.startsWith('products/')) return { kind: 'product' as const }
+  if (slug.startsWith('categories/')) return { kind: 'category' as const }
+  return { kind: 'other' as const }
+}
 
 /**
  * The names the section panels go by, for the sheet's title row. Same words
@@ -197,9 +220,16 @@ export default function VisualEditor({
   )
   const [activeHeroSlide, setActiveHeroSlide] = useState<number | null>(null)
   const [storePages, setStorePages] = useState<StorePage[]>([])
+  const storePagesRef = useRef<StorePage[]>([])
   const [activePage, setActivePage] = useState<StorePage | null>(null)
   const activePageRef = useRef<StorePage | null>(null)
   const [systemPageSlug, setSystemPageSlug] = useState<string | null>(null)
+  /**
+   * A page the preview walked to that the picker has no entry for: one
+   * product, one category. Path is relative to the shop's base, label is what
+   * was clicked so the picker can say where you are.
+   */
+  const [preview, setPreview] = useState<PreviewLocation | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [showAddPageModal, setShowAddPageModal] = useState(false)
   // Creating a page from the page picker means "take me there". Creating one
@@ -651,6 +681,10 @@ export default function VisualEditor({
       .catch(() => {})
   }, [storeId])
 
+  useEffect(() => {
+    storePagesRef.current = storePages
+  }, [storePages])
+
   // Keep ref in sync so event listeners don't capture stale activePage
   useEffect(() => {
     activePageRef.current = activePage
@@ -711,6 +745,45 @@ export default function VisualEditor({
     window.addEventListener('message', handleAddProduct)
     return () => window.removeEventListener('message', handleAddProduct)
   }, [])
+
+  /**
+   * The preview asked to go somewhere.
+   *
+   * The frame cannot navigate itself: the editor owns the iframe's src and
+   * holds the theme that has not been saved yet. A path the picker already
+   * knows selects that page, so walking to Products from the preview and
+   * picking Products from the menu land in exactly the same place. Anything
+   * else becomes a preview location of its own.
+   */
+  function goToPreviewPath(path: string, label?: string | null) {
+    const where = classifyPath(path, storePagesRef.current)
+    setPickerOpen(false)
+    setSectionView('list')
+    if (where.kind === 'home' || where.kind === 'system' || where.kind === 'page') {
+      setPreview(null)
+      if (where.kind === 'home') handlePageSelect('__home__')
+      else if (where.kind === 'system') handleSystemPageSelect(where.slug)
+      else handlePageSelect(where.page.id)
+      return
+    }
+    leavingPage()
+    setActivePage(null)
+    setSystemPageSlug(null)
+    setPreview({
+      path,
+      label: label?.trim() || (where.kind === 'product' ? 'Product page' : 'Page'),
+      kind: where.kind,
+    })
+  }
+
+  useEffect(() => {
+    function handleNavigate(e: MessageEvent) {
+      if (e.data?.type !== 'preview:navigate' || typeof e.data.path !== 'string') return
+      goToPreviewPath(e.data.path, e.data.label)
+    }
+    window.addEventListener('message', handleNavigate)
+    return () => window.removeEventListener('message', handleNavigate)
+  })
 
   useEffect(() => {
     function handleEditProduct(e: MessageEvent) {
@@ -955,6 +1028,7 @@ function handlePageContentChange(content: unknown) {
   function handlePageSelect(pageId: string) {
     setPickerOpen(false)
     leavingPage()
+    setPreview(null)
     if (pageId === '__home__') {
       setActivePage(null)
       setSystemPageSlug(null)
@@ -968,6 +1042,7 @@ function handlePageContentChange(content: unknown) {
   function handleSystemPageSelect(slug: string) {
     setPickerOpen(false)
     leavingPage()
+    setPreview(null)
     setActivePage(null)
     setSystemPageSlug(slug)
     setSectionView('list')
@@ -1031,11 +1106,13 @@ function handlePageContentChange(content: unknown) {
     }
   }
 
-  const iframeSrc = activePage
-    ? `/store/${subdomain}/${activePage.slug}`
-    : systemPageSlug
-      ? `/store/${subdomain}/${systemPageSlug}`
-      : `/store/${subdomain}`
+  const iframeSrc = preview
+    ? `/store/${subdomain}${preview.path.startsWith('/') ? '' : '/'}${preview.path}`
+    : activePage
+      ? `/store/${subdomain}/${activePage.slug}`
+      : systemPageSlug
+        ? `/store/${subdomain}/${systemPageSlug}`
+        : `/store/${subdomain}`
 
   useEffect(() => {
     setIframeLoading(true)
@@ -1047,7 +1124,9 @@ function handlePageContentChange(content: unknown) {
   ]
 
   const activeSystemPage = systemPageSlug ? SYSTEM_PAGES.find(p => p.slug === systemPageSlug) : null
-  const currentPageName = activePage ? activePage.name : activeSystemPage ? activeSystemPage.name : 'Home'
+  const currentPageName = preview
+    ? preview.label
+    : activePage ? activePage.name : activeSystemPage ? activeSystemPage.name : 'Home'
   // The section wins when there is one: on a phone the sheet is small enough
   // that "Home" tells you nothing you did not already know from the preview
   // behind it, while "Hero" is the answer to what you just tapped.
@@ -1221,11 +1300,15 @@ function handlePageContentChange(content: unknown) {
               className="w-full flex items-center justify-between gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-semibold text-zinc-800 dark:text-zinc-100 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
             >
               <span className="flex items-center gap-2 min-w-0">
-                {activePage
-                  ? <Globe className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                  : activeSystemPage
-                    ? <activeSystemPage.icon className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                    : <Home className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                {preview
+                  ? (preview.kind === 'category'
+                      ? <Tag className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      : <Package className="w-3.5 h-3.5 text-zinc-400 shrink-0" />)
+                  : activePage
+                    ? <Globe className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                    : activeSystemPage
+                      ? <activeSystemPage.icon className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      : <Home className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                 }
                 <span className="truncate">{currentPageName}</span>
               </span>
@@ -1237,14 +1320,31 @@ function handlePageContentChange(content: unknown) {
                 {/* Click-away overlay */}
                 <div className="fixed inset-0 z-10" onClick={() => setPickerOpen(false)} />
                 <div className="absolute left-3 right-3 top-full mt-1 z-20 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-xl overflow-hidden max-h-64 overflow-y-auto thin-scrollbar">
+                  {/* Where the preview walked to. Not a choice you can make
+                      from this menu, so it is shown rather than offered: a
+                      product page is reached by clicking the product. */}
+                  {preview && (
+                    <>
+                      <p className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Viewing</p>
+                      <div className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left">
+                        {preview.kind === 'category'
+                          ? <Tag className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                          : <Package className="w-3.5 h-3.5 text-zinc-500 shrink-0" />}
+                        <span className="flex-1 truncate font-bold text-zinc-900 dark:text-zinc-50">{preview.label}</span>
+                        <Check className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100 shrink-0" />
+                      </div>
+                      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+                    </>
+                  )}
+
                   {/* Home */}
                   <button
                     onClick={() => handlePageSelect('__home__')}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left"
                   >
                     <Home className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                    <span className={`flex-1 ${!activePage && !systemPageSlug ? 'font-bold text-zinc-900 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'}`}>Home</span>
-                    {!activePage && !systemPageSlug && <Check className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100 shrink-0" />}
+                    <span className={`flex-1 ${!preview && !activePage && !systemPageSlug ? 'font-bold text-zinc-900 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'}`}>Home</span>
+                    {!preview && !activePage && !systemPageSlug && <Check className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100 shrink-0" />}
                   </button>
 
                   {/* System / built-in pages */}
@@ -1252,7 +1352,7 @@ function handlePageContentChange(content: unknown) {
                   <p className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Built-in Pages</p>
                   {SYSTEM_PAGES.map(p => {
                     const Icon = p.icon
-                    const isActive = systemPageSlug === p.slug && !activePage
+                    const isActive = systemPageSlug === p.slug && !activePage && !preview
                     return (
                       <button
                         key={p.id}
@@ -1278,8 +1378,8 @@ function handlePageContentChange(content: unknown) {
                           className="w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left"
                         >
                           <Globe className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                          <span className={`flex-1 truncate ${activePage?.id === p.id ? 'font-bold text-zinc-900 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'}`}>{p.name}</span>
-                          {activePage?.id === p.id && <Check className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100 shrink-0" />}
+                          <span className={`flex-1 truncate ${!preview && activePage?.id === p.id ? 'font-bold text-zinc-900 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'}`}>{p.name}</span>
+                          {!preview && activePage?.id === p.id && <Check className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-100 shrink-0" />}
                         </button>
                       ))}
                     </>
@@ -1349,7 +1449,7 @@ function handlePageContentChange(content: unknown) {
             {tab === 'sections' && !activePage && (
               <>
                 {/* Section lists */}
-                {sectionView === 'list' && !systemPageSlug && (
+                {sectionView === 'list' && !systemPageSlug && !preview && (
                   <SectionsList
                     customSections={customSections}
                     order={resolveSectionOrder(theme.sectionOrder, customSections.filter(c => c.visible).map(c => c.id))}
@@ -1371,9 +1471,20 @@ function handlePageContentChange(content: unknown) {
                     }}
                   />
                 )}
-                {sectionView === 'list' && systemPageSlug && (
+                {sectionView === 'list' && systemPageSlug && !preview && (
                   <SystemPageEdit
                     slug={systemPageSlug}
+                    onSectionClick={view => { setSectionView(view as SectionView); triggerSidebarPulse() }}
+                    sendHighlight={sendHighlightToPreview}
+                  />
+                )}
+                {/* A product or category page. Its chrome is the theme's, so
+                    the header, banner and footer panels are the same ones; the
+                    body is the merchant's own product data, edited where that
+                    data lives rather than reinvented here. */}
+                {sectionView === 'list' && preview && (
+                  <SystemPageEdit
+                    slug={preview.kind}
                     onSectionClick={view => { setSectionView(view as SectionView); triggerSidebarPulse() }}
                     sendHighlight={sendHighlightToPreview}
                   />
@@ -1382,7 +1493,7 @@ function handlePageContentChange(content: unknown) {
                 {/* Shared section sub-editors (home page + system pages that support them) */}
                 {sectionView === 'banner'   && <BannerEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} storeId={storeId} />}
                 {sectionView === 'header'   && <HeaderEdit storeId={storeId} theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} />}
-                {sectionView === 'hero'     && !systemPageSlug && (
+                {sectionView === 'hero'     && !systemPageSlug && !preview && (
                   <HeroEdit
                     storeId={storeId}
                     subdomain={subdomain}
@@ -1403,8 +1514,8 @@ function handlePageContentChange(content: unknown) {
                 {sectionView === 'nav-menu'        && <NavMenuEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('header')} />}
                 {sectionView === 'category-filter' && <CategoryFilterEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} storeId={storeId} />}
                 {sectionView === 'footer'        && <FooterEdit storeId={storeId} storeName={dbStoreName} onPreviewChange={setPreviewStoreName} onSaveSuccess={name => { setDbStoreName(name); setPreviewStoreName(name) }} theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} pages={storePages} onAddPage={() => { setAddPageOrigin('footer'); setShowAddPageModal(true) }} />}
-                {sectionView === 'code'          && !systemPageSlug && <CustomCodeEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} />}
-                {sectionView === 'seo'           && !systemPageSlug && (
+                {sectionView === 'code'          && !systemPageSlug && !preview && <CustomCodeEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} />}
+                {sectionView === 'seo'           && !systemPageSlug && !preview && (
                   <SeoEdit
                     theme={theme}
                     updateTheme={updateTheme}
@@ -1414,7 +1525,7 @@ function handlePageContentChange(content: unknown) {
                     storeUrl={storeUrl(subdomain).replace(/^https?:\/\//, '')}
                   />
                 )}
-                {sectionView === 'custom'        && !systemPageSlug && (
+                {sectionView === 'custom'        && !systemPageSlug && !preview && (
                   <CustomSectionsEdit
             openAddModal={openAddSection}
                     storeId={storeId}
@@ -1552,11 +1663,21 @@ function handlePageContentChange(content: unknown) {
               onLoad={handleIframeLoad}
             />
             {/* A reload of the preview alone — a page switch, or a product
-                saved from the modal. Plain, and only over the frame: the
-                panel and toolbar stay usable because nothing about them is
-                changing. */}
+                saved from the modal.
+
+                This used to be a white sheet over the whole frame, pulsing.
+                It was the wrong shape for what is happening: the browser keeps
+                the page you were looking at painted until the next one is
+                ready, so covering it up threw away the only thing worth
+                showing and replaced it with a blink. A hairline at the top
+                instead, the way a browser does it. The page stays. */}
             {iframeLoading && firstPaint && (
-              <div className="absolute inset-0 bg-white dark:bg-zinc-900 animate-pulse" />
+              <div className="absolute inset-x-0 top-0 h-[2px] overflow-hidden rounded-t-[inherit] pointer-events-none z-10">
+                <div
+                  className="preview-progress h-full rounded-r-full"
+                  style={{ backgroundColor: theme.primaryColor || '#18181b' }}
+                />
+              </div>
             )}
           </div>
         </main>

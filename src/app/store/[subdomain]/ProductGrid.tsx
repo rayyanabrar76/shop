@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Pencil } from 'lucide-react'
 import AddToCartButton from './add-to-cart-button'
-import { EditorItem } from './EditorHighlight'
+import { EditorItem, previewNavigate } from './EditorHighlight'
 import { usePrice } from '@/components/CurrencyProvider'
 import { useStoreBase } from '@/components/StoreBaseProvider'
 
@@ -214,6 +214,17 @@ export default function ProductGrid({
     if (!isEditor) router.push(`${storeBase}/products/${handle}`)
   }
 
+  /**
+   * Show this product's own page in the editor's preview.
+   *
+   * The frame cannot route itself: the editor owns the iframe's src and holds
+   * the theme that has not been saved. So it reports where it wants to go and
+   * the editor takes it there.
+   */
+  function openInPreview(handle: string, title: string) {
+    previewNavigate(`/products/${handle}`, { label: title, kind: 'product' })
+  }
+
   // — title computed style —
   const titlePreset = themeStyle.productTitlePreset || 'default'
   const titleStyle: React.CSSProperties = {
@@ -306,9 +317,21 @@ export default function ProductGrid({
               >
                 {/* The card has no frame of its own, the image is the object,
                     sitting on the page. Theme radius and shadow move onto it so
-                    both settings still read. */}
+                    both settings still read.
+
+                    In the editor it answers two questions, so it takes two
+                    gestures. A single click keeps its old job: the card sits
+                    inside a "Card layout" EditorItem and clicking it opens that
+                    panel. A double click means "show me this product", the way
+                    a double click opens a thing everywhere else. */}
                 <div
                   className="relative shrink-0 overflow-hidden bg-zinc-50"
+                  onDoubleClick={isEditor ? (e => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    openInPreview(p.slug || p.id, p.title)
+                  }) : undefined}
+                  title={isEditor ? 'Double-click to open this product’s page' : undefined}
                   style={{
                     borderRadius: imageRadius,
                     // A hairline keeps white-background product shots from

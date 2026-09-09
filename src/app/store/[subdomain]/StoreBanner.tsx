@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { EditorItem } from './EditorHighlight'
+import { EditorItem, useIsEditor, notifyEdit } from './EditorHighlight'
 
 interface StoreBannerProps {
   theme: {
@@ -13,12 +13,14 @@ interface StoreBannerProps {
   onEdit?: (s: string) => void
 }
 
-export default function StoreBanner({ theme, isEditor = false, onEdit }: StoreBannerProps) {
+export default function StoreBanner({ theme, isEditor: isEditorProp, onEdit }: StoreBannerProps) {
   const [dismissed, setDismissed] = useState(false)
+  // Read before the early return: hooks cannot sit behind a condition.
+  const detected = useIsEditor()
+  const isEditor = isEditorProp ?? detected
+  const notify = onEdit ?? notifyEdit
 
   if (!theme?.showBanner || dismissed) return null
-
-  const notify = onEdit ?? (() => {})
 
   return (
     <div

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Instagram, Twitter, Facebook, ArrowRight, Check } from 'lucide-react'
 import { readableText, readableBorder, isDark } from '@/lib/contrast'
 import { useStoreBase } from '@/components/StoreBaseProvider'
-import { EditorItem } from './EditorHighlight'
+import { EditorItem, useIsEditor, notifyEdit } from './EditorHighlight'
 
 export interface FooterLink {
   label: string
@@ -169,10 +169,14 @@ export default function StoreFooter({
   categories = [],
   pages = [],
   showShopflowBranding = false,
-  isEditor = false,
+  isEditor: isEditorProp,
   onEdit,
 }: StoreFooterProps) {
-  const notify = onEdit ?? (() => {})
+  // Same as the header: a page rendered straight from the server hands nothing
+  // down, so the footer works out for itself whether it is being edited.
+  const detected = useIsEditor()
+  const isEditor = isEditorProp ?? detected
+  const notify = onEdit ?? notifyEdit
   const storeBase = useStoreBase()
 
   // Falls back to the header logo, so setting a logo once covers both. A

@@ -7,6 +7,7 @@ import { verifyCustomerToken, COOKIE_NAME } from '@/lib/store-auth'
 import { prisma } from '@/lib/prisma'
 import { sanitizeCustomCss, sanitizeCustomHead } from '@/lib/sanitize'
 import OwnerPreviewBar from './OwnerPreviewBar'
+import PreviewLinks from './PreviewLinks'
 import { CurrencyProvider } from '@/components/CurrencyProvider'
 import { StoreBaseProvider } from '@/components/StoreBaseProvider'
 import { getStoreBase } from '@/lib/store-base'
@@ -172,6 +173,8 @@ export default async function StoreLayout({
           {children}
         </div>
         {store && <OwnerPreviewBar storeId={store.id} isOwner={isOwner} />}
+        {/* Only does anything inside the theme editor's frame. */}
+        <PreviewLinks />
       </CartProvider>
       </CurrencyProvider>
       </StoreBaseProvider>
