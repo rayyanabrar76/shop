@@ -4,7 +4,7 @@ import Link from 'next/link'
 import SectionHeader from './SectionHeader'
 import AiFieldLabel from '@/components/ai/AiFieldLabel'
 import { ThemeState, labelCls, inputCls } from '../types'
-import { ColorField, PanelRow, SelectField, ToggleRow } from '../controls'
+import { ColorField, PanelRow, RichTextField, SelectField, ToggleRow } from '../controls'
 import { ExternalLink, ShoppingCart, Tag, Type } from 'lucide-react'
 
 interface ProductGridEditProps {
@@ -209,29 +209,100 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
           ]}
         />
 
-        {/* Section Heading Label */}
-        <div data-field="featured-label">
-          <label className={labelCls}>{isProductsPage ? 'Grid Heading' : 'Section Heading'}</label>
-          <input
-            type="text"
-            className={inputCls}
-            value={theme.featuredLabel}
-            onChange={e => updateTheme({ featuredLabel: e.target.value })}
-            placeholder={isProductsPage ? 'All Products' : 'Featured Products'}
+        {/* Section Heading.
+
+            Shown and named are two questions, so they are two controls. A
+            merchant who cleared the text to get rid of the heading was left
+            with nothing to click on to bring it back, and a blank label is an
+            unnamed heading rather than a missing one. Switching it off hides
+            the field it names too, since there is nothing to write for
+            something that is not drawn. */}
+        <div data-field="featured-label" className="space-y-3">
+          <ToggleRow
+            label={isProductsPage ? 'Show grid heading' : 'Show section heading'}
+            on={theme.featuredLabelShow !== false}
+            onChange={v => updateTheme({ featuredLabelShow: v })}
           />
+          {theme.featuredLabelShow !== false && (
+            <>
+              <RichTextField
+                label={isProductsPage ? 'Grid Heading' : 'Section Heading'}
+                value={theme.featuredLabel}
+                onChange={v => updateTheme({ featuredLabel: v })}
+                rows={2}
+              />
+              <div>
+                <label className={labelCls}>Heading Padding (px)</label>
+                <div className="grid grid-cols-4 gap-2">
+                  <NumBox label="Top"    value={theme.featuredLabelPadTop}    onChange={v => updateTheme({ featuredLabelPadTop: v })} />
+                  <NumBox label="Bottom" value={theme.featuredLabelPadBottom} onChange={v => updateTheme({ featuredLabelPadBottom: v })} />
+                  <NumBox label="Left"   value={theme.featuredLabelPadLeft}   onChange={v => updateTheme({ featuredLabelPadLeft: v })} />
+                  <NumBox label="Right"  value={theme.featuredLabelPadRight}  onChange={v => updateTheme({ featuredLabelPadRight: v })} />
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>
+                  Heading Margin (px) <span className="normal-case font-normal opacity-60">its gap from the cards</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <NumBox label="Top"    value={theme.featuredLabelMarginTop}    onChange={v => updateTheme({ featuredLabelMarginTop: v })} />
+                  <NumBox label="Bottom" value={theme.featuredLabelMarginBottom} onChange={v => updateTheme({ featuredLabelMarginBottom: v })} />
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Shop All Button Label, home page only */}
+        {/* Shop All Button, home page only */}
         {!isProductsPage && (
-          <div data-field="shop-all">
-            <label className={labelCls}>&quot;Shop All&quot; Button Label</label>
-            <input
-              type="text"
-              className={inputCls}
-              value={theme.shopAllLabel}
-              onChange={e => updateTheme({ shopAllLabel: e.target.value })}
-              placeholder="Shop All Products"
+          <div data-field="shop-all" className="space-y-3">
+            <ToggleRow
+              label="Show &quot;Shop All&quot; button"
+              on={theme.shopAllShow !== false}
+              onChange={v => updateTheme({ shopAllShow: v })}
             />
+            {theme.shopAllShow !== false && (
+              <>
+                <SelectField
+                  label="Button Style"
+                  hint="blank follows the theme"
+                  value={theme.shopAllStyle ?? ''}
+                  onChange={v => updateTheme({ shopAllStyle: v })}
+                  options={[
+                    { value: '',        label: 'Follow theme' },
+                    { value: 'solid',   label: 'Solid' },
+                    { value: 'outline', label: 'Outline' },
+                    { value: 'text',    label: 'Text only, no frame' },
+                  ]}
+                />
+                <RichTextField
+                  label={'"Shop All" Button Label'}
+                  value={theme.shopAllLabel}
+                  onChange={v => updateTheme({ shopAllLabel: v })}
+                  rows={2}
+                />
+                <div>
+                  <label className={labelCls}>
+                    Button Padding (px) <span className="normal-case font-normal opacity-60">inside the button</span>
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    <NumBox label="Top"    value={theme.shopAllPadTop}    onChange={v => updateTheme({ shopAllPadTop: v })} />
+                    <NumBox label="Bottom" value={theme.shopAllPadBottom} onChange={v => updateTheme({ shopAllPadBottom: v })} />
+                    <NumBox label="Left"   value={theme.shopAllPadLeft}   onChange={v => updateTheme({ shopAllPadLeft: v })} />
+                    <NumBox label="Right"  value={theme.shopAllPadRight}  onChange={v => updateTheme({ shopAllPadRight: v })} />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelCls}>
+                    Button Margin (px) <span className="normal-case font-normal opacity-60">its gap from the cards</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <NumBox label="Top"    value={theme.shopAllMarginTop}    onChange={v => updateTheme({ shopAllMarginTop: v })} />
+                    <NumBox label="Bottom" value={theme.shopAllMarginBottom} onChange={v => updateTheme({ shopAllMarginBottom: v })} />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -251,6 +322,40 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
           />
         </div>
 
+        {/* Section spacing.
+
+            Both, not one. Padding is inside the section, so its background
+            covers it; margin is outside, so the page shows through. Separating
+            a coloured band from what sits above it needs margin; giving that
+            band room to breathe needs padding, and neither can stand in for
+            the other. */}
+        <div data-field="grid-spacing" className="space-y-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+          <div>
+            <label className={labelCls}>
+              Padding (px) <span className="normal-case font-normal opacity-60">inside the section</span>
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              <NumBox label="Top"    value={theme.productGridPadTop}    onChange={v => updateTheme({ productGridPadTop: v })} />
+              <NumBox label="Bottom" value={theme.productGridPadBottom} onChange={v => updateTheme({ productGridPadBottom: v })} />
+              <NumBox label="Left"   value={theme.productGridPadLeft}   onChange={v => updateTheme({ productGridPadLeft: v })} />
+              <NumBox label="Right"  value={theme.productGridPadRight}  onChange={v => updateTheme({ productGridPadRight: v })} />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>
+              Margin (px) <span className="normal-case font-normal opacity-60">outside it</span>
+            </label>
+            {/* Top and bottom only. A side margin on a section that runs the
+                width of the page just insets it, which is what padding does,
+                and offering two controls for one result invites a merchant to
+                set both and wonder why the gap doubled. */}
+            <div className="grid grid-cols-2 gap-2">
+              <NumBox label="Top"    value={theme.productGridMarginTop}    onChange={v => updateTheme({ productGridMarginTop: v })} />
+              <NumBox label="Bottom" value={theme.productGridMarginBottom} onChange={v => updateTheme({ productGridMarginBottom: v })} />
+            </div>
+          </div>
+        </div>
+
         <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
           <Link
             href={`/dashboard/stores/${storeId}/products`}
@@ -263,6 +368,32 @@ export default function ProductGridEdit({ theme, updateTheme, onBack, storeId, i
         </div>
 
       </div>
+    </div>
+  )
+}
+
+/** One number in a row of them, with its edge named underneath. */
+function NumBox({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: number
+  onChange: (v: number) => void
+}) {
+  return (
+    <div className="text-center">
+      <input
+        type="number"
+        min={0}
+        className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-xs text-center outline-none focus:border-zinc-400 dark:focus:border-zinc-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+        value={value ?? 0}
+        // An empty box is a zero rather than a NaN, so clearing it to type a
+        // new number does not blank the section out on the way.
+        onChange={e => onChange(parseInt(e.target.value) || 0)}
+      />
+      <span className="text-[9px] text-zinc-500 mt-0.5 block">{label}</span>
     </div>
   )
 }

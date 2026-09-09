@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import {
-  Megaphone, LayoutGrid, Image as ImageIcon, Layout, Type, PanelLeft,
+  Megaphone, LayoutGrid, Image as ImageIcon, Layout, Type,
   ChevronRight, Code2, Search, Plus, Rows3, GripVertical,
 } from 'lucide-react'
 import { isCustomKey, customIdFromKey } from '@/lib/section-order'
@@ -92,9 +92,6 @@ export default function SectionsList({
       <Group label="Header">
         <Row icon={Megaphone} label="Announcement Banner" onClick={() => onSectionClick('banner')} />
         <Row icon={Layout} label="Header" onClick={() => onSectionClick('header')} />
-        {/* Its own row rather than a setting inside Header: the drawer is a
-            page that opens out of the bar, not a property of it. */}
-        <Row icon={PanelLeft} label="Drawer" onClick={() => onSectionClick('drawer')} />
         <AddRow onClick={onAddSection} />
       </Group>
 

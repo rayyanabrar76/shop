@@ -52,10 +52,31 @@ export interface ThemeState {
   cardShadow: string
   dividerStyle: string
   shopAllLabel: string
+  shopAllShow: boolean
+  shopAllPadTop: number
+  shopAllPadBottom: number
+  shopAllPadLeft: number
+  shopAllPadRight: number
+  shopAllMarginTop: number
+  shopAllMarginBottom: number
+  featuredLabelShow: boolean
+  shopAllStyle: string
+  featuredLabelPadTop: number
+  featuredLabelPadBottom: number
+  featuredLabelPadLeft: number
+  featuredLabelPadRight: number
+  featuredLabelMarginTop: number
+  featuredLabelMarginBottom: number
   featuredLabel: string
   featuredLabelLevel: string
   productsPageHeading: string
   productGridBg: string
+  productGridPadTop: number
+  productGridPadBottom: number
+  productGridPadLeft: number
+  productGridPadRight: number
+  productGridMarginTop: number
+  productGridMarginBottom: number
   productImageRadius: string
   productGridButtonColor: string
   productGridTextColor: string

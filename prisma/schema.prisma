@@ -162,9 +162,40 @@ model StoreTheme {
   dividerStyle    String  @default("none")
   showSearch      Boolean @default(true)
   shopAllLabel    String  @default("Shop All Products")
+  /// Whether the button under the grid is drawn at all. Separate from its
+  /// label, because a blank label is an unnamed button, not a missing one.
+  shopAllShow     Boolean @default(true)
+  /// The button's own spacing, in px. Padding is the button; margin is the
+  /// room around it inside the grid section.
+  shopAllPadTop    Int     @default(12)
+  shopAllPadBottom Int     @default(12)
+  shopAllPadLeft   Int     @default(32)
+  shopAllPadRight  Int     @default(32)
+  shopAllMarginTop Int     @default(0)
+  shopAllMarginBottom Int     @default(32)
   featuredLabel   String  @default("Featured Products")
+  /// Whether the heading above the grid is drawn at all.
+  featuredLabelShow Boolean @default(true)
+  /// The heading's own spacing, in px.
+  featuredLabelPadTop       Int     @default(0)
+  featuredLabelPadBottom    Int     @default(0)
+  featuredLabelPadLeft      Int     @default(0)
+  featuredLabelPadRight     Int     @default(0)
+  featuredLabelMarginTop    Int     @default(0)
+  featuredLabelMarginBottom Int     @default(28)
+  /// How the "shop all" button is drawn. Blank follows the theme's own
+  /// button style; "text" drops the frame and leaves the words.
+  shopAllStyle    String  @default("")
   featuredLabelLevel String @default("")  // blank keeps the original small-caps label
   productGridBg          String  @default("#ffffff")
+  /// The grid section's own spacing, in px. Padding is inside the section,
+  /// so its background covers it; margin is outside, so it does not.
+  productGridPadTop       Int     @default(24)
+  productGridPadBottom    Int     @default(24)
+  productGridPadLeft      Int     @default(0)
+  productGridPadRight     Int     @default(0)
+  productGridMarginTop    Int     @default(0)
+  productGridMarginBottom Int     @default(0)
   productImageRadius     String  @default("")  // blank = follow global borderRadius
   productGridButtonColor String  @default("")
   productGridTextColor   String  @default("")

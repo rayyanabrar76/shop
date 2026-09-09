@@ -8,6 +8,7 @@ import { EditorItem, previewNavigate } from './EditorHighlight'
 import { usePrice } from '@/components/CurrencyProvider'
 import { useStoreBase } from '@/components/StoreBaseProvider'
 import { readableText, readableBorder, ensureReadable } from '@/lib/contrast'
+import { sanitizeRichText } from '@/lib/sanitize'
 
 interface Product {
   id: string
@@ -38,6 +39,30 @@ interface ThemeStyle {
   cardShadow?: string
   productImageRadius?: string
   featuredLabel?: string
+  featuredLabelShow?: boolean
+  /** Undefined means this page does not have the button at all, which is
+   *  how the products listing opts out: it is already the full catalogue. */
+  shopAllShow?: boolean
+  shopAllLabel?: string
+  shopAllStyle?: string
+  featuredLabelPadTop?: number
+  featuredLabelPadBottom?: number
+  featuredLabelPadLeft?: number
+  featuredLabelPadRight?: number
+  featuredLabelMarginTop?: number
+  featuredLabelMarginBottom?: number
+  shopAllPadTop?: number
+  shopAllPadBottom?: number
+  shopAllPadLeft?: number
+  shopAllPadRight?: number
+  shopAllMarginTop?: number
+  shopAllMarginBottom?: number
+  productGridPadTop?: number
+  productGridPadBottom?: number
+  productGridPadLeft?: number
+  productGridPadRight?: number
+  productGridMarginTop?: number
+  productGridMarginBottom?: number
   featuredLabelLevel?: string
   productTitleWidth?: string
   productTitleAlign?: string
@@ -113,6 +138,11 @@ const TITLE_SIZE: Record<string, React.CSSProperties> = {
  * a merchant who picks a size in the theme editor still wins — these only fill
  * in the "default" preset, which maps to nothing.
  */
+/** The page's own left and right breathing room. */
+const PAD = 'px-4 md:px-8'
+/** The reading column: that padding, capped and centred. */
+const COLUMN = `max-w-7xl mx-auto w-full ${PAD}`
+
 const TITLE_BASE: React.CSSProperties = {
   fontSize: '0.9375rem',
   fontWeight: 500,
@@ -173,13 +203,37 @@ const HEADING_PRESETS: Record<string, string> = {
   h6:   'text-sm font-semibold uppercase tracking-widest',
 }
 
+/**
+ * The same scale again, for headings written inside the field.
+ *
+ * The preset above sets the tag and size of the whole heading. The toolbar in
+ * the panel can also mark a run of text as a heading, which arrives here as
+ * real <h1>..<h6> markup, and preflight strips every browser default off those
+ * so they came out the size of body text: the Aa menu looked broken because
+ * nothing was left to make an h1 large.
+ *
+ * Restated rather than shared with the preset, because these have to be
+ * literal class strings for Tailwind to find them at build time.
+ */
+const HEADING_IN_TEXT =
+  '[&_h1]:text-4xl [&_h1]:font-black [&_h1]:tracking-tight ' +
+  '[&_h2]:text-3xl [&_h2]:font-bold [&_h2]:tracking-tight ' +
+  '[&_h3]:text-2xl [&_h3]:font-bold [&_h3]:tracking-tight ' +
+  '[&_h4]:text-xl [&_h4]:font-semibold ' +
+  '[&_h5]:text-lg [&_h5]:font-semibold ' +
+  '[&_h6]:text-sm [&_h6]:font-semibold [&_h6]:uppercase [&_h6]:tracking-widest ' +
+  // A heading is one line in a heading, so the block elements inside it sit on
+  // that line rather than starting new ones.
+  '[&_h1]:inline [&_h2]:inline [&_h3]:inline [&_h4]:inline [&_h5]:inline [&_h6]:inline ' +
+  '[&_p]:inline [&_p]:m-0'
+
 export default function ProductGrid({
   products, theme, subdomain, themeStyle, isEditor = false, onEdit, activeProductField,
 }: ProductGridProps) {
   const storeBase = useStoreBase()
   const price = usePrice()
   const router = useRouter()
-  const { primaryColor, borderRadius, headingFont, featuredLabel, font } = themeStyle
+  const { primaryColor, borderRadius, buttonStyle, headingFont, featuredLabel, font } = themeStyle
 
   /**
    * Heading level is both the tag and the size, so a merchant choosing
@@ -262,6 +316,16 @@ export default function ProductGrid({
     width: (themeStyle.productPriceWidth || 'fit') === 'fill' ? '100%' : 'fit-content',
   }
 
+  /*
+   * How the shop-all button is drawn.
+   *
+   * Blank follows the theme's own button style, which is what it did before it
+   * could be set on its own. "Text" is the one that is not a button at all:
+   * no fill, no rule, just the words, which is what an editorial storefront
+   * usually wants under a grid it has already shown you.
+   */
+  const shopAllStyle = themeStyle.shopAllStyle || buttonStyle
+
   // Shops that quote rather than sell, or price at the counter, take the
   // number off the card entirely.
   const priceHidden = themeStyle.productPriceHidden === true
@@ -297,47 +361,124 @@ export default function ProductGrid({
   const cartHighlight  = isEditor && activeProductField === 'add-to-cart-btn' ? HIGHLIGHT : {}
 
   return (
+    /*
+     * The outer spacing sits here, as padding on a wrapper inside the band
+     * rather than as a margin on the section itself.
+     *
+     * A margin is outside the element, so nothing paints it: the gap showed
+     * the page behind, which on a black section read as a white stripe cut
+     * across it. Worse, a top margin on the first child collapses straight
+     * through its parent and lands outside the coloured wrapper entirely, so
+     * the stripe was not even where the number said it would be.
+     *
+     * Padding on a wrapper the colour already covers keeps the band unbroken,
+     * which is what a merchant setting spacing on a coloured section is
+     * asking for. Two controls still do two things: this one holds the band's
+     * outer edges apart from what is above and below, and the section's own
+     * padding holds its content off those edges, on all four sides.
+     */
+    <div
+      style={{
+        paddingTop: themeStyle.productGridMarginTop ?? 0,
+        paddingBottom: themeStyle.productGridMarginBottom ?? 0,
+      }}
+    >
     <main
-      className="flex-1 px-4 md:px-8 py-6 max-w-7xl mx-auto w-full"
+      // The reading column used to live here, which meant the carousel was
+      // capped too and stopped short of the page with a strip of ground beside
+      // it that no amount of scrolling could reach. The cap now sits on the
+      // things that actually want it, so the carousel can run to the edges.
+      className="flex-1 w-full"
       id="products"
-      // Set here rather than on each piece so the heading, the titles and the
-      // prices all follow it, and anything with a colour of its own still wins
-      // by being more specific.
-      style={themeStyle.textColor ? { color: themeStyle.textColor } : undefined}
+      style={{
+        // Set here rather than on each piece so the heading, the titles and
+        // the prices all follow it, and anything with a colour of its own
+        // still wins by being more specific.
+        ...(themeStyle.textColor ? { color: themeStyle.textColor } : {}),
+        /*
+         * The section's own spacing. Padding is inside it, so the section's
+         * background covers it; margin is outside, so the page shows through.
+         * That is the reason both are offered rather than one: separating a
+         * coloured band from what is above it wants margin, and giving that
+         * band room to breathe wants padding.
+         *
+         * py-6 used to be a class here. It is a value now so a control can
+         * reach it, and it is still the default, so nothing moves until it is.
+         */
+        paddingTop: themeStyle.productGridPadTop ?? 24,
+        paddingBottom: themeStyle.productGridPadBottom ?? 24,
+        paddingLeft: themeStyle.productGridPadLeft ?? 0,
+        paddingRight: themeStyle.productGridPadRight ?? 0,
+      }}
     >
 
-      {/* Section heading */}
-      <div className="mb-7 flex items-center gap-2">
+      {/* Section heading. Hidden is hidden: the rule beside it and the space
+          under it go with it, or a switched-off heading leaves a stripe and a
+          gap where a heading used to be. */}
+      {themeStyle.featuredLabelShow !== false && (
+      <div
+        className={`${COLUMN} flex items-center gap-2`}
+        style={{
+          paddingTop: themeStyle.featuredLabelPadTop ?? 0,
+          paddingBottom: themeStyle.featuredLabelPadBottom ?? 0,
+          paddingLeft: themeStyle.featuredLabelPadLeft ?? 0,
+          paddingRight: themeStyle.featuredLabelPadRight ?? 0,
+          marginTop: themeStyle.featuredLabelMarginTop ?? 0,
+          // mb-7 used to be a class here. It is a value now so a control can
+          // reach it, and it is still the default, so nothing moves.
+          marginBottom: themeStyle.featuredLabelMarginBottom ?? 28,
+        }}
+      >
         <div className="h-4 w-1 rounded-full" style={{ backgroundColor: primaryColor }} />
         <EditorItem section="products" field="featured-label" label="Section heading" isEditor={isEditor} onEdit={notify}>
+          {/* Markup, because the field behind it is the same rich text
+              editor the hero's copy uses, so a merchant can bold a word in
+              their own heading. Everything goes through sanitizeRichText: the
+              toolbar can only make safe markup, but a paste from Word can put
+              anything into the field. */}
           <HeadingTag
-            className={HEADING_PRESETS[headingLevel] ?? HEADING_PRESETS['']}
+            className={`${HEADING_PRESETS[headingLevel] ?? HEADING_PRESETS['']} ${HEADING_IN_TEXT}`}
             style={{ fontFamily: headingFont === 'serif' ? 'serif' : 'inherit' }}
-          >
-            {featuredLabel || 'Featured Products'}
-          </HeadingTag>
+            dangerouslySetInnerHTML={{ __html: sanitizeRichText(featuredLabel || 'Featured Products') }}
+          />
         </EditorItem>
       </div>
+      )}
 
       {(products.length > 0 || isEditor) ? (
         <div
           className={
             layout === 'carousel'
-              // Card widths live on the container via [&>*] so the card markup
-              // stays identical across all three layouts.
-              ? 'flex gap-5 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 *:snap-start *:shrink-0 *:w-[82%] sm:*:w-[45%] lg:*:w-[23%]'
+              /*
+               * Card widths live on the container via [&>*] so the card markup
+               * stays identical across all three layouts.
+               *
+               * Full width, with its own padding rather than the column's, and
+               * that is the whole difference. Padding on a scroller belongs to
+               * the scrollable area, so it reads as a gap before the first card
+               * and after the last one and slides away in between; a column's
+               * margin does not scroll, which is why a band of empty ground
+               * used to sit pinned beside the row wherever you dragged it.
+               *
+               * The cards are wider on a desk than the grid's, a touch over a
+               * quarter each. A carousel showing four whole cards and a sliver
+               * is a grid with a scrollbar; three and most of a fourth is what
+               * tells you to keep going. Below lg nothing changes: a phone was
+               * already showing one card and a peek of the next.
+               */
+              ? `flex w-full gap-5 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 ${PAD} scroll-px-4 md:scroll-px-8 *:snap-start *:shrink-0 *:w-[82%] sm:*:w-[45%] lg:gap-6 lg:*:w-[27%]`
               : isEditorial
               // One product a screen, with room to breathe between them. The
               // column is capped: card images are square, so at full container
               // width a single product stood 1300px tall and you scrolled past
               // one donut at a time.
-              ? 'flex flex-col gap-16 sm:gap-24 mx-auto w-full max-w-2xl'
+              ? `${PAD} flex flex-col gap-16 sm:gap-24 mx-auto w-full max-w-2xl`
               : swipeOnMobile
               // Swipes below sm, then reverts to a true grid: overflow-visible
               // and w-auto have to be undone explicitly, or the cards keep the
               // fixed width the scroller gave them.
-              ? 'flex gap-5 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 *:snap-start *:shrink-0 *:w-[82%] sm:grid sm:grid-cols-3 lg:grid-cols-4 sm:gap-x-6 sm:gap-y-10 sm:overflow-visible sm:*:w-auto'
-              : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-9 sm:gap-x-6 sm:gap-y-10'
+              ? `${COLUMN} flex gap-5 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-1 *:snap-start *:shrink-0 *:w-[82%] sm:grid sm:grid-cols-3 lg:grid-cols-4 sm:gap-x-6 sm:gap-y-10 sm:overflow-visible sm:*:w-auto`
+              : `${COLUMN} grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-9 sm:gap-x-6 sm:gap-y-10`
           }
         >
           {products.map((p) => (
@@ -517,11 +658,59 @@ export default function ProductGrid({
           )}
         </div>
       ) : (
-        <div className="text-center py-16 bg-zinc-50 rounded-2xl border-2 border-dashed border-zinc-200">
+        <div className={`${COLUMN} text-center py-16 bg-zinc-50 rounded-2xl border-2 border-dashed border-zinc-200`}>
           <p className="text-zinc-400 text-sm">No products yet.</p>
         </div>
       )}
+
+      {/* Shop all.
+
+          Drawn here rather than beside the grid, which is where it used to
+          live. It reads as part of this section and a merchant sets its
+          spacing in this section's panel, so being a sibling of the section
+          meant it sat outside the band's own colour and padding and drifted
+          whenever either changed.
+
+          Its label goes through the same rich text field the heading uses, so
+          a heading level chosen in that toolbar sizes the type and the button
+          grows around it. The padding below is the button's own; the margin is
+          the room it keeps inside the section. */}
+      {themeStyle.shopAllShow === true && (
+        <div
+          className="flex justify-center"
+          // Padding, not margin. A bottom margin on the last child collapses
+          // straight out of the section and pushes whatever comes next down
+          // the page, so the number set here moved the section below instead
+          // of the button. Padding stays where it is put.
+          style={{
+            paddingTop: themeStyle.shopAllMarginTop ?? 0,
+            paddingBottom: themeStyle.shopAllMarginBottom ?? 32,
+          }}
+        >
+          <EditorItem section="products" field="shop-all" label="Shop All label" isEditor={isEditor} onEdit={notify} block>
+            <a
+              href={`${storeBase}/products`}
+              data-btn-type={shopAllStyle}
+              className={`inline-flex items-center gap-2 text-sm font-bold transition-all hover:opacity-80 ${HEADING_IN_TEXT}`}
+              style={{
+                borderRadius: shopAllStyle === 'text' ? 0 : borderRadius,
+                paddingTop: themeStyle.shopAllPadTop ?? 12,
+                paddingBottom: themeStyle.shopAllPadBottom ?? 12,
+                paddingLeft: themeStyle.shopAllPadLeft ?? 32,
+                paddingRight: themeStyle.shopAllPadRight ?? 32,
+                backgroundColor: shopAllStyle === 'solid' ? primaryColor : 'transparent',
+                color: shopAllStyle === 'solid' ? readableText(primaryColor) : primaryColor,
+                border: shopAllStyle === 'outline' ? `2px solid ${primaryColor}` : 'none',
+              }}
+              dangerouslySetInnerHTML={{
+                __html: sanitizeRichText(themeStyle.shopAllLabel || 'Shop All Products'),
+              }}
+            />
+          </EditorItem>
+        </div>
+      )}
     </main>
+    </div>
   )
 }
 

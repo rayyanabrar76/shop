@@ -3,7 +3,7 @@
 import { Fragment, useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Search, X, User, LogOut, ShoppingBag, ChevronDown, Menu } from 'lucide-react'
+import { Search, X, User, LogOut, ShoppingBag, ChevronDown, ChevronLeft, Menu } from 'lucide-react'
 import CartIcon from './cart-icon'
 import { useAuth } from './auth-context'
 import { EditorItem, useIsEditor, notifyEdit } from './EditorHighlight'
@@ -63,6 +63,7 @@ interface StoreHeaderProps {
     headerTransparentText?: string | null
     /** The drawer's contents. Null or missing means every default. */
     drawer?: unknown
+    borderRadius?: string | null
     accentColor?: string | null
     primaryColor?: string | null
     backgroundColor?: string | null
@@ -126,7 +127,28 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
   const [categories, setCategories]     = useState<Category[]>([])
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [drawerOpen, setDrawerOpen]     = useState(false)
+  /*
+   * Closing is a state of being open, not the absence of it.
+   *
+   * Unmounting on the click gives the panel nowhere to go: it was there and
+   * then it was not, which reads as a fault rather than as a menu. It stays
+   * mounted through its exit and takes itself out when the animation ends, so
+   * there is no timer to keep in step with the stylesheet.
+   */
+  const [drawerClosing, setDrawerClosing] = useState(false)
   const [drawerCatalogue, setDrawerCatalogue] = useState<DrawerProduct[]>([])
+
+  function openDrawer() {
+    setDrawerClosing(false)
+    setDrawerOpen(true)
+  }
+  function closeDrawer() {
+    // No guard on whether it is open. The editor's listener is registered once
+    // and would hold the first render's answer forever, and asking a shut
+    // drawer to shut costs nothing: it is not rendered, and opening resets
+    // this before anything is drawn.
+    setDrawerClosing(true)
+  }
 
   const searchRef   = useRef<HTMLDivElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
@@ -151,6 +173,17 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
    * anyone has chosen. A pick is honoured in the order it was arranged, and
    * ids that no longer exist simply drop out rather than leaving a gap.
    */
+  /*
+   * The carousel cards' corners.
+   *
+   * Blank follows the shop's own curvature, which is what the cards did when
+   * the radius was a Tailwind class. It has to be an inline value now rather
+   * than that class: the storefront layout maps every rounded-* utility onto
+   * the theme radius with !important, so a class here could not be overridden
+   * by a setting, only by the theme it was meant to depart from.
+   */
+  const cardRadius = drawer.carousel.radius || theme?.borderRadius || '0.75rem'
+
   const drawerCategories = drawer.categories.ids.length
     ? drawer.categories.ids
         .map(id => categories.find(c => c.id === id))
@@ -232,10 +265,10 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
   }, [searchOpen])
 
   useEffect(() => {
-    if (drawerOpen) document.body.style.overflow = 'hidden'
+    if (drawerOpen && !drawerClosing) document.body.style.overflow = 'hidden'
     else            document.body.style.overflow = ''
     return () => { document.body.style.overflow = '' }
-  }, [drawerOpen])
+  }, [drawerOpen, drawerClosing])
 
   function closeSearch() {
     setSearchOpen(false)
@@ -261,7 +294,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
    * editor from by keeping it shut.
    */
   function handleHamburgerClick() {
-    setDrawerOpen(true)
+    openDrawer()
     if (isEditor) {
       window.parent.postMessage({ type: 'section:edit', section: 'drawer' }, '*')
     }
@@ -272,8 +305,8 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
   // hamburger at a width where it may not even be rendered.
   useEffect(() => {
     function onMessage(e: MessageEvent) {
-      if (e.data?.type === 'drawer:open') setDrawerOpen(true)
-      if (e.data?.type === 'drawer:close') setDrawerOpen(false)
+      if (e.data?.type === 'drawer:open') openDrawer()
+      if (e.data?.type === 'drawer:close') closeDrawer()
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
@@ -710,8 +743,10 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
         <div className="fixed inset-0 z-50 flex">
           {/* Dark overlay */}
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setDrawerOpen(false)}
+            className={`absolute inset-0 bg-black/40 backdrop-blur-sm ${
+              drawerClosing ? 'drawer-dim-out' : 'drawer-dim-in'
+            }`}
+            onClick={closeDrawer}
           />
           {/* Slide panel.
 
@@ -720,8 +755,19 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
               drawer, and the rules and hovers inside it were fixed blacks that
               vanished on anything dark. Everything below is mixed from the
               same foreground the bar uses. */}
-          <div className="relative drawer-slide-in w-72 max-w-[85vw] h-full shadow-2xl flex flex-col overflow-y-auto"
-            style={{ backgroundColor: drawerBg, color: fg }}>
+          <div
+            className={`relative w-72 max-w-[85vw] h-full shadow-2xl flex flex-col overflow-y-auto ${
+              drawerClosing ? 'drawer-out' : 'drawer-in'
+            }`}
+            style={{ backgroundColor: drawerBg, color: fg }}
+            /* The panel's own animation is the one that decides when the
+               drawer is gone. Children animate too and their events bubble,
+               so only the panel's own is listened for. */
+            onAnimationEnd={e => {
+              if (e.target !== e.currentTarget) return
+              if (drawerClosing) { setDrawerClosing(false); setDrawerOpen(false) }
+            }}
+          >
             {/* Drawer header */}
             <div
               className="flex items-center justify-between px-5 py-4 border-b"
@@ -729,7 +775,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
             >
               <Link
                 href={buildHref(storeBase, '/')}
-                onClick={() => setDrawerOpen(false)}
+                onClick={closeDrawer}
                 className="hover:opacity-80 transition-opacity"
               >
                 {theme?.logoUrl ? (
@@ -745,13 +791,38 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
                   </span>
                 )}
               </Link>
+              {/* Not an X, and not only a glyph.
+                  A cross is what a browser puts on a dialog. This panel came
+                  in from the left, so what sends it back points that way, and
+                  it says so in words: small caps on a wide track, the register
+                  the rest of an editorial storefront is set in.
+
+                  The whole thing sits at just over half strength and comes to
+                  full on hover, and the chevron slides a little further left
+                  as it does, in the direction it is about to send the drawer.
+                  The control previews its own result.
+
+                  A rule under the word rather than a box around it, drawn from
+                  the drawer's own ink so it works on any colour, and grown from
+                  the left so the reveal travels the same way as everything
+                  else here. */}
               <button
-                onClick={() => setDrawerOpen(false)}
-                className="p-2 rounded-xl transition-colors opacity-60"
-                {...drawerHover}
+                onClick={closeDrawer}
                 aria-label="Close menu"
+                className="group/close -mr-1 flex shrink-0 items-center gap-1 rounded-md py-1 pl-1 pr-1 opacity-55 transition-opacity duration-200 hover:opacity-100"
               >
-                <X className="w-5 h-5" />
+                <ChevronLeft
+                  className="h-3.5 w-3.5 transition-transform duration-200 ease-out group-hover/close:-translate-x-0.5"
+                  strokeWidth={1.75}
+                />
+                <span className="relative text-[10px] font-semibold uppercase tracking-[0.16em] leading-none">
+                  Close
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -bottom-1 left-0 right-0 h-px origin-left scale-x-0 transition-transform duration-300 ease-out group-hover/close:scale-x-100"
+                    style={{ backgroundColor: 'currentColor' }}
+                  />
+                </span>
               </button>
             </div>
 
@@ -761,12 +832,12 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
 
             {/* Menu links. The header's own list, shown a second way. */}
             {drawer.links.show && navLinks.length > 0 && (
-              <DrawerBlock label={drawer.links.label} line={chrome.line} first>
+              <DrawerBlock label={drawer.links.label} line={chrome.line} first beat={0} still={drawerClosing}>
                 {navLinks.map(({ label, href }, i) => (
                   <Link
                     key={`${label}-${i}`}
                     href={buildHref(storeBase, href)}
-                    onClick={() => setDrawerOpen(false)}
+                    onClick={closeDrawer}
                     className="px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors"
                     style={navTextStyle}
                     {...drawerHover}
@@ -778,10 +849,10 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
             )}
 
             {drawer.allProducts.show && (
-              <DrawerBlock line={chrome.line} first={!drawer.links.show}>
+              <DrawerBlock line={chrome.line} first={!drawer.links.show} beat={1} still={drawerClosing}>
                 <Link
                   href={`${storeBase}/products`}
-                  onClick={() => setDrawerOpen(false)}
+                  onClick={closeDrawer}
                   className="px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors"
                   {...drawerHover}
                 >
@@ -791,12 +862,12 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
             )}
 
             {drawer.categories.show && drawerCategories.length > 0 && (
-              <DrawerBlock label={drawer.categories.label} line={chrome.line}>
+              <DrawerBlock label={drawer.categories.label} line={chrome.line} beat={2} still={drawerClosing}>
                 {drawerCategories.map(cat => (
                   <Link
                     key={cat.id}
                     href={`${storeBase}/products?category=${cat.slug}`}
-                    onClick={() => setDrawerOpen(false)}
+                    onClick={closeDrawer}
                     className="px-3 py-2 rounded-xl text-sm font-medium opacity-80 hover:opacity-100 transition-colors"
                     {...drawerHover}
                   >
@@ -810,18 +881,24 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
                 288px wide, and two columns of product card in it are thumbnails
                 of a thumbnail. */}
             {drawer.carousel.show && drawerProducts.length > 0 && (
-              <DrawerBlock label={drawer.carousel.label} line={chrome.line} flush>
-                <div className="flex gap-3 overflow-x-auto hide-scrollbar px-3 pb-1 -mx-0">
-                  {drawerProducts.map(pr => (
+              <DrawerBlock label={drawer.carousel.label} line={chrome.line} flush beat={3} still={drawerClosing}>
+                {/* Snapped, so a flick lands a card square in the panel
+                    rather than halfway off the edge of a 288px drawer. */}
+                <div className="flex gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory scroll-px-3 px-3 pb-1">
+                  {drawerProducts.map((pr, i) => (
                     <Link
                       key={pr.id}
                       href={`${storeBase}/products/${pr.slug || pr.id}`}
-                      onClick={() => setDrawerOpen(false)}
-                      className="shrink-0 w-32 group/dp"
+                      onClick={closeDrawer}
+                      className={`shrink-0 w-32 snap-start group/dp ${drawerClosing ? '' : 'drawer-card-in'}`}
+                      // Capped at six: past that the last card would still be
+                      // waiting to appear after the drawer has finished
+                      // opening, which reads as the page being slow.
+                      style={drawerClosing ? undefined : { animationDelay: `${260 + Math.min(i, 6) * 60}ms` }}
                     >
                       <div
-                        className="w-32 h-32 overflow-hidden rounded-xl"
-                        style={{ backgroundColor: chrome.well }}
+                        className="w-32 h-32 overflow-hidden transition-shadow duration-300 group-hover/dp:shadow-lg"
+                        style={{ backgroundColor: chrome.well, borderRadius: cardRadius }}
                       >
                         {pr.imageUrl && (
                           <img
@@ -844,7 +921,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
             )}
 
             {drawer.contact.show && (
-              <DrawerBlock label={drawer.contact.label} line={chrome.line}>
+              <DrawerBlock label={drawer.contact.label} line={chrome.line} beat={4} still={drawerClosing}>
                 {drawer.contact.text.trim() ? (
                   <p className="px-3 text-[13px] leading-relaxed opacity-70 whitespace-pre-wrap">
                     {drawer.contact.text}
@@ -852,7 +929,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
                 ) : (
                   <Link
                     href={buildHref(storeBase, '/contact')}
-                    onClick={() => setDrawerOpen(false)}
+                    onClick={closeDrawer}
                     className="px-3 py-2 rounded-xl text-sm font-medium opacity-80 hover:opacity-100 transition-colors"
                     {...drawerHover}
                   >
@@ -881,6 +958,8 @@ function DrawerBlock({
   line,
   first = false,
   flush = false,
+  beat = 0,
+  still = false,
   children,
 }: {
   label?: string
@@ -889,12 +968,21 @@ function DrawerBlock({
   /** The child manages its own horizontal padding, e.g. a sideways scroller
       that has to bleed to the edge to look scrollable. */
   flush?: boolean
+  /** How many places down the drawer this block sits, for the stagger. */
+  beat?: number
+  /** No entrance while the drawer is leaving: the panel is the only thing
+      that should be moving then, and blocks rising into a sliding panel reads
+      as two animations fighting. */
+  still?: boolean
   children: React.ReactNode
 }) {
   return (
     <>
       {!first && <div className="mx-5 border-t" style={{ borderColor: line }} />}
-      <div className={`py-4 ${flush ? '' : 'px-4'}`}>
+      <div
+        className={`py-4 ${flush ? '' : 'px-4'} ${still ? '' : 'drawer-block-in'}`}
+        style={still ? undefined : { animationDelay: `${90 + beat * 55}ms` }}
+      >
         {label?.trim() && (
           <p className={`mb-2 text-[10px] font-bold uppercase tracking-widest opacity-50 ${flush ? 'px-7' : 'px-3'}`}>
             {label}

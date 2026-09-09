@@ -34,6 +34,8 @@ export interface DrawerConfig {
     productIds: string[]
     showTitle: boolean
     showPrice: boolean
+    /** The cards' corners. Blank follows the shop's own curvature. */
+    radius: string
   }
   /**
    * The navigation links. These are the header's own links, shown a second
@@ -50,7 +52,7 @@ export const DRAWER_DEFAULTS: DrawerConfig = {
   links:      { show: true,  label: '' },
   allProducts:{ show: true,  label: 'All products' },
   categories: { show: true,  label: 'Categories', ids: [] },
-  carousel:   { show: false, label: 'Featured', productIds: [], showTitle: true, showPrice: true },
+  carousel:   { show: false, label: 'Featured', productIds: [], showTitle: true, showPrice: true, radius: '' },
   contact:    { show: false, label: 'Contact', text: '' },
 }
 
@@ -112,6 +114,7 @@ export function resolveDrawer(raw: unknown): DrawerConfig {
       productIds: ids(d.carousel?.productIds),
       showTitle: bool(d.carousel?.showTitle, D.carousel.showTitle),
       showPrice: bool(d.carousel?.showPrice, D.carousel.showPrice),
+      radius: str(d.carousel?.radius, D.carousel.radius),
     },
     contact: {
       show: bool(d.contact?.show, D.contact.show),

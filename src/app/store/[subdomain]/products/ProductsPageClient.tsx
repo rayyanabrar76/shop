@@ -72,6 +72,12 @@ interface ThemeState {
   navCase?: string
   navDividers?: boolean
   productGridBg?: string
+  productGridPadTop?: number
+  productGridPadBottom?: number
+  productGridPadLeft?: number
+  productGridPadRight?: number
+  productGridMarginTop?: number
+  productGridMarginBottom?: number
   productImageRadius?: string
   carouselOnMobile?: boolean
   productGridButtonColor?: string
@@ -80,6 +86,21 @@ interface ThemeState {
   featuredLabel?: string
   featuredLabelLevel?: string
   shopAllLabel?: string
+  shopAllShow?: boolean
+  shopAllPadTop?: number
+  shopAllPadBottom?: number
+  shopAllPadLeft?: number
+  shopAllPadRight?: number
+  shopAllMarginTop?: number
+  shopAllMarginBottom?: number
+  featuredLabelShow?: boolean
+  shopAllStyle?: string
+  featuredLabelPadTop?: number
+  featuredLabelPadBottom?: number
+  featuredLabelPadLeft?: number
+  featuredLabelPadRight?: number
+  featuredLabelMarginTop?: number
+  featuredLabelMarginBottom?: number
   productTitleWidth?: string
   productTitleMaxWidth?: string
   productTitleAlign?: string
@@ -234,6 +255,19 @@ export default function ProductsPageClient({
     productImageRadius:        theme.productImageRadius,
     carouselOnMobile:          theme.carouselOnMobile,
     featuredLabel:             theme.featuredLabel || 'All Products',
+    featuredLabelShow:         theme.featuredLabelShow,
+    featuredLabelPadTop: theme.featuredLabelPadTop,
+    featuredLabelPadBottom: theme.featuredLabelPadBottom,
+    featuredLabelPadLeft: theme.featuredLabelPadLeft,
+    featuredLabelPadRight: theme.featuredLabelPadRight,
+    featuredLabelMarginTop: theme.featuredLabelMarginTop,
+    featuredLabelMarginBottom: theme.featuredLabelMarginBottom,
+    productGridPadTop: theme.productGridPadTop,
+    productGridPadBottom: theme.productGridPadBottom,
+    productGridPadLeft: theme.productGridPadLeft,
+    productGridPadRight: theme.productGridPadRight,
+    productGridMarginTop: theme.productGridMarginTop,
+    productGridMarginBottom: theme.productGridMarginBottom,
     productTitleWidth:         theme.productTitleWidth,
     productTitleMaxWidth:      theme.productTitleMaxWidth,
     productTitleAlign:         theme.productTitleAlign,

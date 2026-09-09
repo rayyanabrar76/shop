@@ -12,6 +12,20 @@ import {
   ChevronDown, GripVertical, ImageIcon, Menu, Package, Plus, Tag, Trash2, X,
 } from 'lucide-react'
 
+/** A CSS length in px or rem, as the slider's whole-pixel position. */
+function remOf(v: string): number {
+  if (!v || v === '0' || v === '0px') return 0
+  if (v.includes('rem')) return Math.round(parseFloat(v) * 16)
+  if (v.includes('px')) return parseInt(v)
+  return 0
+}
+
+/** The slider's position back to a stored value. Rem, so it scales with the
+ *  reader's own text size the way the rest of the theme's radii do. */
+function pxToRadius(n: number): string {
+  return n === 0 ? '0px' : `${(n / 16).toFixed(4)}rem`
+}
+
 interface Category { id: string; name: string; slug: string }
 interface Product { id: string; title: string; price: number; imageUrl?: string | null }
 
@@ -192,6 +206,41 @@ export default function DrawerEdit({ storeId, theme, updateTheme, onBack, onOpen
                         picked={pickedProducts.map(p => ({ id: p.id, label: p.title, imageUrl: p.imageUrl }))}
                         onChange={idsNext => patch('carousel', { productIds: idsNext })}
                       />
+                      {/* Reads like the grid's own curvature slider, with a
+                          swatch carrying whatever radius the track is on. */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className={`${labelCls} mb-0`}>Card Curvature</label>
+                          <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] text-zinc-600 tabular-nums dark:bg-zinc-800 dark:text-zinc-300">
+                            {drawer.carousel.radius || 'Theme'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="h-5 w-5 shrink-0 border-2 border-zinc-200 dark:border-zinc-700 transition-[border-radius]"
+                            style={{ borderRadius: drawer.carousel.radius || theme.borderRadius }}
+                          />
+                          <input
+                            type="range"
+                            min={0} max={24} step={2}
+                            value={remOf(drawer.carousel.radius || theme.borderRadius)}
+                            onChange={e => patch('carousel', { radius: pxToRadius(parseInt(e.target.value)) })}
+                            className="flex-1 h-1.5 cursor-pointer rounded-full accent-zinc-900 dark:accent-zinc-100"
+                            aria-label="Card curvature"
+                          />
+                          <div className="w-5 h-5 border-2 border-zinc-200 dark:border-zinc-700 shrink-0 rounded-full" />
+                        </div>
+                        {drawer.carousel.radius && (
+                          <button
+                            type="button"
+                            onClick={() => patch('carousel', { radius: '' })}
+                            className="mt-1.5 text-[10px] text-zinc-400 underline hover:text-zinc-600"
+                          >
+                            Follow the theme
+                          </button>
+                        )}
+                      </div>
+
                       <ToggleRow
                         label="Show titles"
                         on={drawer.carousel.showTitle}

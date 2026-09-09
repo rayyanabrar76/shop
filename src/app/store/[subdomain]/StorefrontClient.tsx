@@ -10,10 +10,9 @@ import CartSidebar from './cart-sidebar'
 import SectionDivider from './SectionDivider'
 import CustomSection, { type CustomSectionData, type StoreCategory } from './CustomSection'
 import ThemeSync from './ThemeSync'
-import { EditorSection, EditorItem, AddSectionSlot } from './EditorHighlight'
+import { EditorSection, AddSectionSlot } from './EditorHighlight'
 import { resolveSectionOrder, isCustomKey, customIdFromKey } from '@/lib/section-order'
-import { ensureReadable, readableText } from '@/lib/contrast'
-import { useStoreBase } from '@/components/StoreBaseProvider'
+import { ensureReadable } from '@/lib/contrast'
 
 interface ThemeStyle {
   primaryColor: string
@@ -59,9 +58,30 @@ interface ThemeStyle {
   cardShadow: string
   dividerStyle: string
   shopAllLabel: string
+  shopAllShow?: boolean
+  shopAllPadTop?: number
+  shopAllPadBottom?: number
+  shopAllPadLeft?: number
+  shopAllPadRight?: number
+  shopAllMarginTop?: number
+  shopAllMarginBottom?: number
+  featuredLabelShow?: boolean
+  shopAllStyle?: string
+  featuredLabelPadTop?: number
+  featuredLabelPadBottom?: number
+  featuredLabelPadLeft?: number
+  featuredLabelPadRight?: number
+  featuredLabelMarginTop?: number
+  featuredLabelMarginBottom?: number
   featuredLabel: string
   featuredLabelLevel?: string
   productGridBg: string
+  productGridPadTop?: number
+  productGridPadBottom?: number
+  productGridPadLeft?: number
+  productGridPadRight?: number
+  productGridMarginTop?: number
+  productGridMarginBottom?: number
   productImageRadius?: string
   productGridButtonColor: string
   productGridTextColor: string
@@ -131,7 +151,6 @@ export default function StorefrontClient({
   subdomain,
   showShopflowBranding = false,
 }: StorefrontClientProps) {
-  const storeBase = useStoreBase()
   const [theme, setTheme] = useState<ThemeStyle>(initialTheme)
   const [storeName, setStoreName] = useState(store.name)
   const [isEditor, setIsEditor] = useState(false)
@@ -292,6 +311,14 @@ export default function StorefrontClient({
     cardShadow: theme.cardShadow,
     productImageRadius: theme.productImageRadius,
     featuredLabel: theme.featuredLabel || 'Featured Products',
+    featuredLabelShow: theme.featuredLabelShow,
+    shopAllStyle: theme.shopAllStyle,
+    featuredLabelPadTop: theme.featuredLabelPadTop,
+    featuredLabelPadBottom: theme.featuredLabelPadBottom,
+    featuredLabelPadLeft: theme.featuredLabelPadLeft,
+    featuredLabelPadRight: theme.featuredLabelPadRight,
+    featuredLabelMarginTop: theme.featuredLabelMarginTop,
+    featuredLabelMarginBottom: theme.featuredLabelMarginBottom,
     featuredLabelLevel: theme.featuredLabelLevel,
     productTitleWidth:         theme.productTitleWidth,
     productTitleMaxWidth:      theme.productTitleMaxWidth,
@@ -304,6 +331,20 @@ export default function StorefrontClient({
     productTitlePaddingRight:  theme.productTitlePaddingRight,
     productPriceShowSale:      theme.productPriceShowSale,
     productPriceHidden:        theme.productPriceHidden,
+    productGridPadTop: theme.productGridPadTop,
+    productGridPadBottom: theme.productGridPadBottom,
+    productGridPadLeft: theme.productGridPadLeft,
+    productGridPadRight: theme.productGridPadRight,
+    productGridMarginTop: theme.productGridMarginTop,
+    productGridMarginBottom: theme.productGridMarginBottom,
+    shopAllShow: theme.shopAllShow,
+    shopAllLabel: theme.shopAllLabel,
+    shopAllPadTop: theme.shopAllPadTop,
+    shopAllPadBottom: theme.shopAllPadBottom,
+    shopAllPadLeft: theme.shopAllPadLeft,
+    shopAllPadRight: theme.shopAllPadRight,
+    shopAllMarginTop: theme.shopAllMarginTop,
+    shopAllMarginBottom: theme.shopAllMarginBottom,
     productPriceInstallments:  theme.productPriceInstallments,
     productPriceTaxInfo:       theme.productPriceTaxInfo,
     productPricePreset:        theme.productPricePreset,
@@ -412,23 +453,6 @@ export default function StorefrontClient({
               <EditorSection id="section-products" label="Product Grid" section="products" isEditor={isEditor} onEdit={notifyParent} className={dragSection === 'products' ? 'preview-dragging' : ''}>
                 <div data-pg="1" style={{ backgroundColor: 'var(--store-pg-bg)' }}>
                   <ProductGrid products={products} theme={themeObj} subdomain={subdomain} themeStyle={themeStyle} isEditor={isEditor} onEdit={notifyParent} activeProductField={activeProductField} />
-                  <div className="flex justify-center pb-8 -mt-2">
-                    <EditorItem section="products" field="shop-all" label="Shop All label" isEditor={isEditor} onEdit={notifyParent} block>
-                      <a
-                        href={`${storeBase}/products`}
-                        data-btn-type={theme.buttonStyle}
-                        className="inline-flex items-center gap-2 px-8 py-3 text-sm font-bold transition-all hover:opacity-80"
-                        style={{
-                          borderRadius: theme.borderRadius,
-                          backgroundColor: theme.buttonStyle === 'solid' ? btnColor : 'transparent',
-                          color: theme.buttonStyle === 'solid' ? '#fff' : btnColor,
-                          border: theme.buttonStyle === 'ghost' ? 'none' : `2px solid ${btnColor}`,
-                        }}
-                      >
-                        {theme.shopAllLabel || 'Shop All Products'}
-                      </a>
-                    </EditorItem>
-                  </div>
                 </div>
               </EditorSection>
               <AddSectionSlot isEditor={isEditor} />

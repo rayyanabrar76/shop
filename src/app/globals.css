@@ -415,13 +415,68 @@ body {
   border-radius: 0.5rem;
 }
 
-/* Mobile nav drawer slide-in */
-@keyframes drawer-slide-in {
+/* ── The header's drawer ─────────────────────────────────────────────────
+   Two directions, not one. The panel used to animate in and then vanish on
+   the frame it was closed, which reads as a bug rather than as a menu: the
+   thing you are watching should leave the way it arrived.
+
+   The curves are deliberately different. Coming in it decelerates hard, so
+   the panel arrives fast and settles, which is what makes a sheet feel like
+   it has weight. Going out it accelerates and takes less time, because a
+   dismissal that lingers feels like the interface is arguing. */
+@keyframes drawer-in {
   from { transform: translateX(-100%); }
   to   { transform: translateX(0); }
 }
-.drawer-slide-in {
-  animation: drawer-slide-in 0.25s ease-out;
+@keyframes drawer-out {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+@keyframes drawer-dim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes drawer-dim-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+.drawer-in  { animation: drawer-in  0.44s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.drawer-out { animation: drawer-out 0.26s cubic-bezier(0.6, 0, 0.9, 0.2) both; }
+.drawer-dim-in  { animation: drawer-dim-in  0.32s ease-out both; }
+.drawer-dim-out { animation: drawer-dim-out 0.24s ease-in both; }
+
+/* Each block settles a beat after the panel that carries it, so the drawer
+   composes itself rather than appearing whole. `backwards` is what keeps the
+   later blocks invisible during their delay instead of flashing at full
+   opacity and then starting. */
+@keyframes drawer-block-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.drawer-block-in {
+  animation: drawer-block-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* The carousel's cards come in from the side they scroll from, and lift very
+   slightly as they land. Same curve, so it reads as one movement with the
+   panel rather than a second animation happening on top of it. */
+@keyframes drawer-card-in {
+  from { opacity: 0; transform: translateX(14px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+.drawer-card-in {
+  animation: drawer-card-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* Nothing above is load-bearing: with motion turned down the drawer simply
+   is where it is. */
+@media (prefers-reduced-motion: reduce) {
+  .drawer-in, .drawer-out,
+  .drawer-dim-in, .drawer-dim-out,
+  .drawer-block-in, .drawer-card-in {
+    animation-duration: 0.01ms;
+    animation-delay: 0ms;
+  }
 }
 /* Cart line items settle in as the drawer opens. `backwards` matters: each row
    is given a staggered animation-delay, and without it the un-delayed rows
