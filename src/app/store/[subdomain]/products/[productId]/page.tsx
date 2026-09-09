@@ -7,7 +7,7 @@ import StoreFooter from '../../StoreFooter'
 import CartSidebar from '../../cart-sidebar'
 import ProductDetailClient from './ProductDetailClient'
 import ProductReviews from './ProductReviews'
-import { ArrowLeft, Package } from 'lucide-react'
+import { Package } from 'lucide-react'
 import ThemeSync from '../../ThemeSync'
 import { formatPrice } from '@/lib/currency'
 
@@ -130,6 +130,24 @@ export default async function StoreProductPage({
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / ratingCount
     : 0
 
+  // The cheapest option the shop actually offers, so the product page can
+  // answer "how does it get to me" instead of leaving it to the checkout.
+  const rates = await prisma.shippingRate.findMany({
+    where: { storeId: store.id },
+    orderBy: { price: 'asc' },
+    take: 1,
+    select: { name: true, price: true, estimatedDays: true, minOrder: true },
+  })
+  const cheapest = rates[0] ?? null
+  const shipping = cheapest
+    ? {
+        label: cheapest.price === 0
+          ? (cheapest.minOrder > 0 ? `Free delivery over ${formatPrice(cheapest.minOrder, store.currency)}` : 'Free delivery')
+          : `${cheapest.name} · ${formatPrice(cheapest.price, store.currency)}`,
+        detail: cheapest.estimatedDays ? `Usually ${cheapest.estimatedDays}` : 'Calculated at checkout',
+      }
+    : null
+
   const related = await prisma.product.findMany({
     where: { storeId: store.id, status: 'active', NOT: { id: productId } },
     take: 4,
@@ -211,15 +229,32 @@ export default async function StoreProductPage({
       <StoreBanner theme={theme} />
       <StoreHeader store={store} theme={headerTheme} subdomain={subdomain} />
 
-      <div className="max-w-6xl mx-auto w-full px-6 pt-8 pb-4">
-        <Link
-          href={`/store/${subdomain}`}
-          className="inline-flex items-center gap-1.5 text-sm font-medium opacity-50 hover:opacity-100 transition-opacity"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Back to store
-        </Link>
-      </div>
+      <nav aria-label="Breadcrumb" className="max-w-6xl mx-auto w-full px-6 pt-6 pb-4">
+        <ol className="flex items-center gap-1.5 text-[12.5px] min-w-0">
+          <li className="shrink-0">
+            <Link href={`/store/${subdomain}`} className="opacity-50 hover:opacity-100 transition-opacity">Home</Link>
+          </li>
+          <li aria-hidden className="opacity-25">/</li>
+          <li className="shrink-0">
+            <Link href={`/store/${subdomain}/products`} className="opacity-50 hover:opacity-100 transition-opacity">Products</Link>
+          </li>
+          {product.category && (
+            <>
+              <li aria-hidden className="opacity-25">/</li>
+              <li className="shrink-0 min-w-0">
+                <Link
+                  href={`/store/${subdomain}/products?category=${encodeURIComponent(product.category)}`}
+                  className="opacity-50 hover:opacity-100 transition-opacity truncate block"
+                >
+                  {product.category}
+                </Link>
+              </li>
+            </>
+          )}
+          <li aria-hidden className="opacity-25">/</li>
+          <li className="min-w-0 font-medium truncate">{product.title}</li>
+        </ol>
+      </nav>
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 pb-16">
         <ProductDetailClient
@@ -245,6 +280,8 @@ export default async function StoreProductPage({
             })),
           }}
           theme={{ primary, radius, buttonStyle, textColor }}
+          rating={ratingCount > 0 ? { average: ratingAverage, count: ratingCount } : undefined}
+          shipping={shipping}
         />
 
         <ProductReviews

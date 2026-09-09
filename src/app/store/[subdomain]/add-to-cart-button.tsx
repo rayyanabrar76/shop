@@ -13,6 +13,12 @@ interface AddToCartButtonProps {
   }
   variantSelections?: CartVariantSelection[]
   cartKey?: string
+  /**
+   * How many to add. The cart has always accepted a count; this button was
+   * the only caller and passed a literal 1, so a quantity box on the product
+   * page could not reach it.
+   */
+  quantity?: number
   style?: CSSProperties
   disabled?: boolean
   label?: string
@@ -37,6 +43,7 @@ export default function AddToCartButton({
   product,
   variantSelections,
   cartKey,
+  quantity = 1,
   style,
   disabled = false,
   label,
@@ -65,7 +72,7 @@ export default function AddToCartButton({
       price: product.price,
       imageUrl: product.imageUrl,
       variantSelections,
-    }, 1)
+    }, Math.max(1, Math.floor(quantity)))
     setIsAdded(true)
     setTimeout(() => setIsAdded(false), 2000)
   }
