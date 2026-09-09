@@ -192,33 +192,36 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
         }
       />
 
-      <div className="max-w-5xl px-6 pb-10 flex gap-8">
-        {/* Sidebar nav */}
-        <aside className="w-48 shrink-0">
-          <nav className="flex flex-col gap-1 sticky top-6">
+      <div className="max-w-5xl px-3.5 md:px-6 pb-10 flex flex-col md:flex-row gap-3 md:gap-8">
+        {/* The section list. A column beside the content on a desk, a strip of
+            tabs above it on a phone, where 192px of standing menu is half the
+            screen. It bleeds to both edges so the last tab is visibly cut off,
+            which is the thing that says the row scrolls. */}
+        <aside className="md:w-48 md:shrink-0">
+          <nav className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible hide-scrollbar -mx-3.5 px-3.5 md:mx-0 md:px-0 md:sticky md:top-6">
             {NAV.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 onClick={() => setActiveSection(id)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-left transition-all
+                className={`flex shrink-0 items-center gap-2 md:gap-2.5 whitespace-nowrap rounded-lg px-2.5 md:px-3 py-1.5 md:py-2 text-[12.5px] md:text-sm font-medium text-left transition-all
                   ${activeSection === id
                     ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-zinc-50 border border-(--admin-border)'
-                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-white/60 dark:hover:bg-zinc-800/60'}
+                    : 'border border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-white/60 dark:hover:bg-zinc-800/60'}
                   ${id === 'danger' && activeSection !== 'danger' ? 'text-red-500! hover:text-red-600!' : ''}`}
               >
-                <Icon size={14} className={id === 'danger' && activeSection !== 'danger' ? 'text-red-400' : ''} />
+                <Icon size={13} className={`shrink-0 ${id === 'danger' && activeSection !== 'danger' ? 'text-red-400' : ''}`} />
                 {label}
               </button>
             ))}
           </nav>
         </aside>
 
-        <div className="flex-1 min-w-0 space-y-6">
+        <div className="flex-1 min-w-0 space-y-3 md:space-y-6">
 
           {/* ── GENERAL ── */}
           {activeSection === 'general' && (
             <Card title="General Settings" description="Basic information about your store.">
-              <div className="space-y-5">
+              <div className="space-y-4 md:space-y-5">
                 <Field label="Store Name" hint="Displayed in your header and browser tab.">
                   <input
                     className={inputCls}
@@ -237,14 +240,14 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                     than a design choice. */}
                 <Link
                   href={`/dashboard/stores/${store.id}/theme/editor?section=seo&field=favicon`}
-                  className="group flex items-center gap-3 rounded-xl border border-(--admin-border) px-4 py-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                  className="group flex items-center gap-2.5 md:gap-3 rounded-xl border border-(--admin-border) px-3 md:px-4 py-2.5 md:py-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                  <span className="flex h-7 w-7 md:h-8 md:w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
                     <Globe className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
                   </span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">Favicon</span>
-                    <span className="block text-[11px] text-zinc-500 dark:text-zinc-400">
+                    <span className="block text-[13px] md:text-sm font-medium text-zinc-900 dark:text-zinc-50">Favicon</span>
+                    <span className="block text-[10.5px] md:text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
                       The square mark in the browser tab, in Google results, and
                       in place of {storeInitials(store.name)} in the top bar.
                     </span>
@@ -299,19 +302,19 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                 </Field>
                 <Field label="Store ID" hint="Read-only. Quote this if you contact support.">
                   <div className="flex gap-2">
-                    <input readOnly className="flex-1 border border-(--admin-border) rounded-xl px-4 py-2.5 text-sm bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 font-mono cursor-not-allowed" value={store.id} />
-                    <button onClick={() => navigator.clipboard.writeText(store.id)} className="p-2.5 border border-(--admin-border) rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200">
+                    <input readOnly className="min-w-0 flex-1 border border-(--admin-border) rounded-xl px-3 md:px-4 py-2.5 text-[12px] md:text-sm bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 font-mono cursor-not-allowed" value={store.id} />
+                    <button onClick={() => navigator.clipboard.writeText(store.id)} className="shrink-0 p-2.5 border border-(--admin-border) rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200">
                       <Copy size={14} />
                     </button>
                   </div>
                 </Field>
                 <Field label="Created">
-                  <input readOnly className="w-full border border-(--admin-border) rounded-xl px-4 py-2.5 text-sm bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 cursor-not-allowed"
+                  <input readOnly className="w-full border border-(--admin-border) rounded-xl px-3 md:px-4 py-2.5 text-[12.5px] md:text-sm bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 cursor-not-allowed"
                     value={new Date(store.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                   />
                 </Field>
                 <StatusLine saved={saved} error={error} />
-                <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50 hover:opacity-90 transition-opacity" style={{ backgroundColor: primary }}>
+                <button onClick={handleSave} disabled={saving} className="flex w-full md:w-auto items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-white text-[13px] md:text-sm font-semibold disabled:opacity-50 hover:opacity-90 transition-opacity" style={{ backgroundColor: primary }}>
                   <Save size={14} />
                   {saving ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -323,10 +326,13 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
           {activeSection === 'appearance' && (
             <Card title="Appearance" description="Choose how the admin dashboard looks.">
               <div className="space-y-4">
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                <p className="text-[11px] md:text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
                   Select a theme for your admin interface. This is saved to your browser and only affects you.
                 </p>
-                <div className="grid grid-cols-3 gap-3">
+                {/* Three across even on a phone. Stacked, the three previews
+                    stop being comparable, and comparing them is the whole
+                    reason they are pictures rather than a list. */}
+                <div className="grid grid-cols-3 gap-2 md:gap-3">
                   {([
                     { id: 'light',  label: 'Light',          icon: Sun,     preview: { bg: '#ffffff', sidebar: '#f4f4f5', text: '#09090b' } },
                     { id: 'dark',   label: 'Dark',           icon: Moon,    preview: { bg: '#09090b', sidebar: '#18181b', text: '#fafafa' } },
@@ -338,27 +344,27 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                       <button
                         key={opt.id}
                         onClick={() => setAdminThemeMode(opt.id)}
-                        className={`relative flex flex-col gap-3 p-4 rounded-2xl border-2 transition-all text-left ${focusPulse === opt.id ? 'ring-4 ring-violet-500/30 ' : ''}${
+                        className={`relative flex flex-col gap-2 md:gap-3 p-2 md:p-4 rounded-xl md:rounded-2xl border-2 transition-all text-left ${focusPulse === opt.id ? 'ring-4 ring-violet-500/30 ' : ''}${
                           isActive
                             ? 'border-violet-500 bg-violet-50/40 dark:bg-violet-950/30'
                             : 'border-(--admin-border) hover:border-(--admin-field-border)'
                         }`}
                       >
-                        <div className="w-full h-16 rounded-xl overflow-hidden border border-(--admin-border) flex" style={{ background: opt.preview.bg }}>
-                          <div className="w-7 h-full shrink-0" style={{ backgroundColor: opt.preview.sidebar }} />
-                          <div className="flex-1 p-1.5 flex flex-col gap-1">
-                            <div className="h-1.5 w-8 rounded-full opacity-30" style={{ backgroundColor: opt.preview.text }} />
-                            <div className="h-1.5 w-12 rounded-full opacity-20" style={{ backgroundColor: opt.preview.text }} />
+                        <div className="w-full h-11 md:h-16 rounded-lg md:rounded-xl overflow-hidden border border-(--admin-border) flex" style={{ background: opt.preview.bg }}>
+                          <div className="w-4 md:w-7 h-full shrink-0" style={{ backgroundColor: opt.preview.sidebar }} />
+                          <div className="flex-1 p-1 md:p-1.5 flex flex-col gap-1">
+                            <div className="h-1 md:h-1.5 w-5 md:w-8 rounded-full opacity-30" style={{ backgroundColor: opt.preview.text }} />
+                            <div className="h-1 md:h-1.5 w-8 md:w-12 rounded-full opacity-20" style={{ backgroundColor: opt.preview.text }} />
                             <div className="mt-auto h-3 w-full rounded opacity-10" style={{ backgroundColor: opt.preview.text }} />
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-violet-600' : 'text-zinc-500'}`} />
-                          <span className={`text-xs font-semibold ${isActive ? 'text-violet-700 dark:text-violet-400' : 'text-zinc-600 dark:text-zinc-300'}`}>{opt.label}</span>
+                        <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
+                          <Icon className={`w-3 h-3 md:w-3.5 md:h-3.5 shrink-0 ${isActive ? 'text-violet-600' : 'text-zinc-500'}`} />
+                          <span className={`truncate text-[10.5px] md:text-xs font-semibold ${isActive ? 'text-violet-700 dark:text-violet-400' : 'text-zinc-600 dark:text-zinc-300'}`}>{opt.label}</span>
                         </div>
                         {isActive && (
-                          <div className="absolute top-2.5 right-2.5 w-4 h-4 rounded-full bg-violet-500 flex items-center justify-center">
-                            <CheckCircle2 className="w-3 h-3 text-white" />
+                          <div className="absolute top-1.5 right-1.5 md:top-2.5 md:right-2.5 w-3.5 h-3.5 md:w-4 md:h-4 rounded-full bg-violet-500 flex items-center justify-center">
+                            <CheckCircle2 className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" />
                           </div>
                         )}
                       </button>
@@ -371,9 +377,9 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
 
           {/* ── DOMAIN ── */}
           {activeSection === 'domain' && (
-            <div className="space-y-5">
+            <div className="space-y-3 md:space-y-5">
               <Card title="Domain & URL" description="Manage your store's public address.">
-                <div className="space-y-5">
+                <div className="space-y-4 md:space-y-5">
                   <Field label="Subdomain" hint="Lowercase letters, numbers, and hyphens only.">
                     <div className={`flex items-center border rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-offset-1 dark:focus-within:ring-offset-zinc-900 focus-within:ring-black/10 dark:focus-within:ring-white/10 transition-shadow ${subdomainError ? 'border-red-300 dark:border-red-800' : 'border-(--admin-border)'}`}>
                       <span className="px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 text-zinc-500 text-sm border-r border-(--admin-border) shrink-0">/store/</span>
@@ -388,10 +394,13 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                       <p className="text-[11px] text-red-500 dark:text-red-400 font-medium mt-1.5">{subdomainError}</p>
                     )}
                   </Field>
-                  <div className="rounded-xl border border-(--admin-border) bg-zinc-50 dark:bg-zinc-800/50 p-4 flex items-center justify-between gap-3">
+                  {/* The address and the two things you do with it. Side by
+                      side there is not room for both on a phone, so the
+                      buttons drop below rather than squeezing the URL. */}
+                  <div className="rounded-xl border border-(--admin-border) bg-zinc-50 dark:bg-zinc-800/50 p-3 md:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3">
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Store URL</p>
-                      <p className="text-sm font-mono text-zinc-700 dark:text-zinc-200 truncate">{storeUrlDisplay}</p>
+                      <p className="text-[10.5px] md:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Store URL</p>
+                      <p className="text-[12.5px] md:text-sm font-mono text-zinc-700 dark:text-zinc-200 truncate">{storeUrlDisplay}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <button onClick={copyUrl} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 border border-(--admin-border) rounded-lg hover:bg-white dark:hover:bg-zinc-800 transition-colors text-zinc-600 dark:text-zinc-300">
@@ -403,7 +412,7 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                     </div>
                   </div>
                   <StatusLine saved={saved} error={error} />
-                  <button onClick={handleSave} disabled={saving || Boolean(subdomainError)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity" style={{ backgroundColor: primary }}>
+                  <button onClick={handleSave} disabled={saving || Boolean(subdomainError)} className="flex w-full md:w-auto items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-white text-[13px] md:text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity" style={{ backgroundColor: primary }}>
                     <Save size={14} />
                     {saving ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -411,18 +420,18 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
               </Card>
 
               <Card title="Custom Domain" description="Connect your own domain to your store.">
-                <div className="space-y-4">
-                  <div className="flex gap-2">
+                <div className="space-y-3 md:space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       value={customDomain}
                       onChange={e => setCustomDomain(e.target.value)}
                       placeholder="mystore.com"
-                      className="flex-1 rounded-xl border border-(--admin-field-border) px-3 py-2.5 text-sm outline-none focus:border-(--admin-field-border-focus) transition-all bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 font-mono placeholder:text-zinc-300 dark:placeholder:text-zinc-600 placeholder:font-sans"
+                      className="min-w-0 flex-1 rounded-xl border border-(--admin-field-border) px-3 py-2.5 text-[13px] md:text-sm outline-none focus:border-(--admin-field-border-focus) transition-all bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 font-mono placeholder:text-zinc-300 dark:placeholder:text-zinc-600 placeholder:font-sans"
                     />
                     <button
                       onClick={handleSaveAndVerifyDomain}
                       disabled={domainSaving || !customDomain.trim()}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors disabled:opacity-50 shrink-0"
+                      className="flex w-full sm:w-auto items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors disabled:opacity-50 shrink-0"
                     >
                       {domainSaving ? (
                         <><RefreshCw size={13} className="animate-spin" /> Verifying...</>
@@ -433,17 +442,17 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                   </div>
 
                   {store.customDomain && (
-                    <div className={`flex items-center justify-between p-3 rounded-xl border ${domainVerified ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/40' : 'bg-amber-50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/40'}`}>
-                      <div className="flex items-center gap-2">
+                    <div className={`flex items-center justify-between gap-2 p-3 rounded-xl border ${domainVerified ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/40' : 'bg-amber-50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/40'}`}>
+                      <div className="flex items-center gap-2 min-w-0">
                         {domainVerified
                           ? <HiCheckCircle className="w-4 h-4 text-emerald-500" />
                           : <HiClock className="w-4 h-4 text-amber-500" />
                         }
-                        <div>
+                        <div className="min-w-0">
                           <p className={`text-xs font-bold ${domainVerified ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
                             {domainVerified ? 'Domain verified ✓' : 'Pending verification'}
                           </p>
-                          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono mt-0.5">{store.customDomain}</p>
+                          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono mt-0.5 truncate">{store.customDomain}</p>
                         </div>
                       </div>
                       <button onClick={handleRemoveDomain} className="p-1.5 rounded-lg text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all">
@@ -468,16 +477,21 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
                     <div className="space-y-3 pt-2">
                       <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">DNS Setup</p>
                       <p className="text-xs text-zinc-500">Add these records in your domain registrar:</p>
-                      <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-(--admin-border) overflow-hidden">
-                        <div className="grid grid-cols-3 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/60 border-b border-(--admin-border)">
-                          <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Type</span>
-                          <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Name</span>
-                          <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Value</span>
-                        </div>
-                        <div className="grid grid-cols-3 px-3 py-2.5">
-                          <span className="text-xs font-mono text-zinc-700 dark:text-zinc-200">CNAME</span>
-                          <span className="text-xs font-mono text-zinc-700 dark:text-zinc-200">@</span>
-                          <span className="text-xs font-mono text-violet-600 dark:text-violet-400">cname.vercel-dns.com</span>
+                      {/* A record you retype into a registrar, so it scrolls
+                          rather than wraps: a hostname broken across two lines
+                          is a hostname copied wrong. */}
+                      <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-(--admin-border) overflow-x-auto">
+                        <div className="min-w-[19rem]">
+                          <div className="grid grid-cols-[4.5rem_3rem_1fr] gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/60 border-b border-(--admin-border)">
+                            <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Type</span>
+                            <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Name</span>
+                            <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Value</span>
+                          </div>
+                          <div className="grid grid-cols-[4.5rem_3rem_1fr] gap-2 px-3 py-2.5">
+                            <span className="text-[11px] md:text-xs font-mono text-zinc-700 dark:text-zinc-200">CNAME</span>
+                            <span className="text-[11px] md:text-xs font-mono text-zinc-700 dark:text-zinc-200">@</span>
+                            <span className="text-[11px] md:text-xs font-mono text-violet-600 dark:text-violet-400 whitespace-nowrap">cname.vercel-dns.com</span>
+                          </div>
                         </div>
                       </div>
                       <p className="text-[10px] text-zinc-500">DNS changes can take up to 48 hours. Click &quot;Save &amp; Verify&quot; again after adding records.</p>
@@ -495,43 +509,43 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
 
           {activeSection === 'danger' && (
             <Card title="Danger Zone" description="Permanent actions that cannot be undone." danger>
-              <div className="space-y-6">
-                <div className="flex items-start justify-between gap-6">
+              <div className="space-y-4 md:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-6">
                   <div>
-                    <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Delete this store</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                    <p className="text-[13px] md:text-sm font-semibold text-zinc-800 dark:text-zinc-100">Delete this store</p>
+                    <p className="text-[11px] md:text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
                       Permanently removes the store and <strong>all</strong> associated products, orders, customers, and theme data. There is no undo.
                     </p>
                   </div>
                   {!showDeleteInput && (
-                    <button onClick={() => setShowDeleteInput(true)} className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
+                    <button onClick={() => setShowDeleteInput(true)} className="shrink-0 flex w-full sm:w-auto items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-xl border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-[13px] md:text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
                       <Trash2 size={14} /> Delete Store
                     </button>
                   )}
                 </div>
 
                 {showDeleteInput && (
-                  <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 p-5 space-y-4">
+                  <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 p-3.5 md:p-5 space-y-3 md:space-y-4">
                     <div className="space-y-1">
-                      <p className="text-sm font-semibold text-red-800 dark:text-red-300">Confirm deletion</p>
-                      <p className="text-xs text-red-600 dark:text-red-400">
+                      <p className="text-[13px] md:text-sm font-semibold text-red-800 dark:text-red-300">Confirm deletion</p>
+                      <p className="text-[11px] md:text-xs text-red-600 dark:text-red-400 leading-relaxed">
                         Type <span className="font-black font-mono bg-red-100 dark:bg-red-900/40 px-1 rounded">{store.name}</span> to permanently delete this store.
                       </p>
                     </div>
                     <input
                       autoFocus
-                      className="w-full border border-red-300 dark:border-red-900 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 dark:focus:ring-red-800 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+                      className="w-full border border-red-300 dark:border-red-900 rounded-lg px-3 py-2.5 text-[13px] md:text-sm focus:outline-none focus:ring-2 focus:ring-red-400 dark:focus:ring-red-800 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
                       placeholder={`Type "${store.name}" to confirm`}
                       value={deleteConfirm}
                       onChange={e => setDeleteConfirm(e.target.value)}
                     />
                     {deleteError && <p className="text-xs text-red-600 dark:text-red-400 font-medium flex items-center gap-1"><AlertCircle size={13} /> {deleteError}</p>}
-                    <div className="flex gap-2">
-                      <button onClick={handleDelete} disabled={deleteConfirm !== store.name || deleting} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold disabled:opacity-40 hover:bg-red-700 transition-colors">
+                    <div className="flex flex-col-reverse sm:flex-row gap-2">
+                      <button onClick={handleDelete} disabled={deleteConfirm !== store.name || deleting} className="flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-lg bg-red-600 text-white text-[13px] md:text-sm font-semibold disabled:opacity-40 hover:bg-red-700 transition-colors">
                         <Trash2 size={13} />
                         {deleting ? 'Deleting everything...' : 'Yes, delete permanently'}
                       </button>
-                      <button onClick={() => { setShowDeleteInput(false); setDeleteConfirm(''); setDeleteError('') }} disabled={deleting} className="px-4 py-2 rounded-lg border border-(--admin-border) text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50">
+                      <button onClick={() => { setShowDeleteInput(false); setDeleteConfirm(''); setDeleteError('') }} disabled={deleting} className="px-4 py-2.5 sm:py-2 rounded-lg border border-(--admin-border) text-[13px] md:text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50">
                         Cancel
                       </button>
                     </div>
@@ -548,12 +562,12 @@ export default function SettingsClient({ store, orderCount = 0 }: { store: Store
 
 function Card({ title, description, children, danger = false }: { title: string; description?: string; children: React.ReactNode; danger?: boolean }) {
   return (
-    <div className={`bg-(--admin-card) rounded-2xl border shadow-sm overflow-hidden ${danger ? 'border-red-200 dark:border-red-900/50' : 'border-(--admin-border)'}`}>
-      <div className={`px-6 py-4 border-b ${danger ? 'border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-950/20' : 'border-(--admin-edge)'}`}>
-        <h2 className={`font-semibold text-sm ${danger ? 'text-red-700 dark:text-red-400' : 'text-zinc-800 dark:text-zinc-100'}`}>{title}</h2>
-        {description && <p className="text-xs text-zinc-500 mt-0.5">{description}</p>}
+    <div className={`bg-(--admin-card) rounded-xl md:rounded-2xl border shadow-sm overflow-hidden ${danger ? 'border-red-200 dark:border-red-900/50' : 'border-(--admin-border)'}`}>
+      <div className={`px-3.5 md:px-6 py-3 md:py-4 border-b ${danger ? 'border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-950/20' : 'border-(--admin-edge)'}`}>
+        <h2 className={`font-semibold text-[13px] md:text-sm ${danger ? 'text-red-700 dark:text-red-400' : 'text-zinc-800 dark:text-zinc-100'}`}>{title}</h2>
+        {description && <p className="text-[11px] md:text-xs text-zinc-500 mt-0.5 leading-relaxed">{description}</p>}
       </div>
-      <div className="px-6 py-5">{children}</div>
+      <div className="px-3.5 md:px-6 py-4 md:py-5">{children}</div>
     </div>
   )
 }
@@ -562,8 +576,8 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   return (
     <div className="space-y-1.5">
       <div>
-        <label className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-zinc-500">{label}</label>
-        {hint && <p className="text-[11px] text-zinc-500 mt-0.5">{hint}</p>}
+        <label className="text-[10px] md:text-[10.5px] font-semibold uppercase tracking-[0.08em] text-zinc-500">{label}</label>
+        {hint && <p className="text-[10.5px] md:text-[11px] text-zinc-500 mt-0.5 leading-relaxed">{hint}</p>}
       </div>
       {children}
     </div>
@@ -571,7 +585,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 }
 
 function StatusLine({ saved, error }: { saved: boolean; error: string }) {
-  if (saved) return <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium"><CheckCircle2 size={15} /> Changes saved successfully</div>
-  if (error) return <div className="flex items-center gap-2 text-red-500 text-sm font-medium"><AlertCircle size={15} /> {error}</div>
+  if (saved) return <div className="flex items-center gap-2 text-emerald-600 text-[12.5px] md:text-sm font-medium"><CheckCircle2 size={15} className="shrink-0" /> Changes saved successfully</div>
+  if (error) return <div className="flex items-start gap-2 text-red-500 text-[12.5px] md:text-sm font-medium"><AlertCircle size={15} className="shrink-0 mt-px" /> {error}</div>
   return null
 }

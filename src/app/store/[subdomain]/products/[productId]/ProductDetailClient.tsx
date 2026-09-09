@@ -303,7 +303,7 @@ export default function ProductDetailClient({ product, theme, rating, shipping }
                 onClick={() => setQty(q => Math.max(1, q - 1))}
                 disabled={qty <= 1}
                 aria-label="Fewer"
-                className="w-11 h-[52px] flex items-center justify-center disabled:opacity-25 transition-opacity"
+                className="w-11 h-13 flex items-center justify-center disabled:opacity-25 transition-opacity"
               >
                 <Minus className="w-3.5 h-3.5" />
               </button>
@@ -312,7 +312,7 @@ export default function ProductDetailClient({ product, theme, rating, shipping }
                 onClick={() => setQty(q => Math.min(maxQty, q + 1))}
                 disabled={qty >= maxQty}
                 aria-label="More"
-                className="w-11 h-[52px] flex items-center justify-center disabled:opacity-25 transition-opacity"
+                className="w-11 h-13 flex items-center justify-center disabled:opacity-25 transition-opacity"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
@@ -384,7 +384,7 @@ export default function ProductDetailClient({ product, theme, rating, shipping }
       {/* ── Lightbox ──────────────────────────────────────────────────── */}
       {zoomed && images.length > 0 && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
+          className="fixed inset-0 z-100 flex items-center justify-center bg-black/90 p-4"
           onClick={() => setZoomed(false)}
           role="dialog"
           aria-modal="true"

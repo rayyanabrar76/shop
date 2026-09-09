@@ -115,17 +115,17 @@ export default function PoliciesPanel({ storeId, subdomain }: { storeId: string;
   }
 
   return (
-    <div className="space-y-5">
-      <div className="bg-(--admin-card) rounded-2xl border border-(--admin-border) shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-(--admin-edge)">
-          <h2 className="font-semibold text-sm text-zinc-800 dark:text-zinc-100">Policies</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
+    <div className="space-y-3 md:space-y-5">
+      <div className="bg-(--admin-card) rounded-xl md:rounded-2xl border border-(--admin-border) shadow-sm overflow-hidden">
+        <div className="px-3.5 md:px-6 py-3 md:py-4 border-b border-(--admin-edge)">
+          <h2 className="font-semibold text-[13px] md:text-sm text-zinc-800 dark:text-zinc-100">Policies</h2>
+          <p className="text-[11px] md:text-xs text-zinc-500 mt-0.5 leading-relaxed">
             Linked from the checkout and the storefront footer once written. A policy that is hidden stays reachable by its address; one that is not written is not shown anywhere.
           </p>
         </div>
 
         {error && (
-          <p className="mx-6 mt-4 rounded-xl border border-red-100 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400">
+          <p className="mx-3.5 md:mx-6 mt-4 rounded-xl border border-red-100 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400">
             {error}
           </p>
         )}
@@ -133,10 +133,10 @@ export default function PoliciesPanel({ storeId, subdomain }: { storeId: string;
         {rows === null ? (
           <div className="divide-y divide-(--admin-edge)">
             {POLICY_KINDS.map(k => (
-              <div key={k.kind} className="flex items-center gap-4 px-6 py-4">
-                <div className="flex-1 space-y-2">
-                  <div className="h-3.5 w-36 rounded bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
-                  <div className="h-2.5 w-64 rounded bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+              <div key={k.kind} className="flex items-center gap-4 px-3.5 md:px-6 py-3.5 md:py-4">
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="h-3.5 w-36 max-w-full rounded bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+                  <div className="h-2.5 w-64 max-w-full rounded bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
                 </div>
                 <div className="h-5 w-9 rounded-full bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
               </div>
@@ -158,7 +158,7 @@ export default function PoliciesPanel({ storeId, subdomain }: { storeId: string;
               return (
                 <li key={row.kind}>
                   <div
-                    className="flex items-center gap-3 px-4 sm:px-6 py-3.5 cursor-pointer hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors"
+                    className="flex items-center gap-2.5 sm:gap-3 px-3.5 sm:px-6 py-3 sm:py-3.5 cursor-pointer hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors"
                     onClick={e => {
                       if ((e.target as HTMLElement).closest('button, a')) return
                       setOpen(isOpen ? null : row.kind)
@@ -166,13 +166,16 @@ export default function PoliciesPanel({ storeId, subdomain }: { storeId: string;
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 min-w-0">
-                        <p className="text-[13.5px] font-semibold text-zinc-900 dark:text-zinc-50 truncate">{row.title}</p>
-                        <span className={`inline-flex shrink-0 items-center gap-1.5 pl-1.5 pr-2 h-5 rounded-full text-[10.5px] font-medium ${status.cls}`}>
+                        <p className="text-[12.5px] sm:text-[13.5px] font-semibold text-zinc-900 dark:text-zinc-50 truncate">{row.title}</p>
+                        {/* On a phone the dot carries the state on its own:
+                            the word beside it costs a third of the row and the
+                            colour has already said it. */}
+                        <span className={`inline-flex shrink-0 items-center gap-1.5 pl-1.5 pr-1.5 sm:pr-2 h-5 rounded-full text-[10.5px] font-medium ${status.cls}`}>
                           <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
-                          {status.label}
+                          <span className="hidden sm:inline">{status.label}</span>
                         </span>
                       </div>
-                      <p className="text-[11.5px] text-zinc-500 mt-0.5 truncate">{def.blurb}</p>
+                      <p className="text-[10.5px] sm:text-[11.5px] text-zinc-500 mt-0.5 truncate">{def.blurb}</p>
                     </div>
 
                     {/* Footer switch. Only meaningful once written, so it is
@@ -195,14 +198,14 @@ export default function PoliciesPanel({ storeId, subdomain }: { storeId: string;
                   </div>
 
                   {isOpen && (
-                    <div className="px-4 sm:px-6 pb-5 pt-1 space-y-3 border-t border-(--admin-edge) bg-zinc-50/40 dark:bg-zinc-950/20">
+                    <div className="px-3.5 sm:px-6 pb-4 sm:pb-5 pt-1 space-y-3 border-t border-(--admin-edge) bg-zinc-50/40 dark:bg-zinc-950/20">
                       <textarea
                         value={textOf(row)}
                         onChange={e => setEdits(ed => ({ ...ed, [row.kind]: e.target.value }))}
-                        rows={16}
+                        rows={14}
                         placeholder={policyStarter(row.kind)}
                         spellCheck
-                        className={`${inputCls} mt-4 resize-y min-h-48 text-[13px] leading-relaxed placeholder:text-zinc-400 dark:placeholder:text-zinc-500`}
+                        className={`${inputCls} mt-3 sm:mt-4 resize-y min-h-40 sm:min-h-48 text-[12.5px] sm:text-[13px] leading-relaxed placeholder:text-zinc-400 dark:placeholder:text-zinc-500`}
                       />
 
                       <div className="flex flex-wrap items-center gap-2">
@@ -213,7 +216,7 @@ export default function PoliciesPanel({ storeId, subdomain }: { storeId: string;
                           className="flex h-8 items-center gap-1.5 rounded-lg border border-(--admin-border) bg-(--admin-card) px-3 text-[11.5px] font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-(--admin-field-border) transition-colors disabled:opacity-60"
                         >
                           {drafting === row.kind
-                            ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Writing from your store details…</>
+                            ? <><Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" /> <span className="hidden sm:inline">Writing from your store details…</span><span className="sm:hidden">Writing…</span></>
                             : <><Sparkles className="w-3.5 h-3.5" /> {written ? 'Redraft with AI' : 'Draft with AI'}</>}
                         </button>
 
