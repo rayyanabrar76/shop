@@ -42,7 +42,7 @@ export default async function ThemePage({
     <div className="min-h-full bg-(--admin-page)">
       <PageHeader
         storeId={storeId}
-        maxWidth="max-w-5xl"
+        maxWidth="max-w-6xl"
         icon={<Paintbrush className="w-5 h-5" />}
         title="Customization"
         action={

@@ -173,7 +173,7 @@ export default function ThemeClient({
   ]
 
   return (
-    <div className="max-w-5xl px-4 md:px-6 pb-10 space-y-6">
+    <div className="max-w-6xl px-3.5 md:px-6 pb-10 space-y-6">
       {/* ── The shop, as it stands ────────────────────────────────────────
           The picture runs edge to edge, so the shop's own header is the first
           thing in frame. Its details ride on a frosted panel floating at the
@@ -235,18 +235,23 @@ export default function ThemeClient({
               throughout and masked so it ramps in on the way down, so the page
               drifts out of focus over the last third of the card instead of
               being cut across by a band. It reaches well above the panel on
-              purpose — a blur confined to the strip behind the panel is a
-              band with soft edges, not a page trailing off. A little shade
-              with it, so the panel reads on a pale image. */}
+              purpose: a blur confined to the strip behind the panel is a band
+              with soft edges, not a page trailing off. A little shade with it,
+              so the panel reads on a pale image. */}
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-[45%] backdrop-blur-lg"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-[62%] backdrop-blur-2xl"
             style={{
-              maskImage: 'linear-gradient(to bottom, transparent, black 78%)',
-              WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 78%)',
+              // The ramp starts sooner than the layer does, so the top of it
+              // is barely there and the page thickens into the blur rather
+              // than meeting an edge. Two stops rather than one: a single
+              // gradient reaches full strength at a point you can see, and
+              // the eye finds it.
+              maskImage: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.35) 46%, black 82%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.35) 46%, black 82%)',
             }}
           />
-          <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
+          <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-black/40 via-black/12 to-transparent" />
 
           {/* The panel. Inset and floating, not a full-width strip: it reads
               as something resting on the shop rather than a chrome bar bolted
