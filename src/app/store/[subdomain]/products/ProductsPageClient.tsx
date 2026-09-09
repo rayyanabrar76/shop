@@ -56,6 +56,7 @@ interface ThemeState {
   headerTransparent?: boolean
   headerInverseLogoUrl?: string
   headerTransparentText?: string
+  drawer?: unknown
   footerText: string
   footerLogoUrl?: string
   footerLogoWidth?: number

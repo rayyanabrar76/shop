@@ -97,6 +97,7 @@ export async function POST(
     customCss,
     customHead,
     navLinks:    body.navLinks    ?? undefined,
+    drawer:      body.drawer      ?? undefined,
     navFontSize: body.navFontSize ?? undefined,
     navCase:     body.navCase     ?? undefined,
     navDividers: body.navDividers ?? undefined,

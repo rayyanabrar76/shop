@@ -4,7 +4,7 @@ import SectionHeader from './SectionHeader'
 import { ThemeState, labelCls } from '../types'
 import { PanelRow } from '../controls'
 import MediaPicker from '@/components/MediaPicker'
-import { Menu } from 'lucide-react'
+import { Menu, PanelLeft } from 'lucide-react'
 
 interface HeaderEditProps {
   storeId: string
@@ -34,6 +34,11 @@ export default function HeaderEdit({ storeId, theme, updateTheme, onBack, onOpen
               label="Navigation Menu"
               note={linkCount > 0 ? `${linkCount} ${linkCount === 1 ? 'link' : 'links'}` : undefined}
               onClick={() => onOpenPanel('nav-menu')}
+            />
+            <PanelRow
+              icon={PanelLeft}
+              label="Drawer"
+              onClick={() => onOpenPanel('drawer')}
             />
           </div>
         )}

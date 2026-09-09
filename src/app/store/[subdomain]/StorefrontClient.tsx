@@ -42,6 +42,7 @@ interface ThemeStyle {
   headerTransparent?: boolean
   headerInverseLogoUrl?: string
   headerTransparentText?: string
+  drawer?: unknown
   footerText: string
   footerLogoUrl?: string
   footerLogoWidth?: number
@@ -231,6 +232,7 @@ export default function StorefrontClient({
     headerTransparent: theme.headerTransparent,
     headerInverseLogoUrl: theme.headerInverseLogoUrl,
     headerTransparentText: theme.headerTransparentText,
+    drawer: theme.drawer,
     footerText: theme.footerText,
     footerLogoUrl: theme.footerLogoUrl,
     footerLogoWidth: theme.footerLogoWidth,

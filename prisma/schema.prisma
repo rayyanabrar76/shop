@@ -233,6 +233,10 @@ model StoreTheme {
   facebookUrl     String?
   heroSlides      Json?
   navLinks        Json?
+  /// The mobile drawer's contents. One column rather than a scalar per
+  /// row, because the drawer gains a block whenever someone thinks of
+  /// another one. Shape lives in src/lib/drawer.ts.
+  drawer          Json?
   navFontSize     Int     @default(14)
   navCase         String  @default("normal")
   navDividers     Boolean @default(false)

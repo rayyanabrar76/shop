@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { storeUrl } from '@/lib/config'
+import { resolveDrawer } from '@/lib/drawer'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -29,6 +30,7 @@ import ProductTitleEdit from './sections/ProductTitleEdit'
 import ProductPriceEdit from './sections/ProductPriceEdit'
 import ProductCartButtonEdit from './sections/ProductCartButtonEdit'
 import NavMenuEdit from './sections/NavMenuEdit'
+import DrawerEdit from './sections/DrawerEdit'
 import CategoryFilterEdit from './sections/CategoryFilterEdit'
 import EditorSkeleton from './EditorSkeleton'
 import AddPageModal, { type PageResult } from '@/components/AddPageModal'
@@ -48,6 +50,7 @@ type Tab = 'sections' | 'theme'
 const SECTION_VIEWS = [
   'list', 'banner', 'header', 'hero', 'products', 'footer', 'custom', 'code',
   'seo', 'product-title', 'product-price', 'product-cart', 'nav-menu', 'category-filter',
+  'drawer',
 ] as const
 type SectionView = (typeof SECTION_VIEWS)[number]
 
@@ -111,6 +114,7 @@ const SECTION_LABELS: Record<string, string> = {
   'product-price': 'Product Price',
   'product-cart': 'Add to Cart Button',
   'nav-menu': 'Menu',
+  drawer: 'Drawer',
   'category-filter': 'Category Filter',
 }
 
@@ -613,6 +617,7 @@ export default function VisualEditor({
     cartBtnPaddingRight:  initialTheme?.cartBtnPaddingRight  ?? 0,
     // Navigation
     navLinks:    initialTheme?.navLinks    ?? [],
+    drawer:      resolveDrawer(initialTheme?.drawer),
     navFontSize: initialTheme?.navFontSize ?? 14,
     navCase:     initialTheme?.navCase     ?? 'normal',
     navDividers: initialTheme?.navDividers ?? false,
@@ -885,6 +890,20 @@ export default function VisualEditor({
     if (sectionView !== 'hero') setActiveHeroSlide(null)
   }, [sectionView])
 
+  /*
+   * Open the drawer in the preview for as long as its panel is open.
+   *
+   * A drawer you cannot see is a drawer you cannot edit, and on a desktop
+   * preview the hamburger that would open it is not even rendered. Opening it
+   * with the panel means the thing being edited is the thing on screen.
+   */
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: sectionView === 'drawer' ? 'drawer:open' : 'drawer:close' },
+      '*',
+    )
+  }, [sectionView])
+
   useEffect(() => {
     if (sectionView !== 'product-title' && sectionView !== 'product-price' && sectionView !== 'product-cart') {
       iframeRef.current?.contentWindow?.postMessage({ type: 'product-field:activate', field: null }, '*')
@@ -899,6 +918,9 @@ export default function VisualEditor({
     win.postMessage({ type: 'theme:update', theme }, '*')
     win.postMessage({ type: 'custom-sections:update', sections: customSections }, '*')
     win.postMessage({ type: 'hero:update', slides: heroSlides }, '*')
+    // A reload closes the drawer, so a merchant editing it would watch the
+    // thing they are editing disappear on every preview refresh.
+    if (sectionView === 'drawer') win.postMessage({ type: 'drawer:open' }, '*')
     if (activePage) {
       win.postMessage({ type: 'page-content:update', content: activePage.content }, '*')
     }
@@ -1514,6 +1536,15 @@ function handlePageContentChange(content: unknown) {
                 {sectionView === 'product-price' && <ProductPriceEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('products')} />}
                 {sectionView === 'product-cart'    && <ProductCartButtonEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('products')} storeId={storeId} />}
                 {sectionView === 'nav-menu'        && <NavMenuEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('header')} />}
+                {sectionView === 'drawer'          && (
+                  <DrawerEdit
+                    storeId={storeId}
+                    theme={theme}
+                    updateTheme={updateTheme}
+                    onBack={() => setSectionView('header')}
+                    onOpenPanel={v => { setSectionView(v as SectionView); triggerSidebarPulse() }}
+                  />
+                )}
                 {sectionView === 'category-filter' && <CategoryFilterEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} storeId={storeId} />}
                 {sectionView === 'footer'        && <FooterEdit storeId={storeId} storeName={dbStoreName} onPreviewChange={setPreviewStoreName} onSaveSuccess={name => { setDbStoreName(name); setPreviewStoreName(name) }} theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} pages={storePages} onAddPage={() => { setAddPageOrigin('footer'); setShowAddPageModal(true) }} />}
                 {sectionView === 'code'          && !systemPageSlug && !preview && <CustomCodeEdit theme={theme} updateTheme={updateTheme} onBack={() => setSectionView('list')} />}

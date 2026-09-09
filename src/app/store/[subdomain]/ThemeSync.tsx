@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { isDark } from '@/lib/contrast'
 
 /**
  * Keeps the live preview in step with the editor.
@@ -34,6 +35,15 @@ export default function ThemeSync() {
       el.style.setProperty('--store-pg-bg', t.productGridBg || '#ffffff')
       el.style.setProperty('--store-divider', 'rgba(0,0,0,0.08)')
       el.style.setProperty('--store-card-border', '#f1f1f1')
+
+      // The browser's own chrome follows too. Without this, painting a shop
+      // dark in the editor left a white scrollbar gutter down the preview and
+      // a thumb you could not see against it.
+      const dark = isDark(t.backgroundColor || '#ffffff')
+      el.style.colorScheme = dark ? 'dark' : 'light'
+      el.style.setProperty('--scrollbar-thumb', dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.16)')
+      el.style.setProperty('--scrollbar-thumb-hover', dark ? 'rgba(255,255,255,0.32)' : 'rgba(0,0,0,0.30)')
+      el.style.setProperty('--scrollbar-thumb-active', dark ? 'rgba(255,255,255,0.44)' : 'rgba(0,0,0,0.42)')
     }
 
     window.addEventListener('message', handleMessage)

@@ -129,7 +129,12 @@ export default function CustomSection({ section, themeStyle, categories = [], su
     const viewAllLabel = section.buttonLabel || 'View all'
 
     return (
-      <section className="px-4 md:px-8 py-14 max-w-7xl mx-auto w-full" style={wrapperStyle}>
+      <section className="w-full py-14" style={wrapperStyle}>
+        {/* Two elements, because they answer two questions. The outer one
+            carries the colour and runs edge to edge; the inner one caps the
+            reading width. They used to be one, so a section painted dark
+            stopped at 1280px and the page showed down both sides of it. */}
+        <div className="px-4 md:px-8 max-w-7xl mx-auto w-full">
         {/* Heading left, view-all right, the standard collection-row header. */}
         <div className="flex items-end justify-between gap-6 mb-9">
           <div className="min-w-0">
@@ -215,6 +220,7 @@ export default function CustomSection({ section, themeStyle, categories = [], su
             })}
           </div>
         )}
+        </div>
       </section>
     )
   }

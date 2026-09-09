@@ -55,6 +55,7 @@ export default async function SuccessPage({
     headerBgColor: t?.headerBgColor ?? '',
     headerTextColor: t?.headerTextColor ?? '',
     utilityStyle: t?.utilityStyle ?? 'icons',
+    drawer: t?.drawer ?? null,
     headerTransparent: t?.headerTransparent ?? false,
     headerInverseLogoUrl: t?.headerInverseLogoUrl ?? '',
     headerTransparentText: t?.headerTransparentText ?? '#ffffff',

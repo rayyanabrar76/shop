@@ -1,3 +1,5 @@
+import type { DrawerConfig } from '@/lib/drawer'
+
 export interface NavLink {
   label: string
   href: string
@@ -94,6 +96,8 @@ export interface ThemeState {
   cartBtnPaddingRight: number
   // Navigation
   navLinks: NavLink[]
+  /** The mobile drawer's contents. See src/lib/drawer.ts. */
+  drawer: DrawerConfig
   navFontSize: number
   navCase: string
   navDividers: boolean

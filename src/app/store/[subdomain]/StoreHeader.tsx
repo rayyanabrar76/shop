@@ -9,7 +9,8 @@ import { useAuth } from './auth-context'
 import { EditorItem, useIsEditor, notifyEdit } from './EditorHighlight'
 import { usePrice } from '@/components/CurrencyProvider'
 import { useStoreBase } from '@/components/StoreBaseProvider'
-import { readableText } from '@/lib/contrast'
+import { readableText, ensureReadable } from '@/lib/contrast'
+import { resolveDrawer, type DrawerConfig } from '@/lib/drawer'
 
 interface NavLink {
   label: string
@@ -20,6 +21,14 @@ interface Category {
   id: string
   name: string
   slug: string
+}
+
+interface DrawerProduct {
+  id: string
+  title: string
+  price: number
+  imageUrl?: string | null
+  slug?: string | null
 }
 
 interface SearchProduct {
@@ -52,6 +61,8 @@ interface StoreHeaderProps {
     headerTransparent?: boolean | null
     headerInverseLogoUrl?: string | null
     headerTransparentText?: string | null
+    /** The drawer's contents. Null or missing means every default. */
+    drawer?: unknown
     accentColor?: string | null
     primaryColor?: string | null
     backgroundColor?: string | null
@@ -115,6 +126,7 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
   const [categories, setCategories]     = useState<Category[]>([])
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [drawerOpen, setDrawerOpen]     = useState(false)
+  const [drawerCatalogue, setDrawerCatalogue] = useState<DrawerProduct[]>([])
 
   const searchRef   = useRef<HTMLDivElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
@@ -127,6 +139,51 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
   const navDividers  = theme?.navDividers ?? false
 
   const navTextStyle: React.CSSProperties = { fontSize: navFontSize, textTransform: navCase }
+
+  // Normalised once. Everything below reads plain fields off this rather than
+  // guessing at whatever the JSON column happens to hold.
+  const drawer: DrawerConfig = resolveDrawer(theme?.drawer)
+
+  /*
+   * Which categories the drawer lists.
+   *
+   * An empty pick means all of them, which is what a drawer shows before
+   * anyone has chosen. A pick is honoured in the order it was arranged, and
+   * ids that no longer exist simply drop out rather than leaving a gap.
+   */
+  const drawerCategories = drawer.categories.ids.length
+    ? drawer.categories.ids
+        .map(id => categories.find(c => c.id === id))
+        .filter((c): c is Category => !!c)
+    : categories
+
+  /*
+   * The carousel's products.
+   *
+   * Fetched rather than passed down, because the header is rendered by every
+   * page including ones that never load a product, and asking each of them to
+   * carry a list for a panel that may never be opened is how a shop page ends
+   * up doing a query for a menu.
+   */
+  const wantsCarousel = drawer.carousel.show && drawer.carousel.productIds.length > 0
+  useEffect(() => {
+    if (!wantsCarousel) return
+    let alive = true
+    fetch(`/api/storefront/${subdomain}/products?limit=48`)
+      .then(r => (r.ok ? r.json() : { products: [] }))
+      .then(d => { if (alive) setDrawerCatalogue(d.products ?? []) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [wantsCarousel, subdomain])
+
+  // Resolved at render rather than stored, so the order is always the order
+  // that is currently configured and a product removed from the pick leaves
+  // immediately instead of waiting for the next fetch.
+  const drawerProducts = wantsCarousel
+    ? drawer.carousel.productIds
+        .map(id => drawerCatalogue.find(p => p.id === id))
+        .filter((p): p is DrawerProduct => !!p)
+    : []
 
   useEffect(() => {
     fetch(`/api/storefront/${subdomain}/categories`)
@@ -194,13 +251,33 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
     return () => window.removeEventListener('scroll', onScroll)
   }, [theme?.headerTransparent, theme?.headerSticky, isHome])
 
+  /*
+   * In the editor this both opens the drawer and asks for its panel.
+   *
+   * It used to only send the message, so the one control whose whole job is to
+   * reveal the drawer was the one place you could not see it: a merchant could
+   * edit the drawer's contents and never look at them. It is a panel that
+   * opens, not a link that navigates, so there is nothing to protect the
+   * editor from by keeping it shut.
+   */
   function handleHamburgerClick() {
+    setDrawerOpen(true)
     if (isEditor) {
-      window.parent.postMessage({ type: 'field:focus', section: 'header', field: 'header-nav' }, '*')
-    } else {
-      setDrawerOpen(true)
+      window.parent.postMessage({ type: 'section:edit', section: 'drawer' }, '*')
     }
   }
+
+  // The editor opens and closes it from its own panel, so opening Drawer in
+  // the sidebar shows the thing you are editing without hunting for the
+  // hamburger at a width where it may not even be rendered.
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      if (e.data?.type === 'drawer:open') setDrawerOpen(true)
+      if (e.data?.type === 'drawer:close') setDrawerOpen(false)
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [])
 
   // ── Header layout ──
   // Menu position is the explicit choice, so it wins: picking a centred menu
@@ -226,7 +303,23 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
   const borderW     = Math.max(0, Math.min(theme?.headerBorderWidth ?? 1, 8))
   // Blank keeps the translucent white that pairs with backdrop-blur.
   const headerBg    = theme?.headerBgColor || 'rgba(255,255,255,0.92)'
-  const headerFg    = theme?.headerTextColor || undefined
+  /*
+   * The bar's ink, checked against the bar's own ground.
+   *
+   * Background and text are set in two separate controls, so a colour picked
+   * while the header was white is still sitting there when it is painted
+   * black. Blank used to mean "inherit the page", which is near-black on a
+   * light theme, so a black header came out with black type on it and the
+   * whole menu disappeared.
+   *
+   * Blank still lands on the page's own text colour when the header is light,
+   * which is what inheriting did, so nothing moves for a shop that never
+   * touched this.
+   */
+  const headerInk   = theme?.headerTextColor?.trim() || ''
+  const headerFg    = headerInk
+    ? ensureReadable(headerInk, headerBg)
+    : readableText(headerBg, '#ffffff', theme?.textColor || '#09090b')
   const utilityText = (theme?.utilityStyle ?? 'icons') === 'text'
 
   // ── Transparent header (home page only) ──
@@ -274,6 +367,21 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
   /** Every icon button in the bar shares one hover, lit from the bar's own colour. */
   const iconButton = {
     className: 'flex h-10 w-10 items-center justify-center rounded-xl transition-colors',
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.backgroundColor = chrome.hover },
+    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.backgroundColor = 'transparent' },
+  }
+
+  /*
+   * The drawer's ground.
+   *
+   * The bar's own default is translucent white, which pairs with a blur over
+   * whatever is behind it. A drawer has a page behind it rather than a hero,
+   * so a translucent panel would show the shop through the menu; it takes the
+   * page's ground in that case and the header's colour whenever one is set.
+   */
+  const drawerBg = theme?.headerBgColor || 'var(--store-bg, #ffffff)'
+  /** Every row in the drawer lights the same way the bar's icons do. */
+  const drawerHover = {
     onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.backgroundColor = chrome.hover },
     onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.backgroundColor = 'transparent' },
   }
@@ -605,11 +713,20 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setDrawerOpen(false)}
           />
-          {/* Slide panel */}
+          {/* Slide panel.
+
+              It takes the header's colours, not the page's. This is the menu
+              opening out of the bar, so a black header used to produce a white
+              drawer, and the rules and hovers inside it were fixed blacks that
+              vanished on anything dark. Everything below is mixed from the
+              same foreground the bar uses. */}
           <div className="relative drawer-slide-in w-72 max-w-[85vw] h-full shadow-2xl flex flex-col overflow-y-auto"
-            style={{ backgroundColor: 'var(--store-bg, #ffffff)', color: 'var(--store-text, #09090b)' }}>
+            style={{ backgroundColor: drawerBg, color: fg }}>
             {/* Drawer header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.07]">
+            <div
+              className="flex items-center justify-between px-5 py-4 border-b"
+              style={{ borderColor: chrome.line }}
+            >
               <Link
                 href={buildHref(storeBase, '/')}
                 onClick={() => setDrawerOpen(false)}
@@ -630,62 +747,161 @@ export default function StoreHeader({ store, theme, subdomain, isEditor: isEdito
               </Link>
               <button
                 onClick={() => setDrawerOpen(false)}
-                className="p-2 rounded-xl hover:bg-black/5 transition-colors opacity-60"
+                className="p-2 rounded-xl transition-colors opacity-60"
+                {...drawerHover}
                 aria-label="Close menu"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Nav links */}
-            <nav className="px-4 py-4 flex flex-col gap-1">
-              {navLinks.map(({ label, href }, i) => (
+            {/* Every block below is optional and separately editable, so the
+                rules between them are drawn by the blocks themselves rather
+                than hardcoded between fixed sections. */}
+
+            {/* Menu links. The header's own list, shown a second way. */}
+            {drawer.links.show && navLinks.length > 0 && (
+              <DrawerBlock label={drawer.links.label} line={chrome.line} first>
+                {navLinks.map(({ label, href }, i) => (
+                  <Link
+                    key={`${label}-${i}`}
+                    href={buildHref(storeBase, href)}
+                    onClick={() => setDrawerOpen(false)}
+                    className="px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                    style={navTextStyle}
+                    {...drawerHover}
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </DrawerBlock>
+            )}
+
+            {drawer.allProducts.show && (
+              <DrawerBlock line={chrome.line} first={!drawer.links.show}>
                 <Link
-                  key={`${label}-${i}`}
-                  href={buildHref(storeBase, href)}
+                  href={`${storeBase}/products`}
                   onClick={() => setDrawerOpen(false)}
-                  className="px-3 py-2.5 rounded-xl text-sm font-semibold hover:bg-black/5 transition-colors"
-                  style={navTextStyle}
+                  className="px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                  {...drawerHover}
                 >
-                  {label}
+                  {drawer.allProducts.label || 'All products'}
                 </Link>
-              ))}
+              </DrawerBlock>
+            )}
 
-            </nav>
+            {drawer.categories.show && drawerCategories.length > 0 && (
+              <DrawerBlock label={drawer.categories.label} line={chrome.line}>
+                {drawerCategories.map(cat => (
+                  <Link
+                    key={cat.id}
+                    href={`${storeBase}/products?category=${cat.slug}`}
+                    onClick={() => setDrawerOpen(false)}
+                    className="px-3 py-2 rounded-xl text-sm font-medium opacity-80 hover:opacity-100 transition-colors"
+                    {...drawerHover}
+                  >
+                    {cat.name}
+                  </Link>
+                ))}
+              </DrawerBlock>
+            )}
 
-            {/* Categories */}
-            {categories.length > 0 && (
-              <>
-                <div className="mx-5 border-t border-black/[0.07]" />
-                <div className="px-4 py-4">
-                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-50 mb-2 px-3">
-                    Categories
-                  </p>
-                  <div className="flex flex-col gap-1">
+            {/* A row that scrolls sideways rather than a grid: the drawer is
+                288px wide, and two columns of product card in it are thumbnails
+                of a thumbnail. */}
+            {drawer.carousel.show && drawerProducts.length > 0 && (
+              <DrawerBlock label={drawer.carousel.label} line={chrome.line} flush>
+                <div className="flex gap-3 overflow-x-auto hide-scrollbar px-3 pb-1 -mx-0">
+                  {drawerProducts.map(pr => (
                     <Link
-                      href={`${storeBase}/products`}
+                      key={pr.id}
+                      href={`${storeBase}/products/${pr.slug || pr.id}`}
                       onClick={() => setDrawerOpen(false)}
-                      className="px-3 py-2 rounded-xl text-sm font-medium opacity-80 hover:opacity-100 hover:bg-black/5 transition-colors"
+                      className="shrink-0 w-32 group/dp"
                     >
-                      All Products
-                    </Link>
-                    {categories.map(cat => (
-                      <Link
-                        key={cat.id}
-                        href={`${storeBase}/products?category=${cat.slug}`}
-                        onClick={() => setDrawerOpen(false)}
-                        className="px-3 py-2 rounded-xl text-sm font-medium opacity-80 hover:opacity-100 hover:bg-black/5 transition-colors"
+                      <div
+                        className="w-32 h-32 overflow-hidden rounded-xl"
+                        style={{ backgroundColor: chrome.well }}
                       >
-                        {cat.name}
-                      </Link>
-                    ))}
-                  </div>
+                        {pr.imageUrl && (
+                          <img
+                            src={pr.imageUrl}
+                            alt={pr.title}
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover/dp:scale-105"
+                          />
+                        )}
+                      </div>
+                      {drawer.carousel.showTitle && (
+                        <p className="mt-2 text-[12px] font-medium leading-snug line-clamp-2">{pr.title}</p>
+                      )}
+                      {drawer.carousel.showPrice && (
+                        <p className="mt-0.5 text-[12px] font-bold">{price(pr.price)}</p>
+                      )}
+                    </Link>
+                  ))}
                 </div>
-              </>
+              </DrawerBlock>
+            )}
+
+            {drawer.contact.show && (
+              <DrawerBlock label={drawer.contact.label} line={chrome.line}>
+                {drawer.contact.text.trim() ? (
+                  <p className="px-3 text-[13px] leading-relaxed opacity-70 whitespace-pre-wrap">
+                    {drawer.contact.text}
+                  </p>
+                ) : (
+                  <Link
+                    href={buildHref(storeBase, '/contact')}
+                    onClick={() => setDrawerOpen(false)}
+                    className="px-3 py-2 rounded-xl text-sm font-medium opacity-80 hover:opacity-100 transition-colors"
+                    {...drawerHover}
+                  >
+                    {drawer.contact.label || 'Contact'}
+                  </Link>
+                )}
+              </DrawerBlock>
             )}
           </div>
         </div>
       )}
+    </>
+  )
+}
+
+/**
+ * One block of the drawer.
+ *
+ * Draws its own rule above it, so blocks can be switched off in any
+ * combination without leaving a stray line where a section used to be. The
+ * first one visible skips the rule, since the drawer's own header already
+ * drew one.
+ */
+function DrawerBlock({
+  label,
+  line,
+  first = false,
+  flush = false,
+  children,
+}: {
+  label?: string
+  line: string
+  first?: boolean
+  /** The child manages its own horizontal padding, e.g. a sideways scroller
+      that has to bleed to the edge to look scrollable. */
+  flush?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <>
+      {!first && <div className="mx-5 border-t" style={{ borderColor: line }} />}
+      <div className={`py-4 ${flush ? '' : 'px-4'}`}>
+        {label?.trim() && (
+          <p className={`mb-2 text-[10px] font-bold uppercase tracking-widest opacity-50 ${flush ? 'px-7' : 'px-3'}`}>
+            {label}
+          </p>
+        )}
+        <div className={flush ? '' : 'flex flex-col gap-1'}>{children}</div>
+      </div>
     </>
   )
 }
